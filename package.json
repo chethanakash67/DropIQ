@@ -1,0 +1,39 @@
+{
+  "name": "dropiq-product-search",
+  "version": "1.0.0",
+  "description": "Product search platform with Apify integration",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "scheduler": "node src/scheduler/monthly-ingestion.js",
+    "ingest": "node src/jobs/ingest-apify-data.js",
+    "ingest:brands": "node src/jobs/ingest-brand-stores.js",
+    "ingest:samsung": "node src/jobs/ingest-samsung-data.js",
+    "ingest:local": "node src/jobs/ingest-local-data.js",
+    "migrate": "node src/database/migrate.js",
+    "export": "node src/utils/export-to-excel.js"
+  },
+  "keywords": [
+    "product",
+    "search",
+    "apify",
+    "ecommerce"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@api/viglink-developer-center": "file:.api/apis/viglink-developer-center",
+    "@google/genai": "^1.38.0",
+    "axios": "^1.6.5",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "node-cron": "^3.0.3",
+    "pg": "^8.11.3",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

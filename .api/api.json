@@ -1,0 +1,11 @@
+{
+  "version": "1.0",
+  "apis": [
+    {
+      "identifier": "viglink-developer-center",
+      "source": "@viglink-developer-center/v1.0#3rtq83uma6ytvmp",
+      "integrity": "sha512-NOkGW+P06lD1XYEClScfL08lcsgp8mXLoYSTOcH17U8J8XEEk7piZDK7lychHpsidkG7WS621+uEH+G45fFwBQ==",
+      "installerVersion": "6.1.3"
+    }
+  ]
+}

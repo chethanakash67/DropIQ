@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DropIQ Product Search</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Dashboard Styles */
+    .dashboard {
+      background: white;
+      padding: 40px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 30px;
+      color: #333;
+    }
+
+    .search-container {
+      position: relative;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    #searchInput {
+      width: 100%;
+      padding: 15px;
+      font-size: 16px;
+      border: 2px solid #ddd;
+      border-radius: 4px;
+      outline: none;
+    }
+
+    #searchInput:focus {
+      border-color: #4CAF50;
+    }
+
+    #searchButton {
+      margin-top: 15px;
+      padding: 12px 40px;
+      font-size: 16px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #searchButton:hover {
+      background: #45a049;
+    }
+
+    /* Frequent Searches */
+    .frequent-searches {
+      margin-top: 30px;
+      display: none;
+    }
+
+    .frequent-searches.show {
+      display: block;
+    }
+
+    .frequent-searches h3 {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    .frequent-searches-list {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .frequent-search-item {
+      padding: 8px 16px;
+      background: #f0f0f0;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .frequent-search-item:hover {
+      background: #e0e0e0;
+    }
+
+    .search-count {
+      font-size: 11px;
+      color: #999;
+      font-weight: 500;
+    }
+
+    .search-history-section {
+      width: 100%;
+    }
+
+    .search-history-header {
+      font-size: 12px;
+      color: #666;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      text-align: left;
+    }
+
+    /* Results Page */
+    .results-page {
+      display: none;
+    }
+
+    .results-page.show {
+      display: block;
+    }
+
+    .back-button {
+      padding: 10px 20px;
+      background: #666;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+
+    .back-button:hover {
+      background: #555;
+    }
+
+    /* Results Page Search Bar */
+    .results-search-container {
+      position: relative;
+      max-width: 800px;
+      margin: 0 auto 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    #resultsSearchInput {
+      flex: 1;
+      padding: 12px 15px;
+      font-size: 16px;
+      border: 2px solid #ddd;
+      border-radius: 4px;
+      outline: none;
+    }
+
+    #resultsSearchInput:focus {
+      border-color: #4CAF50;
+    }
+
+    #resultsSearchButton {
+      padding: 12px 30px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    #resultsSearchButton:hover {
+      background: #45a049;
+    }
+
+    /* Filters */
+    .filters {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .filters h3 {
+      margin-bottom: 15px;
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .filter-group label {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .filter-group select,
+    .filter-group input {
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    /* Product Grid */
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .product-card {
+      background: white;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+
+    .store-tag {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 4px 10px;
+      background: #4CAF50;
+      color: white;
+      font-size: 12px;
+      border-radius: 3px;
+    }
+
+    .product-image {
+      width: 100%;
+      height: 200px;
+      object-fit: contain;
+      margin-bottom: 10px;
+      background: #f9f9f9;
+    }
+
+    .product-name {
+      font-weight: bold;
+      margin-bottom: 10px;
+      font-size: 16px;
+      color: #333;
+    }
+
+    .product-price {
+      font-size: 20px;
+      color: #4CAF50;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .product-emi {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    .product-rating {
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    .rating-value {
+      color: #ff9800;
+      font-weight: bold;
+    }
+
+    .product-features {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #eee;
+    }
+
+    .product-features h4 {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 5px;
+    }
+
+    .product-features ul {
+      list-style: none;
+      font-size: 12px;
+      color: #333;
+    }
+
+    .product-features li {
+      padding: 2px 0;
+    }
+
+    .product-reviews {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #eee;
+    }
+
+    .product-reviews h4 {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 5px;
+    }
+
+    .review-item {
+      font-size: 12px;
+      color: #333;
+      padding: 5px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .product-link {
+      display: block;
+      margin-top: 10px;
+      padding: 10px;
+      background: #4CAF50;
+      color: white;
+      text-align: center;
+      text-decoration: none;
+      border-radius: 4px;
+    }
+
+    .product-link:hover {
+      background: #45a049;
+    }
+
+    /* Product Actions */
+    .product-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .recommendations-btn {
+      padding: 8px 12px;
+      background: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .recommendations-btn:hover {
+      background: #0b7dda;
+    }
+
+    .price-comparison-btn {
+      padding: 8px 12px;
+      background: #FF9800;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .price-comparison-btn:hover {
+      background: #F57C00;
+    }
+
+    /* Recommendations Container */
+    .recommendations-container {
+      margin-top: 15px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      border: 1px solid #dee2e6;
+    }
+
+    .recommendations-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .recommendations-header h4 {
+      margin: 0;
+      font-size: 16px;
+      color: #333;
+    }
+
+    .close-recommendations {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #666;
+      padding: 0;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .close-recommendations:hover {
+      color: #333;
+    }
+
+    .recommendations-loading {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .recommendations-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .recommendation-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px;
+      background: white;
+      border-radius: 4px;
+      border: 1px solid #e0e0e0;
+    }
+
+    .recommendation-item img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    .recommendation-details {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .recommendation-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+      margin-bottom: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .recommendation-price {
+      font-size: 14px;
+      font-weight: bold;
+      color: #4CAF50;
+      margin-bottom: 2px;
+    }
+
+    .recommendation-merchant {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .recommendation-link {
+      padding: 6px 12px;
+      background: #4CAF50;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .recommendation-link:hover {
+      background: #45a049;
+    }
+
+    .no-recommendations {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+      font-size: 14px;
+    }
+
+    /* Price Comparisons Container */
+    .price-comparisons-container {
+      margin-top: 15px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      border: 1px solid #dee2e6;
+    }
+
+    .price-comparisons-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .price-comparisons-header h4 {
+      margin: 0;
+      font-size: 16px;
+      color: #333;
+    }
+
+    .close-price-comparisons {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #666;
+      padding: 0;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .close-price-comparisons:hover {
+      color: #333;
+    }
+
+    .price-comparisons-loading {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .price-comparisons-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .comparison-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px;
+      background: white;
+      border-radius: 4px;
+      border: 1px solid #dee2e6;
+      margin-bottom: 8px;
+    }
+
+    .comparison-item img {
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+      border-radius: 4px;
+      flex-shrink: 0;
+      border: 1px solid #e0e0e0;
+    }
+
+    .comparison-details {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .comparison-merchant {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 4px;
+    }
+
+    .comparison-price {
+      font-size: 15px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .comparison-savings {
+      font-size: 12px;
+      font-weight: 600;
+      color: #d32f2f;
+      margin-top: 2px;
+    }
+
+    .comparison-visit-btn {
+      padding: 6px 12px;
+      background: #4CAF50;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .comparison-visit-btn:hover {
+      background: #45a049;
+    }
+
+    .no-comparisons {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 40px;
+      background: white;
+      border-radius: 8px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      font-size: 18px;
+      color: #666;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <!-- Dashboard -->
+    <div id="dashboard" class="dashboard">
+      <h1>DropIQ Product Search</h1>
+      <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Search for products..." autocomplete="off" />
+        <button id="searchButton">Search</button>
+
+        <div id="frequentSearches" class="frequent-searches">
+          <h3>Frequently Searched</h3>
+          <div id="frequentSearchesList" class="frequent-searches-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Page -->
+    <div id="resultsPage" class="results-page">
+      <button id="backButton" class="back-button">← Back to Dashboard</button>
+
+      <!-- Search Bar on Results Page -->
+      <div class="results-search-container">
+        <input type="text" id="resultsSearchInput" placeholder="Search for audio products..." autocomplete="off" />
+        <button id="resultsSearchButton">Search</button>
+      </div>
+
+      <div class="filters">
+        <h3>Filters</h3>
+        <div class="filter-row">
+          <div class="filter-group">
+            <label>Sort By</label>
+            <select id="sortBy">
+              <option value="price_asc">Price (Low to High)</option>
+              <option value="rating" selected>Rating (High to Low)</option>
+              <option value="price_desc">Price (High to Low)</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>Min Price (₹)</label>
+            <input type="number" id="minPrice" placeholder="0" />
+          </div>
+
+          <div class="filter-group">
+            <label>Max Price (₹)</label>
+            <input type="number" id="maxPrice" placeholder="100000" />
+          </div>
+
+          <div class="filter-group">
+            <label>Store</label>
+            <select id="retailer">
+              <option value="">All Stores</option>
+              <option value="Amazon">Amazon</option>
+              <option value="Flipkart">Flipkart</option>
+              <option value="Samsung">Samsung</option>
+              <option value="Sony">Sony</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="resultsContainer"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
