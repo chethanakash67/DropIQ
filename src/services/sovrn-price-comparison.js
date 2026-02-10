@@ -14,8 +14,9 @@ const USD_TO_INR = 83; // Conversion rate
  */
 async function getPriceComparisons(product, productId) {
   try {
-    if (!SOVRN_SECRET_KEY) {
-      throw new Error('SOVRN_SECRET_KEY not configured');
+    // Skip API calls if keys are not configured
+    if (!SOVRN_SECRET_KEY || !SOVRN_API_KEY) {
+      return [];
     }
 
     const market = 'usd_en'; // US market
@@ -129,12 +130,8 @@ async function getPriceComparisons(product, productId) {
     return transformedComparisons;
 
   } catch (error) {
-    console.error('❌ Error fetching price comparisons:', error.message);
-    if (error.response) {
-      console.error('Response status:', error.response.status);
-      console.error('Response data:', error.response.data);
-    }
-    throw error;
+    // Silently handle any errors - just skip price comparisons
+    return [];
   }
 }
 

@@ -129,6 +129,61 @@ router.delete('/search-history', async (req, res) => {
 });
 
 /**
+ * GET /api/products/retailers
+ * Get list of all available retailers including offline stores
+ */
+router.get('/retailers', async (req, res) => {
+  try {
+    // Static online retailers
+    const onlineRetailers = [
+      { id: 'Amazon', name: 'Amazon', type: 'online' },
+      { id: 'Flipkart', name: 'Flipkart', type: 'online' },
+      { id: 'Samsung', name: 'Samsung Store', type: 'online' },
+      { id: 'Sony', name: 'Sony Store', type: 'online' }
+    ];
+
+    // Get offline stores from database
+    const offlineStoresQuery = `
+      SELECT 
+        store_id, 
+        store_name, 
+        owner_name, 
+        owner_phone,
+        shop_location,
+        table_name
+      FROM offline_stores 
+      ORDER BY store_name
+    `;
+    const offlineStoresResult = await db.query(offlineStoresQuery);
+    
+    const offlineRetailers = offlineStoresResult.rows.map(store => ({
+      id: store.store_id,
+      name: store.store_name,
+      type: 'offline',
+      owner: store.owner_name,
+      phone: store.owner_phone,
+      location: store.shop_location
+    }));
+
+    res.json({
+      success: true,
+      retailers: {
+        online: onlineRetailers,
+        offline: offlineRetailers,
+        all: [...onlineRetailers, ...offlineRetailers]
+      }
+    });
+  } catch (error) {
+    console.error('Error in /api/products/retailers:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch retailers',
+      message: error.message,
+    });
+  }
+});
+
+/**
  * GET /api/products/frequent-searches
  * Get frequently used search queries/keywords
  */

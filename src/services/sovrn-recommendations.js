@@ -53,7 +53,6 @@ class SovrnRecommendations {
    */
   async getRecommendations(product, productId) {
     if (!this.apiKey) {
-      console.warn('SOVRN_API_KEY not configured for recommendations');
       return [];
     }
 
@@ -120,13 +119,7 @@ class SovrnRecommendations {
       return recommendations;
 
     } catch (error) {
-      if (error.response) {
-        console.error('Sovrn API error:', error.response.status, error.response.data);
-      } else if (error.request) {
-        console.error('Sovrn API no response:', error.message);
-      } else {
-        console.error('Sovrn API request error:', error.message);
-      }
+      // Silently handle any errors - just skip recommendations
       return [];
     }
   }

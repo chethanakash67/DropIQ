@@ -8,3 +8,5 @@ coverage/
 .vscode/
 *.swp
 *.swo
+test-files/
+gen-lang-client-0169377687-30900ec04eb4.json

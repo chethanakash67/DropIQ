@@ -23,8 +23,179 @@
       margin: 0 auto;
     }
 
+    /* Authentication Pages */
+    .auth-page {
+      display: none;
+      background: white;
+      padding: 40px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      max-width: 450px;
+      margin: 100px auto;
+    }
+
+    .auth-page.show {
+      display: block;
+    }
+
+    .auth-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .auth-header h1 {
+      color: #333;
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    .auth-header p {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-group label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .form-group input {
+      padding: 12px;
+      font-size: 14px;
+      border: 2px solid #ddd;
+      border-radius: 4px;
+      outline: none;
+    }
+
+    .form-group input:focus {
+      border-color: #4CAF50;
+    }
+
+    .password-field {
+      position: relative;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #666;
+      font-size: 18px;
+      padding: 5px;
+      line-height: 1;
+    }
+
+    .password-toggle:hover {
+      color: #333;
+    }
+
+    .auth-error {
+      background: #fee;
+      color: #c33;
+      padding: 10px;
+      border-radius: 4px;
+      font-size: 13px;
+      display: none;
+    }
+
+    .auth-error.show {
+      display: block;
+    }
+
+    .auth-button {
+      padding: 14px;
+      font-size: 16px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+
+    .auth-button:hover {
+      background: #45a049;
+    }
+
+    .auth-button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .auth-toggle {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .auth-toggle a {
+      color: #4CAF50;
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .auth-toggle a:hover {
+      text-decoration: underline;
+    }
+
+    .password-requirements {
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+    }
+
+    /* User Greeting */
+    .user-greeting {
+      text-align: right;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .user-greeting-text {
+      font-size: 18px;
+      color: #333;
+      font-weight: 600;
+    }
+
+    .logout-button {
+      padding: 8px 16px;
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .logout-button:hover {
+      background: #c82333;
+    }
+
     /* Dashboard Styles */
     .dashboard {
+      display: none;
       background: white;
       padding: 40px;
       border-radius: 8px;
@@ -32,9 +203,31 @@
       text-align: center;
     }
 
+    .dashboard.show {
+      display: block;
+    }
+
     h1 {
       margin-bottom: 30px;
       color: #333;
+    }
+
+    .diq-button {
+      margin-top: 20px;
+      padding: 15px 30px;
+      font-size: 16px;
+      background: #1e3a8a;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .diq-subtitle {
+      margin-top: 15px;
+      color: #666;
+      font-size: 14px;
     }
 
     .search-container {
@@ -137,6 +330,14 @@
 
     .results-page.show {
       display: block;
+    }
+
+    .results-header-bar,
+    .diq-results-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
     }
 
     .back-button {
@@ -262,6 +463,53 @@
       background: #f9f9f9;
     }
 
+    .no-image-placeholder {
+      width: 100%;
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f0f0f0;
+      color: #999;
+      font-size: 14px;
+      font-weight: 500;
+      border: 2px dashed #ddd;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+
+    .no-image-placeholder-small {
+      width: 80px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f0f0f0;
+      color: #999;
+      font-size: 11px;
+      font-weight: 500;
+      border: 2px dashed #ddd;
+      border-radius: 4px;
+      text-align: center;
+      padding: 5px;
+    }
+
+    .no-image-placeholder-tiny {
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f0f0f0;
+      color: #999;
+      font-size: 10px;
+      font-weight: 500;
+      border: 2px dashed #ddd;
+      border-radius: 4px;
+      text-align: center;
+      padding: 3px;
+    }
+
     .product-name {
       font-weight: bold;
       margin-bottom: 10px;
@@ -383,6 +631,82 @@
 
     .price-comparison-btn:hover {
       background: #F57C00;
+    }
+
+    /* Offline Store Styles */
+    .offline-store-product {
+      border: 2px solid #FF6B6B;
+      background: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%);
+    }
+
+    .offline-tag {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 6px 12px;
+      background: linear-gradient(135deg, #FF6B6B 0%, #EE5A6F 100%);
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 20px;
+      box-shadow: 0 2px 6px rgba(255, 107, 107, 0.3);
+    }
+
+    .offline-store-info {
+      margin-top: 10px;
+      padding: 10px;
+      background: #fff;
+      border: 1px solid #FFE0E0;
+      border-radius: 6px;
+    }
+
+    .store-owner-tag {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #333;
+      margin-bottom: 6px;
+    }
+
+    .store-owner-tag .label {
+      font-weight: 600;
+      color: #FF6B6B;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      background: #FFE0E0;
+      color: #FF6B6B;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .call-store-btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      background: linear-gradient(135deg, #4CAF50 0%, #45A049 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      text-align: center;
+      transition: all 0.3s ease;
+      box-shadow: 0 3px 8px rgba(76, 175, 80, 0.3);
+    }
+
+    .call-store-btn:hover {
+      background: linear-gradient(135deg, #45A049 0%, #3D8B40 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 12px rgba(76, 175, 80, 0.4);
     }
 
     /* Recommendations Container */
@@ -614,6 +938,907 @@
       flex-shrink: 0;
     }
 
+    /* D_IQ Questionnaire Styles */
+    .diq-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      overflow-y: auto;
+    }
+
+    .diq-modal.show {
+      display: block;
+    }
+
+    .diq-modal-content {
+      max-width: 800px;
+      margin: 50px auto;
+      background: white;
+      border-radius: 8px;
+      padding: 40px;
+      position: relative;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .diq-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 28px;
+      font-weight: bold;
+      color: #666;
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+
+    .diq-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .diq-title {
+      font-size: 28px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .diq-subtitle-text {
+      color: #666;
+      font-size: 16px;
+    }
+
+    .diq-progress {
+      margin-bottom: 30px;
+    }
+
+    .diq-progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .diq-progress-fill {
+      height: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      transition: width 0.3s ease;
+    }
+
+    .diq-progress-text {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .diq-question-card {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .diq-question-card.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .diq-question-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .diq-help-text {
+      font-size: 13px;
+      color: #6b7280;
+      background: #f0f9ff;
+      padding: 10px 15px;
+      border-radius: 6px;
+      border-left: 3px solid #1e3a8a;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .diq-question-text {
+      font-size: 20px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 25px;
+    }
+
+    .diq-options {
+      display: grid;
+      gap: 15px;
+    }
+
+    .diq-option {
+      padding: 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      cursor: pointer;
+      background: white;
+      text-align: left;
+    }
+
+    .diq-option:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background: #f9fafb;
+    }
+
+    .diq-option.selected {
+      border-color: #1e3a8a;
+      background: #f0f4ff;
+      border-width: 2px;
+    }
+
+    .diq-option-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 6px;
+    }
+
+    .diq-option-spec {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1e3a8a;
+      margin-bottom: 4px;
+    }
+
+    .diq-option-description {
+      font-size: 13px;
+      color: #6b7280;
+      line-height: 1.4;
+    }
+
+    .diq-importance-container {
+      margin-top: 30px;
+      padding-top: 25px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .diq-importance-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      color: #374151;
+      font-weight: 500;
+      margin-bottom: 12px;
+    }
+
+    .diq-importance-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1e3a8a;
+      padding: 4px 12px;
+      background: #f0f4ff;
+      border-radius: 4px;
+    }
+
+    .diq-importance-slider {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: #e5e7eb;
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+      cursor: pointer;
+    }
+
+    .diq-importance-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #1e3a8a;
+      cursor: pointer;
+      border: 2px solid white;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .diq-importance-slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #1e3a8a;
+      cursor: pointer;
+      border: 2px solid white;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .diq-importance-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .diq-navigation {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 30px;
+    }
+
+    .diq-nav-button {
+      padding: 12px 30px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .diq-nav-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .diq-prev-button {
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    .diq-prev-button:hover:not(:disabled) {
+      background: #e0e0e0;
+    }
+
+    .diq-next-button, .diq-submit-button {
+      background: #1e3a8a;
+      color: white;
+    }
+
+    .diq-loading {
+      display: none;
+      text-align: center;
+      padding: 40px;
+    }
+
+    .diq-loading.show {
+      display: block;
+    }
+
+    .diq-spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #1e3a8a;
+      border-radius: 50%;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .diq-loading-text {
+      font-size: 18px;
+      color: #666;
+    }
+
+    /* D_IQ Results Page */
+    .diq-results-page {
+      display: none;
+      padding: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .diq-results-page.show {
+      display: block;
+    }
+
+    .diq-results-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .diq-results-title {
+      font-size: 28px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    /* ==================== CART STYLES ==================== */
+    
+    .add-to-cart-btn {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s;
+      font-weight: 600;
+      margin-right: 10px;
+    }
+
+    .add-to-cart-btn:hover {
+      background: #45a049;
+      transform: scale(1.05);
+    }
+
+    .cart-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      overflow-y: auto;
+    }
+
+    .cart-modal.show {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cart-modal-content {
+      background: white;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 800px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .cart-header {
+      padding: 20px;
+      border-bottom: 2px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .cart-header h2 {
+      margin: 0;
+      color: #333;
+    }
+
+    .cart-close {
+      background: none;
+      border: none;
+      font-size: 32px;
+      cursor: pointer;
+      color: #666;
+      line-height: 1;
+    }
+
+    .cart-close:hover {
+      color: #333;
+    }
+
+    .cart-items {
+      padding: 20px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .empty-cart {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+      font-size: 18px;
+    }
+
+    .cart-item {
+      display: flex;
+      gap: 15px;
+      padding: 15px;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      align-items: center;
+    }
+
+    .cart-item-image {
+      width: 80px;
+      height: 80px;
+      flex-shrink: 0;
+    }
+
+    .cart-item-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+
+    .cart-item-image .no-image {
+      width: 100%;
+      height: 100%;
+      background: #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      color: #999;
+      font-size: 12px;
+    }
+
+    .cart-item-details {
+      flex: 1;
+    }
+
+    .cart-item-name {
+      margin: 0 0 5px 0;
+      font-size: 16px;
+      color: #333;
+    }
+
+    .cart-item-store {
+      margin: 0 0 5px 0;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .cart-item-price {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #4CAF50;
+    }
+
+    .cart-item-quantity {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .qty-btn {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      width: 30px;
+      height: 30px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .qty-btn:hover {
+      background: #45a049;
+    }
+
+    .qty-value {
+      font-weight: bold;
+      font-size: 16px;
+      min-width: 30px;
+      text-align: center;
+    }
+
+    .cart-item-subtotal {
+      text-align: right;
+      min-width: 100px;
+    }
+
+    .cart-item-subtotal p {
+      margin: 0 0 10px 0;
+      font-weight: 600;
+      font-size: 16px;
+      color: #333;
+    }
+
+    .remove-btn {
+      background: #ff4444;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .remove-btn:hover {
+      background: #cc0000;
+    }
+
+    .cart-footer {
+      padding: 20px;
+      border-top: 2px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .cart-total {
+      font-size: 20px;
+      color: #333;
+    }
+
+    .cart-total span {
+      color: #4CAF50;
+      font-weight: bold;
+    }
+
+    .cart-clear-btn {
+      background: #ff4444;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .cart-clear-btn:hover {
+      background: #cc0000;
+    }
+
+    .cart-checkout-btn {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .cart-checkout-btn:hover {
+      background: #45a049;
+    }
+
+    .cart-notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #4CAF50;
+      color: white;
+      padding: 15px 25px;
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 3000;
+      display: none;
+      font-weight: 600;
+    }
+
+    .cart-notification.show {
+      display: block;
+      animation: slideInRight 0.3s ease;
+    }
+
+    @keyframes slideInRight {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .diq-product-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .diq-product-actions .add-to-cart-btn,
+    .diq-product-actions .diq-buy-button {
+      flex: 1;
+    }
+
+    .diq-results-title {
+      font-size: 32px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .diq-results-subtitle {
+      font-size: 16px;
+      color: #666;
+    }
+
+    /* User Preferences Summary */
+    .user-preferences-summary {
+      background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+      border-radius: 12px;
+      padding: 25px;
+      margin: 0 auto 30px;
+      max-width: 900px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .preferences-title {
+      color: white;
+      font-size: 20px;
+      margin: 0 0 20px 0;
+      font-weight: 600;
+    }
+
+    .preferences-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+    }
+
+    .preference-item {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 8px;
+      padding: 15px;
+      border-left: 4px solid #3498db;
+    }
+
+    .preference-question {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .preference-answer {
+      font-size: 15px;
+      color: #333;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .preference-description {
+      font-size: 12px;
+      color: #777;
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    .preference-importance {
+      display: inline-block;
+      background: #3498db;
+      color: white;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      margin-top: 6px;
+      font-weight: 500;
+    }
+
+    #diqResultsContainer {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 25px;
+      margin-top: 30px;
+    }
+
+    .product-card {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .diq-rank-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      min-width: 35px;
+      height: 35px;
+      padding: 0 10px;
+      background: #1e3a8a;
+      color: white;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 13px;
+      z-index: 10;
+    }
+
+    .diq-rank-badge.rank-1 {
+      background: #d97706;
+    }
+
+    .diq-rank-badge.rank-2 {
+      background: #6b7280;
+    }
+
+    .diq-rank-badge.rank-3 {
+      background: #92400e;
+    }
+
+    .diq-product-image {
+      width: 100%;
+      height: 200px;
+      object-fit: contain;
+      border-radius: 6px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+
+    .product-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 10px;
+      min-height: 48px;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .product-price {
+      font-size: 24px;
+      font-weight: bold;
+      color: #4CAF50;
+      margin-bottom: 15px;
+    }
+
+    .diq-score-container {
+      text-align: center;
+      padding: 15px;
+      background: #f9fafb;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .diq-score-label {
+      font-size: 11px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 5px;
+    }
+
+    .diq-score-value {
+      font-size: 32px;
+      font-weight: bold;
+      margin-bottom: 5px;
+      line-height: 1;
+    }
+
+    .diq-score-value.excellent {
+      color: #4CAF50;
+    }
+
+    .diq-score-value.good {
+      color: #8BC34A;
+    }
+
+    .diq-score-value.fair {
+      color: #FF9800;
+    }
+
+    .diq-score-value.poor {
+      color: #F44336;
+    }
+
+    .diq-rating {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .diq-features-list {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+      min-height: 60px;
+    }
+
+    .diq-feature-badge {
+      padding: 5px 10px;
+      background: #e8f5e9;
+      border-radius: 15px;
+      font-size: 12px;
+      color: #2E7D32;
+      font-weight: 500;
+    }
+
+    .diq-buy-button {
+      width: 100%;
+      padding: 12px;
+      background: #1e3a8a;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      margin-top: auto;
+    }
+
+    /* Offline Product Styles */
+    .offline-product {
+      border: 2px solid #FF9800;
+      background: #FFF8E1;
+    }
+
+    .offline-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 5px 12px;
+      background: #FF9800;
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 15px;
+      z-index: 1;
+    }
+
+    .diq-offline-disclaimer {
+      background: #FFF3CD;
+      border-left: 4px solid #FF9800;
+      padding: 10px 12px;
+      margin: 10px 0;
+      border-radius: 4px;
+      font-size: 12px;
+      line-height: 1.5;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .disclaimer-icon {
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .disclaimer-text {
+      color: #856404;
+      flex: 1;
+    }
+
+    .diq-store-info {
+      background: #E3F2FD;
+      border-left: 4px solid #2196F3;
+      padding: 10px 12px;
+      margin: 10px 0;
+      border-radius: 4px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #0D47A1;
+    }
+
+    .diq-store-info strong {
+      display: block;
+      margin-bottom: 5px;
+      color: #1565C0;
+    }
+
     .comparison-visit-btn:hover {
       background: #45a049;
     }
@@ -643,12 +1868,85 @@
 
 <body>
   <div class="container">
+    <!-- Login Page -->
+    <div id="loginPage" class="auth-page show">
+      <div class="auth-header">
+        <h1>Welcome to DropIQ</h1>
+        <p>Sign in to find your perfect audio products</p>
+      </div>
+      <form id="loginForm" class="auth-form">
+        <div id="loginError" class="auth-error"></div>
+        <div class="form-group">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" placeholder="your@email.com" required />
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <div class="password-field">
+            <input type="password" id="loginPassword" placeholder="Enter password" required />
+            <button type="button" class="password-toggle" id="toggleLoginPassword">
+              👁️
+            </button>
+          </div>
+        </div>
+        <button type="submit" id="loginButton" class="auth-button">Login</button>
+      </form>
+      <div class="auth-toggle">
+        Don't have an account? <a id="showSignup">Sign up</a>
+      </div>
+    </div>
+
+    <!-- Signup Page -->
+    <div id="signupPage" class="auth-page">
+      <div class="auth-header">
+        <h1>Create Account</h1>
+        <p>Join DropIQ to get personalized recommendations</p>
+      </div>
+      <form id="signupForm" class="auth-form">
+        <div id="signupError" class="auth-error"></div>
+        <div class="form-group">
+          <label for="signupName">Full Name</label>
+          <input type="text" id="signupName" placeholder="John Doe" required />
+        </div>
+        <div class="form-group">
+          <label for="signupEmail">Email</label>
+          <input type="email" id="signupEmail" placeholder="your@email.com" required />
+        </div>
+        <div class="form-group">
+          <label for="signupPassword">Password</label>
+          <div class="password-field">
+            <input type="password" id="signupPassword" placeholder="Create password" required />
+            <button type="button" class="password-toggle" id="toggleSignupPassword">
+              👁️
+            </button>
+          </div>
+          <p class="password-requirements">Min 8 chars, 1 uppercase, 1 lowercase, 1 number</p>
+        </div>
+        <button type="submit" id="signupButton" class="auth-button">Sign Up</button>
+      </form>
+      <div class="auth-toggle">
+        Already have an account? <a id="showLogin">Login</a>
+      </div>
+    </div>
+
     <!-- Dashboard -->
     <div id="dashboard" class="dashboard">
-      <h1>DropIQ Product Search</h1>
+      <div class="user-greeting">
+        <h1>DropIQ Product Search</h1>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <span id="userGreeting" class="user-greeting-text"></span>
+          <button id="cartButton" class="cart-button">
+            🛒 Cart <span id="cartCount" class="cart-count">0</span>
+          </button>
+          <button id="logoutButton" class="logout-button">Logout</button>
+        </div>
+      </div>
       <div class="search-container">
         <input type="text" id="searchInput" placeholder="Search for products..." autocomplete="off" />
         <button id="searchButton">Search</button>
+
+        <p class="diq-subtitle">or</p>
+        <button id="diqButton" class="diq-button">🎯 Find Perfect Match with D_IQ</button>
 
         <div id="frequentSearches" class="frequent-searches">
           <h3>Frequently Searched</h3>
@@ -659,7 +1957,12 @@
 
     <!-- Results Page -->
     <div id="resultsPage" class="results-page">
-      <button id="backButton" class="back-button">← Back to Dashboard</button>
+      <div class="results-header-bar">
+        <button id="backButton" class="back-button">← Back to Dashboard</button>
+        <button id="cartButtonResults" class="cart-button">
+          🛒 Cart <span id="cartCountResults" class="cart-count">0</span>
+        </button>
+      </div>
 
       <!-- Search Bar on Results Page -->
       <div class="results-search-container">
@@ -693,10 +1996,7 @@
             <label>Store</label>
             <select id="retailer">
               <option value="">All Stores</option>
-              <option value="Amazon">Amazon</option>
-              <option value="Flipkart">Flipkart</option>
-              <option value="Samsung">Samsung</option>
-              <option value="Sony">Sony</option>
+              <!-- Retailers loaded dynamically via JavaScript -->
             </select>
           </div>
         </div>
@@ -704,8 +2004,58 @@
 
       <div id="resultsContainer"></div>
     </div>
+
+    <!-- D_IQ Questionnaire Modal -->
+    <div id="diqModal" class="diq-modal">
+      <div class="diq-modal-content">
+        <button class="diq-close" id="diqClose">&times;</button>
+        <div class="diq-header">
+          <h2 class="diq-title">Find Your Perfect Match</h2>
+          <p class="diq-subtitle-text">Answer 8 quick questions to get personalized recommendations</p>
+        </div>
+        <div class="diq-progress">
+          <div class="diq-progress-bar">
+            <div id="diqProgressFill" class="diq-progress-fill" style="width: 0%"></div>
+          </div>
+          <p class="diq-progress-text">Question <span id="diqCurrentQuestion">1</span> of <span id="diqTotalQuestions">8</span></p>
+        </div>
+        <div id="diqQuestionsContainer"></div>
+        <div id="diqLoading" class="diq-loading">
+          <div class="diq-spinner"></div>
+          <p class="diq-loading-text">Analyzing your preferences and calculating D_IQ scores...</p>
+        </div>
+        <div class="diq-navigation">
+          <button id="diqPrevButton" class="diq-nav-button diq-prev-button">← Previous</button>
+          <button id="diqNextButton" class="diq-nav-button diq-next-button">Next →</button>
+          <button id="diqSubmitButton" class="diq-nav-button diq-submit-button" style="display:none;">Get Recommendations</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- D_IQ Results Page -->
+    <div id="diqResultsPage" class="diq-results-page">
+      <div class="diq-results-header-bar">
+        <button id="diqBackButton" class="back-button">← Back to Dashboard</button>
+        <button id="cartButtonDiq" class="cart-button">
+          🛒 Cart <span id="cartCountDiq" class="cart-count">0</span>
+        </button>
+      </div>
+      <div class="diq-results-header">
+        <h2 class="diq-results-title">Your Personalized Recommendations</h2>
+        <p class="diq-results-subtitle">Products ranked by D_IQ Score based on your preferences</p>
+      </div>
+      
+      <!-- User Preferences Summary -->
+      <div id="userPreferencesSummary" class="user-preferences-summary">
+        <h3 class="preferences-title">📋 Your Preferences</h3>
+        <div id="preferencesList" class="preferences-list"></div>
+      </div>
+      
+      <div id="diqResultsContainer"></div>
+    </div>
   </div>
 
+  <script src="cart-functions.js"></script>
   <script src="app.js"></script>
 </body>
 

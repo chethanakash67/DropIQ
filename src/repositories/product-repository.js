@@ -584,6 +584,84 @@ class ProductRepository {
         results = results.concat(sonyResult.rows);
       }
 
+      // Query Offline Stores
+      if (!retailer || retailer.includes('_o')) {
+        try {
+          // Get all offline stores
+          const offlineStoresQuery = 'SELECT store_id, store_name, table_name, owner_name, owner_phone FROM offline_stores';
+          const offlineStoresResult = await db.query(offlineStoresQuery);
+          
+          for (const store of offlineStoresResult.rows) {
+            // Skip if filtering by specific retailer and this isn't it
+            if (retailer && retailer !== store.store_name && retailer !== store.store_id) {
+              continue;
+            }
+
+            // Build search query for this store's products
+            let storeWhereConditions = 'WHERE 1=1';
+            const storeParams = [];
+            let storeParamIndex = 1;
+
+            // Search in product name
+            if (searchTerm) {
+              storeWhereConditions += ` AND p.product_name ILIKE $${storeParamIndex}`;
+              storeParams.push(`%${searchTerm}%`);
+              storeParamIndex++;
+            }
+
+            // Price filters
+            if (minPrice !== undefined) {
+              storeWhereConditions += ` AND p.price >= $${storeParamIndex}`;
+              storeParams.push(minPrice);
+              storeParamIndex++;
+            }
+
+            if (maxPrice !== undefined) {
+              storeWhereConditions += ` AND p.price <= $${storeParamIndex}`;
+              storeParams.push(maxPrice);
+              storeParamIndex++;
+            }
+
+            // Query this store's products
+            const storeQuery = `
+              SELECT 
+                p.id,
+                p.product_name,
+                p.price as price_inr,
+                '${store.store_name}' as retailer_name,
+                '${store.store_name}' as brand,
+                'Offline Store' as category,
+                NULL as rating,
+                NULL as reviews_count,
+                NULL as description,
+                NULL as features,
+                NULL as image_url,
+                NULL as product_url,
+                NULL as affiliate_url,
+                'in_stock' as availability_status,
+                p.created_at as last_updated,
+                FALSE as is_deleted,
+                '${store.store_id}' as store_id,
+                '${store.owner_name}' as store_owner,
+                '${store.owner_phone}' as store_phone
+              FROM ${store.table_name} p
+              ${storeWhereConditions}
+            `;
+
+            try {
+              const storeResult = await db.query(storeQuery, storeParams);
+              results = results.concat(storeResult.rows);
+            } catch (storeError) {
+              console.error(`Error querying store ${store.store_name}:`, storeError.message);
+              // Continue with other stores even if one fails
+            }
+          }
+        } catch (offlineError) {
+          console.error('Error querying offline stores:', offlineError.message);
+          // Continue even if offline stores query fails
+        }
+      }
+
       // Sort combined results
       // If brand keywords detected, prioritize those brands
       if (searchTerm && detectedBrands.length > 0) {

@@ -3,6 +3,8 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const productsRouter = require('./routes/products');
+const diqRouter = require('./routes/diq');
+const authRouter = require('./routes/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,7 +18,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
 
 // API Routes
+app.use('/api/auth', authRouter);
 app.use('/api/products', productsRouter);
+app.use('/api/diq', diqRouter);
 
 // Health check
 app.get('/api/health', (req, res) => {
