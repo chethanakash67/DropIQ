@@ -9,22 +9,22 @@ let cartCount = null;
 function initializeCart() {
   cartButton = document.getElementById('cartButton');
   cartCount = document.getElementById('cartCount');
-  
+
   const cartButtonResults = document.getElementById('cartButtonResults');
   const cartButtonDiq = document.getElementById('cartButtonDiq');
-  
+
   if (cartButton) {
     cartButton.addEventListener('click', showCart);
   }
-  
+
   if (cartButtonResults) {
     cartButtonResults.addEventListener('click', showCart);
   }
-  
+
   if (cartButtonDiq) {
     cartButtonDiq.addEventListener('click', showCart);
   }
-  
+
   loadCart();
 }
 
@@ -51,14 +51,14 @@ function saveCart() {
 // Update cart count badge
 function updateCartCount() {
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-  
+
   // Update all cart count badges
   const cartCountElements = [
     document.getElementById('cartCount'),
     document.getElementById('cartCountResults'),
     document.getElementById('cartCountDiq')
   ];
-  
+
   cartCountElements.forEach(element => {
     if (element) {
       element.textContent = totalItems;
@@ -70,14 +70,14 @@ function updateCartCount() {
 // Add item to cart
 function addToCart(product, event) {
   if (event) event.stopPropagation();
-  
+
   console.log('Adding to cart:', product);
-  
+
   // Check if product already exists in cart
-  const existingItem = cart.find(item => 
+  const existingItem = cart.find(item =>
     item.id === product.id && item.retailer_name === product.retailer_name
   );
-  
+
   if (existingItem) {
     existingItem.quantity++;
     showNotification('✅ Quantity updated in cart!');
@@ -96,7 +96,7 @@ function addToCart(product, event) {
     });
     showNotification('✅ Added to cart!');
   }
-  
+
   saveCart();
 }
 
@@ -111,7 +111,7 @@ function removeFromCart(index) {
 // Update item quantity
 function updateQuantity(index, change) {
   cart[index].quantity += change;
-  
+
   if (cart[index].quantity <= 0) {
     removeFromCart(index);
   } else {
@@ -131,7 +131,7 @@ function getCartTotal() {
 // Show cart modal
 function showCart() {
   console.log('Opening cart, items:', cart.length);
-  
+
   // Create cart modal if it doesn't exist
   let cartModal = document.getElementById('cartModal');
   if (!cartModal) {
@@ -156,7 +156,7 @@ function showCart() {
     `;
     document.body.appendChild(cartModal);
   }
-  
+
   renderCart();
   cartModal.classList.add('show');
 }
@@ -173,36 +173,36 @@ function closeCart() {
 function renderCart() {
   const cartItemsContainer = document.getElementById('cartItems');
   const cartTotalElement = document.getElementById('cartTotal');
-  
+
   if (!cartItemsContainer) return;
-  
+
   if (cart.length === 0) {
     cartItemsContainer.innerHTML = '<div class="empty-cart">Your cart is empty</div>';
     if (cartTotalElement) cartTotalElement.textContent = '0';
     return;
   }
-  
+
   const cartHTML = cart.map((item, index) => {
     const price = parseFloat(item.price_inr) || 0;
     const subtotal = price * item.quantity;
-    
+
     return `
       <div class="cart-item">
         <div class="cart-item-image">
-          ${item.image_url 
-            ? `<img src="${item.image_url}" alt="${item.product_name}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect fill=%22%23ddd%22 width=%22100%22 height=%22100%22/><text x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22>No Image</text></svg>';" />` 
-            : '<div class="no-image">No Image</div>'
-          }
+          ${item.image_url
+        ? `<img src="${item.image_url}" alt="${item.product_name}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect fill=%22%23ddd%22 width=%22100%22 height=%22100%22/><text x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22>No Image</text></svg>';" />`
+        : '<div class="no-image">No Image</div>'
+      }
         </div>
         <div class="cart-item-details">
           <h4 class="cart-item-name">${item.product_name}</h4>
           <p class="cart-item-store">Store: ${item.retailer_name}</p>
           <p class="cart-item-price">₹${price.toLocaleString('en-IN')}</p>
-          ${item.store_phone ? 
-            `<a href="tel:${item.store_phone}" class="cart-item-link cart-call-btn">📞 Call Store: ${item.store_phone}</a>` 
-            : item.affiliate_url ? 
-            `<a href="${item.affiliate_url}" target="_blank" class="cart-item-link">🔗 View Product</a>` 
-            : ''}
+          ${item.store_phone ?
+        `<a href="tel:${item.store_phone}" class="cart-item-link cart-call-btn">📞 Call Store: ${item.store_phone}</a>`
+        : item.affiliate_url ?
+          `<a href="${item.affiliate_url}" target="_blank" class="cart-item-link">🔗 View Product</a>`
+          : ''}
         </div>
         <div class="cart-item-quantity">
           <button class="qty-btn" onclick="updateQuantity(${index}, -1)">-</button>
@@ -216,9 +216,9 @@ function renderCart() {
       </div>
     `;
   }).join('');
-  
+
   cartItemsContainer.innerHTML = cartHTML;
-  
+
   if (cartTotalElement) {
     const total = getCartTotal();
     cartTotalElement.textContent = total.toLocaleString('en-IN');
@@ -241,14 +241,14 @@ function checkout() {
     alert('Your cart is empty!');
     return;
   }
-  
+
   // For now, just show a message with all product links
   const productLinks = cart.map(item => {
     return `• ${item.product_name} - ₹${item.price_inr} x ${item.quantity}\n  ${item.affiliate_url || 'No link available'}`;
   }).join('\n\n');
-  
+
   alert(`Thank you for shopping with DropIQ!\n\nYour cart (${cart.length} items):\n\n${productLinks}\n\nTotal: ₹${getCartTotal().toLocaleString('en-IN')}\n\nYou can now visit each product link to complete your purchase.`);
-  
+
   // Open all product links in new tabs
   if (confirm('Open all product links in new tabs?')) {
     cart.forEach(item => {
@@ -269,10 +269,10 @@ function showNotification(message) {
     notification.className = 'cart-notification';
     document.body.appendChild(notification);
   }
-  
+
   notification.textContent = message;
   notification.classList.add('show');
-  
+
   setTimeout(() => {
     notification.classList.remove('show');
   }, 2000);

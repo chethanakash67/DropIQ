@@ -170,7 +170,7 @@ async function attemptTokenRefresh() {
       const data = await response.json();
       accessToken = data.accessToken;
       localStorage.setItem('accessToken', accessToken);
-      
+
       // Retry getting user info
       await checkAuthentication();
     } else {
@@ -202,7 +202,7 @@ async function handleLogin() {
   try {
     const url = `${API_BASE}/auth/login`;
     console.log('Sending login request to:', url);
-    
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -223,11 +223,11 @@ async function handleLogin() {
       accessToken = data.accessToken;
       refreshToken = data.refreshToken;
       currentUser = data.user;
-      
+
       console.log('User:', currentUser);
       console.log('Access token length:', accessToken?.length);
       console.log('Refresh token length:', refreshToken?.length);
-      
+
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
 
@@ -253,7 +253,7 @@ async function handleLogin() {
 
 async function handleSignup() {
   console.log('\n=== SIGNUP ATTEMPT ===');
-  
+
   const fullName = document.getElementById('signupName').value.trim();
   const email = document.getElementById('signupEmail').value.trim();
   const password = document.getElementById('signupPassword').value;
@@ -276,14 +276,14 @@ async function handleSignup() {
   }
 
   console.log('✅ Validation passed');
-  
+
   const signupButton = document.getElementById('signupButton');
   signupButton.disabled = true;
   signupButton.textContent = 'Creating Account...';
 
   try {
     console.log('Sending signup request to:', `${API_BASE}/auth/signup`);
-    
+
     const response = await fetch(`${API_BASE}/auth/signup`, {
       method: 'POST',
       headers: {
@@ -294,21 +294,21 @@ async function handleSignup() {
 
     console.log('Response status:', response.status);
     console.log('Response OK:', response.ok);
-    
+
     const data = await response.json();
     console.log('Response data:', data);
 
     if (response.ok && data.success) {
       console.log('✅ Signup successful!');
-      
+
       // Store tokens
       accessToken = data.accessToken;
       refreshToken = data.refreshToken;
       currentUser = data.user;
-      
+
       console.log('User:', currentUser);
       console.log('Tokens stored in memory');
-      
+
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
       console.log('Tokens stored in localStorage');
@@ -372,20 +372,20 @@ function showDashboard() {
   // Hide auth pages
   loginPage.classList.remove('show');
   signupPage.classList.remove('show');
-  
+
   // Show dashboard
   dashboard.classList.add('show');
-  
+
   // Hide other pages
   resultsPage.classList.remove('show');
   diqResultsPage.classList.remove('show');
   diqModal.classList.remove('show');
-  
+
   // Clear search
   searchInput.value = '';
   resultsSearchInput.value = '';
   currentSearchTerm = '';
-  
+
   // Update user greeting
   if (currentUser) {
     const firstName = currentUser.fullName ? currentUser.fullName.split(' ')[0] : currentUser.email.split('@')[0];
@@ -419,7 +419,7 @@ async function authenticatedFetch(url, options = {}) {
   // If 401, try to refresh token
   if (response.status === 401 && refreshToken) {
     await attemptTokenRefresh();
-    
+
     // Retry request with new token
     if (accessToken) {
       options.headers.Authorization = `Bearer ${accessToken}`;
@@ -527,10 +527,10 @@ async function loadRetailers() {
 
     if (data.success) {
       const retailerDropdown = document.getElementById('retailer');
-      
+
       // Clear existing options except "All Stores"
       retailerDropdown.innerHTML = '<option value="">All Stores</option>';
-      
+
       // Add online retailers
       const onlineGroup = document.createElement('optgroup');
       onlineGroup.label = 'Online Stores';
@@ -541,7 +541,7 @@ async function loadRetailers() {
         onlineGroup.appendChild(option);
       });
       retailerDropdown.appendChild(onlineGroup);
-      
+
       // Add offline retailers
       if (data.retailers.offline.length > 0) {
         const offlineGroup = document.createElement('optgroup');
@@ -687,11 +687,11 @@ function createProductCard(product) {
       ${isOfflineStore && product.store_owner ? `
         <div class="store-owner-tag">👤 ${product.store_owner}${product.store_phone ? ' • 📞 ' + product.store_phone : ''}</div>
       ` : ''}
-      ${hasImage 
-        ? `<img src="${product.image_url}" alt="${product.product_name}" class="product-image" onerror="this.style.display='none'; this.parentElement.querySelector('.no-image-placeholder').style.display='flex';" />
-           <div class="no-image-placeholder" style="display:none;">No Image</div>` 
-        : `<div class="no-image-placeholder">No Image</div>`
-      }
+      ${hasImage
+      ? `<img src="${product.image_url}" alt="${product.product_name}" class="product-image" onerror="this.style.display='none'; this.parentElement.querySelector('.no-image-placeholder').style.display='flex';" />
+           <div class="no-image-placeholder" style="display:none;">No Image</div>`
+      : `<div class="no-image-placeholder">No Image</div>`
+    }
       
       <div class="product-name">${product.product_name}</div>
       
@@ -796,11 +796,11 @@ async function showRecommendations(productId, retailerName, event) {
     if (data.success && data.recommendations && data.recommendations.length > 0) {
       listEl.innerHTML = data.recommendations.map(rec => `
         <div class="recommendation-item">
-          ${rec.image_url && rec.image_url.trim() 
-            ? `<img src="${rec.image_url}" alt="${rec.name}" class="recommendation-image" onerror="this.style.display='none'; this.parentElement.querySelector('.no-image-placeholder-small').style.display='flex';" />
-               <div class="no-image-placeholder-small" style="display:none;">No Image</div>` 
-            : `<div class="no-image-placeholder-small">No Image</div>`
-          }
+          ${rec.image_url && rec.image_url.trim()
+          ? `<img src="${rec.image_url}" alt="${rec.name}" class="recommendation-image" onerror="this.style.display='none'; this.parentElement.querySelector('.no-image-placeholder-small').style.display='flex';" />
+               <div class="no-image-placeholder-small" style="display:none;">No Image</div>`
+          : `<div class="no-image-placeholder-small">No Image</div>`
+        }
           <div class="recommendation-details">
             <div class="recommendation-name">${rec.name}</div>
             <div class="recommendation-price">${rec.price_inr && !isNaN(rec.price_inr) ? '₹' + rec.price_inr.toLocaleString('en-IN') : 'Price not disclosed'}</div>
@@ -874,9 +874,9 @@ async function showPriceComparisons(productId, retailerName, event) {
 
         return `
         <div class="comparison-item">
-          ${comp.image_url && comp.image_url.trim() 
+          ${comp.image_url && comp.image_url.trim()
             ? `<img src="${comp.image_url}" alt="${comp.name}" class="comparison-image" onerror="this.style.display='none'; this.parentElement.querySelector('.no-image-placeholder-tiny').style.display='flex';" />
-               <div class="no-image-placeholder-tiny" style="display:none;">No Image</div>` 
+               <div class="no-image-placeholder-tiny" style="display:none;">No Image</div>`
             : `<div class="no-image-placeholder-tiny">No Image</div>`
           }
           <div class="comparison-details">
@@ -939,7 +939,7 @@ async function openDIQModal() {
       console.log('Response status:', response.status);
       const data = await response.json();
       console.log('Response data:', data);
-      
+
       if (data.success) {
         diqQuestions = data.questions;
         diqTotalQuestions.textContent = diqQuestions.length;
@@ -956,7 +956,7 @@ async function openDIQModal() {
     // Reset state
     diqCurrentIndex = 0;
     diqAnswers = {};
-    
+
     console.log('Showing modal and rendering first question...');
     // Show modal and render first question
     // Remove any inline styles that might conflict with CSS classes
@@ -994,7 +994,7 @@ function renderDIQQuestion() {
   const optionsHTML = question.options.map(option => {
     const isDisabled = option.disabled ? 'disabled' : '';
     const selectedClass = selectedValue === option.id ? 'selected' : '';
-    
+
     return `
       <button class="diq-option ${selectedClass} ${isDisabled}" 
               data-value="${option.id}"
@@ -1059,7 +1059,7 @@ function renderDIQQuestion() {
 
   // Update navigation buttons
   diqPrevButton.style.display = diqCurrentIndex === 0 ? 'none' : 'inline-block';
-  
+
   if (diqCurrentIndex === diqQuestions.length - 1) {
     diqNextButton.style.display = 'none';
     diqSubmitButton.style.display = 'inline-block';
@@ -1074,29 +1074,29 @@ async function selectDIQOption(questionId, value) {
   // Get the full option object from the current question
   const currentQuestion = diqQuestions[diqCurrentIndex];
   const selectedOption = currentQuestion.options.find(opt => opt.id === value);
-  
+
   if (!selectedOption) {
     console.error('Option not found:', value);
     return;
   }
-  
+
   // Store the complete option object (not just the ID) with importance
   if (!diqAnswers[questionId]) {
     diqAnswers[questionId] = {};
   }
-  
+
   // Store the complete option with all its properties (scoring, filters, priceRange, etc.)
   diqAnswers[questionId] = {
     ...selectedOption, // This includes id, text, scoring, filters, priceRange, etc.
     importance: diqAnswers[questionId].importance || 50
   };
-  
+
   // If this is category selection, reload questions for that category
   if (questionId === 'q0_category') {
     try {
       const response = await fetch(`${API_BASE}/diq/questions/${value}`);
       const data = await response.json();
-      
+
       if (data.success) {
         diqQuestions = data.questions;
         diqTotalQuestions.textContent = diqQuestions.length;
@@ -1105,7 +1105,7 @@ async function selectDIQOption(questionId, value) {
       console.error('Error loading category questions:', error);
     }
   }
-  
+
   // Update UI
   document.querySelectorAll('.diq-option').forEach(btn => {
     btn.classList.remove('selected');
@@ -1126,7 +1126,7 @@ function goToPreviousQuestion() {
 // Navigate to Next Question
 function goToNextQuestion() {
   const currentQuestion = diqQuestions[diqCurrentIndex];
-  
+
   // Validate answer selected (check for id property since we store the complete option object)
   if (!diqAnswers[currentQuestion.id] || !diqAnswers[currentQuestion.id].id) {
     alert('Please select an option before proceeding.');
@@ -1142,7 +1142,7 @@ function goToNextQuestion() {
 // Submit Answers
 async function submitDIQAnswers() {
   const lastQuestion = diqQuestions[diqQuestions.length - 1];
-  
+
   // Validate last answer selected (check for id property since we store the complete option object)
   if (!diqAnswers[lastQuestion.id] || !diqAnswers[lastQuestion.id].id) {
     alert('Please select an option before submitting.');
@@ -1192,35 +1192,35 @@ async function submitDIQAnswers() {
 function renderUserPreferences() {
   const preferencesList = document.getElementById('preferencesList');
   if (!preferencesList) return;
-  
+
   // Get question texts from diqQuestions array
   const preferencesHTML = diqQuestions.map((question, index) => {
     const questionId = question.id;
     const answer = diqAnswers[questionId];
-    
+
     if (!answer) return ''; // Skip unanswered questions
-    
+
     // Build the preference item
     let html = `
       <div class="preference-item">
         <div class="preference-question">${question.question}</div>
         <div class="preference-answer">${answer.text || answer.id}</div>
     `;
-    
+
     // Add description if available
     if (answer.description) {
       html += `<div class="preference-description">${answer.description}</div>`;
     }
-    
+
     // Add importance badge if it was a question with importance slider
     if (question.hasImportance && answer.importance !== undefined) {
       html += `<span class="preference-importance">Priority: ${answer.importance}%</span>`;
     }
-    
+
     html += `</div>`;
     return html;
   }).filter(html => html !== '').join('');
-  
+
   preferencesList.innerHTML = preferencesHTML || '<p style="color:white; text-align:center;">No preferences recorded</p>';
 }
 
@@ -1229,7 +1229,7 @@ function renderDIQResults(products) {
   // Hide dashboard and results page
   dashboard.classList.remove('show');
   resultsPage.classList.remove('show');
-  
+
   // Show D_IQ results page
   diqResultsPage.classList.add('show');
 
@@ -1244,18 +1244,18 @@ function renderDIQResults(products) {
   const resultsHTML = products.map((product, index) => {
     const rank = index + 1;
     const rankBadge = rank <= 3 ? `<span class="diq-rank-badge rank-${rank}">🏆 #${rank}</span>` : `<span class="diq-rank-badge">#${rank}</span>`;
-    
-    const scoreClass = product.diq_rating === 'Excellent' ? 'excellent' : 
-                       product.diq_rating === 'Good' ? 'good' : 
-                       product.diq_rating === 'Fair' ? 'fair' : 'poor';
+
+    const scoreClass = product.diq_rating === 'Excellent' ? 'excellent' :
+      product.diq_rating === 'Good' ? 'good' :
+        product.diq_rating === 'Fair' ? 'fair' : 'poor';
 
     const features = [];
     if (product.has_anc) features.push('ANC');
     if (product.battery_hours && product.battery_hours > 0) features.push(`${product.battery_hours}h Battery`);
     if (product.has_fast_charge) features.push('Fast Charge');
     if (parseFloat(product.mic_quality_score) >= 4) features.push('Good Mic');
-    
-    const featuresHTML = features.length > 0 
+
+    const featuresHTML = features.length > 0
       ? features.map(f => `<span class="diq-feature-badge">${f}</span>`).join('')
       : '';
 
@@ -1267,7 +1267,7 @@ function renderDIQResults(products) {
            <span class="disclaimer-text">${product.disclaimer}</span>
          </div>`
       : '';
-    
+
     // Add store contact info for offline products
     const storeInfoHTML = isOffline && product.store_name
       ? `<div class="diq-store-info">
@@ -1281,10 +1281,10 @@ function renderDIQResults(products) {
         ${rankBadge}
         ${isOffline ? '<span class="offline-badge">🏪 Offline Store</span>' : ''}
         ${(product.image_url || product.image) && (!isOffline || (product.image_url && product.image_url.trim()))
-          ? `<img src="${product.image_url || product.image}" alt="${product.product_name || product.name}" class="diq-product-image" onerror="this.style.display='none'; this.parentElement.querySelector('.no-image-placeholder').style.display='flex';" />
-             <div class="no-image-placeholder" style="display:none;">No Image</div>` 
-          : `<div class="no-image-placeholder">No Image</div>`
-        }
+        ? `<img src="${product.image_url || product.image}" alt="${product.product_name || product.name}" class="diq-product-image" onerror="this.style.display='none'; this.parentElement.querySelector('.no-image-placeholder').style.display='flex';" />
+             <div class="no-image-placeholder" style="display:none;">No Image</div>`
+        : `<div class="no-image-placeholder">No Image</div>`
+      }
         <h3 class="product-name">${product.product_name || product.name}</h3>
         <p class="product-price">₹${product.price_inr || product.price}</p>
         

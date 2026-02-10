@@ -38,7 +38,7 @@ const diqQuestions = {
         },
         {
           id: 'travel_commute',
-          text: '✈️ Travel / Daily Commute', 
+          text: '✈️ Travel / Daily Commute',
           spec: 'Strong ANC + long battery',
           description: 'For buses, metro, flights - blocks traffic and crowd noise',
           scoring: {

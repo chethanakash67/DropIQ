@@ -42,7 +42,7 @@ class DIQScoringService {
     };
 
     // Calculate total weighted score
-    const totalWeight = 
+    const totalWeight =
       baseWeights.anc * (weights.anc_weight || 1.0) +
       baseWeights.battery * (weights.battery_weight || 1.0) +
       baseWeights.fastCharge * (weights.fast_charge_weight || 1.0) +
@@ -243,7 +243,7 @@ class DIQScoringService {
       // Brand filter
       if (filters.brand_filter && filters.brand_filter.length > 0) {
         const productBrand = (product.brand || '').toLowerCase();
-        const matchesBrand = filters.brand_filter.some(brand => 
+        const matchesBrand = filters.brand_filter.some(brand =>
           productBrand.includes(brand.toLowerCase())
         );
         if (!matchesBrand) {
@@ -254,7 +254,7 @@ class DIQScoringService {
       // Color filter
       if (filters.color_filter && filters.color_filter.length > 0) {
         const productColor = (product.color || '').toLowerCase();
-        const matchesColor = filters.color_filter.some(color => 
+        const matchesColor = filters.color_filter.some(color =>
           productColor.includes(color.toLowerCase())
         );
         if (!matchesColor) {
@@ -265,7 +265,7 @@ class DIQScoringService {
       // Design style filter
       if (filters.design_filter && filters.design_filter.length > 0) {
         const productDesign = (product.design_style || '').toLowerCase();
-        const matchesDesign = filters.design_filter.some(design => 
+        const matchesDesign = filters.design_filter.some(design =>
           productDesign.toLowerCase().includes(design.toLowerCase())
         );
         if (!matchesDesign) {
@@ -282,7 +282,7 @@ class DIQScoringService {
    */
   getCategoryMedian(category) {
     const categoryLower = (category || '').toLowerCase();
-    
+
     if (categoryLower.includes('earbud')) {
       return categoryMedians.earbuds || 999;
     } else if (categoryLower.includes('headphone')) {
@@ -292,7 +292,7 @@ class DIQScoringService {
     } else if (categoryLower.includes('earphone')) {
       return categoryMedians.earphones || 299;
     }
-    
+
     return 999; // Default median
   }
 
@@ -359,7 +359,7 @@ class DIQScoringService {
 
         // Add category filter
         if (effectiveCategory) {
-          query += searchQuery 
+          query += searchQuery
             ? ` AND category ILIKE $2`
             : ` AND category ILIKE $1`;
         }
@@ -461,7 +461,7 @@ class DIQScoringService {
 
         // Add disclaimer for offline products
         const isOffline = product.source_type === 'offline';
-        const disclaimer = isOffline 
+        const disclaimer = isOffline
           ? '⚠️ This is an offline store product. Feature values are approximated based on product name and may vary from the actual product. Please verify specifications with the store owner before purchase.'
           : null;
 

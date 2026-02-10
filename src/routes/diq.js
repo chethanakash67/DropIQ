@@ -31,10 +31,10 @@ router.get('/questions', (req, res) => {
 router.get('/questions/:category', (req, res) => {
   try {
     const { category } = req.params;
-    
+
     // Get category-specific questions
     const categoryQuestions = getQuestionsForCategory(category);
-    
+
     res.json({
       success: true,
       category,
@@ -90,7 +90,7 @@ router.post('/recommendations', async (req, res) => {
       success: true,
       count: topProducts.length,
       products: topProducts,
-      message: topProducts.length === 0 
+      message: topProducts.length === 0
         ? 'No products match your preferences. Try adjusting your filters.'
         : `Found ${topProducts.length} products matching your preferences`
     });

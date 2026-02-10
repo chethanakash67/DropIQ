@@ -1032,6 +1032,7 @@
         opacity: 0;
         transform: translateY(10px);
       }
+
       to {
         opacity: 1;
         transform: translateY(0);
@@ -1205,7 +1206,8 @@
       background: #e0e0e0;
     }
 
-    .diq-next-button, .diq-submit-button {
+    .diq-next-button,
+    .diq-submit-button {
       background: #1e3a8a;
       color: white;
     }
@@ -1230,8 +1232,13 @@
     }
 
     @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
     }
 
     .diq-loading-text {
@@ -1263,7 +1270,7 @@
     }
 
     /* ==================== CART STYLES ==================== */
-    
+
     .add-to-cart-btn {
       background: #4CAF50;
       color: white;
@@ -1558,6 +1565,7 @@
         transform: translateX(400px);
         opacity: 0;
       }
+
       to {
         transform: translateX(0);
         opacity: 1;
@@ -2041,7 +2049,8 @@
           <div class="diq-progress-bar">
             <div id="diqProgressFill" class="diq-progress-fill" style="width: 0%"></div>
           </div>
-          <p class="diq-progress-text">Question <span id="diqCurrentQuestion">1</span> of <span id="diqTotalQuestions">8</span></p>
+          <p class="diq-progress-text">Question <span id="diqCurrentQuestion">1</span> of <span
+              id="diqTotalQuestions">8</span></p>
         </div>
         <div id="diqQuestionsContainer"></div>
         <div id="diqLoading" class="diq-loading">
@@ -2051,7 +2060,8 @@
         <div class="diq-navigation">
           <button id="diqPrevButton" class="diq-nav-button diq-prev-button">← Previous</button>
           <button id="diqNextButton" class="diq-nav-button diq-next-button">Next →</button>
-          <button id="diqSubmitButton" class="diq-nav-button diq-submit-button" style="display:none;">Get Recommendations</button>
+          <button id="diqSubmitButton" class="diq-nav-button diq-submit-button" style="display:none;">Get
+            Recommendations</button>
         </div>
       </div>
     </div>
@@ -2068,13 +2078,13 @@
         <h2 class="diq-results-title">Your Personalized Recommendations</h2>
         <p class="diq-results-subtitle">Products ranked by D_IQ Score based on your preferences</p>
       </div>
-      
+
       <!-- User Preferences Summary -->
       <div id="userPreferencesSummary" class="user-preferences-summary">
         <h3 class="preferences-title">📋 Your Preferences</h3>
         <div id="preferencesList" class="preferences-list"></div>
       </div>
-      
+
       <div id="diqResultsContainer"></div>
     </div>
   </div>
