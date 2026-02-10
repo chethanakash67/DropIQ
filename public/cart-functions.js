@@ -90,6 +90,8 @@ function addToCart(product, event) {
       image_url: product.image_url || product.image,
       retailer_name: product.retailer_name || product.retailer,
       affiliate_url: product.affiliate_url || product.product_url || product.link,
+      store_phone: product.store_phone || null,
+      is_offline: product.is_offline_store || false,
       quantity: 1
     });
     showNotification('✅ Added to cart!');
@@ -148,7 +150,7 @@ function showCart() {
             <strong>Total:</strong> ₹<span id="cartTotal">0</span>
           </div>
           <button class="cart-clear-btn" onclick="clearCart()">Clear Cart</button>
-          <button class="cart-checkout-btn" onclick="checkout()">Proceed to Checkout</button>
+          <!-- <button class="cart-checkout-btn" onclick="checkout()" disabled style="opacity: 0.5; cursor: not-allowed;">Proceed to Checkout (Coming Soon)</button> -->
         </div>
       </div>
     `;
@@ -196,6 +198,11 @@ function renderCart() {
           <h4 class="cart-item-name">${item.product_name}</h4>
           <p class="cart-item-store">Store: ${item.retailer_name}</p>
           <p class="cart-item-price">₹${price.toLocaleString('en-IN')}</p>
+          ${item.store_phone ? 
+            `<a href="tel:${item.store_phone}" class="cart-item-link cart-call-btn">📞 Call Store: ${item.store_phone}</a>` 
+            : item.affiliate_url ? 
+            `<a href="${item.affiliate_url}" target="_blank" class="cart-item-link">🔗 View Product</a>` 
+            : ''}
         </div>
         <div class="cart-item-quantity">
           <button class="qty-btn" onclick="updateQuantity(${index}, -1)">-</button>
