@@ -9,6 +9,16 @@ const ACCESS_TOKEN_EXPIRY = '15m'; // 15 minutes
 const REFRESH_TOKEN_EXPIRY = '7d'; // 7 days
 const SALT_ROUNDS = 12;
 
+// Ensure Google OAuth columns exist (idempotent)
+async function ensureGoogleColumns() {
+  try {
+    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE`);
+    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT`);
+    await db.query(`ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL`);
+  } catch (_) { }
+}
+ensureGoogleColumns();
+
 class AuthService {
   /**
    * Hash password using bcrypt
@@ -29,10 +39,10 @@ class AuthService {
    */
   generateAccessToken(user) {
     return jwt.sign(
-      { 
-        userId: user.id, 
-        email: user.email, 
-        role: user.role 
+      {
+        userId: user.id,
+        email: user.email,
+        role: user.role
       },
       JWT_SECRET,
       { expiresIn: ACCESS_TOKEN_EXPIRY }
@@ -44,7 +54,7 @@ class AuthService {
    */
   generateRefreshToken(user) {
     return jwt.sign(
-      { 
+      {
         userId: user.id,
         tokenId: crypto.randomBytes(16).toString('hex')
       },
@@ -87,7 +97,7 @@ class AuthService {
       VALUES ($1, $2, $3)
       RETURNING id
     `;
-    
+
     const result = await db.query(query, [userId, tokenHash, expiresAt]);
     return result.rows[0].id;
   }
@@ -97,7 +107,7 @@ class AuthService {
    */
   async verifyRefreshTokenInDb(token) {
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-    
+
     const query = `
       SELECT rt.*, u.id as user_id, u.email, u.role, u.is_active
       FROM refresh_tokens rt
@@ -107,7 +117,7 @@ class AuthService {
         AND rt.expires_at > NOW()
         AND u.is_active = true
     `;
-    
+
     const result = await db.query(query, [tokenHash]);
     return result.rows[0] || null;
   }
@@ -117,13 +127,13 @@ class AuthService {
    */
   async revokeRefreshToken(token) {
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-    
+
     const query = `
       UPDATE refresh_tokens 
       SET revoked = true, revoked_at = NOW()
       WHERE token_hash = $1
     `;
-    
+
     await db.query(query, [tokenHash]);
   }
 
@@ -136,7 +146,7 @@ class AuthService {
       SET revoked = true, revoked_at = NOW()
       WHERE user_id = $1 AND revoked = false
     `;
-    
+
     await db.query(query, [userId]);
   }
 
@@ -153,7 +163,7 @@ class AuthService {
       VALUES ($1, $2, $3)
       RETURNING id, email, full_name, role, created_at
     `;
-    
+
     const result = await db.query(query, [email, passwordHash, fullName]);
     return result.rows[0];
   }
@@ -169,11 +179,11 @@ class AuthService {
     // Get user by email
     const userQuery = 'SELECT * FROM users WHERE email = $1';
     console.log('Executing user query...');
-    
+
     try {
       const userResult = await db.query(userQuery, [email]);
       console.log('Query result rows:', userResult.rows.length);
-      
+
       if (userResult.rows.length === 0) {
         console.log('❌ User not found in database');
         await this.recordLoginAttempt(email, ipAddress, false);
@@ -192,10 +202,10 @@ class AuthService {
       // Verify password
       console.log('Verifying password...');
       console.log('Password hash from DB:', user.password_hash?.substring(0, 20) + '...');
-      
+
       const isValidPassword = await this.verifyPassword(password, user.password_hash);
       console.log('Password valid:', isValidPassword);
-      
+
       if (!isValidPassword) {
         console.log('❌ Invalid password');
         await this.recordLoginAttempt(email, ipAddress, false);
@@ -289,10 +299,10 @@ class AuthService {
         AND success = false
         AND attempted_at > NOW() - INTERVAL '15 minutes'
     `;
-    
+
     const result = await db.query(query, [email, ipAddress]);
     const attemptCount = parseInt(result.rows[0].attempt_count);
-    
+
     // Allow max 5 failed attempts in 15 minutes
     return attemptCount >= 5;
   }
@@ -325,6 +335,53 @@ class AuthService {
     const query = 'SELECT COUNT(*) as count FROM users WHERE email = $1';
     const result = await db.query(query, [email]);
     return parseInt(result.rows[0].count) > 0;
+  }
+
+  /**
+   * Find or create a user via Google OAuth
+   */
+  async loginOrRegisterGoogleUser(googleId, email, fullName, avatarUrl) {
+    // Try to find existing user by google_id
+    let userResult = await db.query('SELECT * FROM users WHERE google_id = $1', [googleId]);
+
+    if (userResult.rows.length === 0) {
+      // Check if email already registered — link accounts
+      const byEmail = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+      if (byEmail.rows.length > 0) {
+        await db.query(
+          'UPDATE users SET google_id=$1, avatar_url=$2, email_verified=true WHERE id=$3',
+          [googleId, avatarUrl, byEmail.rows[0].id]
+        );
+      } else {
+        // Create new user
+        await db.query(
+          `INSERT INTO users (email, full_name, google_id, avatar_url, email_verified)
+           VALUES ($1, $2, $3, $4, true)`,
+          [email, fullName, googleId, avatarUrl]
+        );
+      }
+      userResult = await db.query('SELECT * FROM users WHERE google_id = $1', [googleId]);
+    } else {
+      await db.query(
+        'UPDATE users SET avatar_url=$1, last_login=NOW() WHERE id=$2',
+        [avatarUrl, userResult.rows[0].id]
+      );
+    }
+
+    const user = userResult.rows[0];
+    if (!user) throw new Error('Google user not found after upsert');
+
+    await this.updateLastLogin(user.id);
+    const accessToken = this.generateAccessToken(user);
+    const refreshToken = this.generateRefreshToken(user);
+    await this.storeRefreshToken(user.id, refreshToken);
+
+    return {
+      success: true,
+      user: { id: user.id, email: user.email, fullName: user.full_name, avatarUrl: user.avatar_url, role: user.role },
+      accessToken,
+      refreshToken,
+    };
   }
 }
 

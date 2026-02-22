@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
+const passport = require('passport');
 const authService = require('../services/auth-service');
 const { authenticate } = require('../middleware/auth');
+
 
 // Simple in-memory rate limiter (use Redis in production for distributed systems)
 const rateLimitMap = new Map();
@@ -14,26 +16,26 @@ const rateLimiter = (req, res, next) => {
   const ip = req.ip || req.connection.remoteAddress;
   const now = Date.now();
   const windowMs = 15 * 60 * 1000; // 15 minutes
-  
+
   if (!rateLimitMap.has(ip)) {
     rateLimitMap.set(ip, []);
   }
-  
+
   const requests = rateLimitMap.get(ip);
-  
+
   // Remove expired requests
   const validRequests = requests.filter(time => now - time < windowMs);
-  
+
   if (validRequests.length >= 5) {
     return res.status(429).json({
       success: false,
       error: 'Too many requests. Please try again later.'
     });
   }
-  
+
   validRequests.push(now);
   rateLimitMap.set(ip, validRequests);
-  
+
   next();
 };
 
@@ -47,10 +49,10 @@ const validateEmail = (email) => {
 
 const validatePassword = (password) => {
   // Min 8 chars, 1 uppercase, 1 lowercase, 1 number
-  return password && password.length >= 8 && 
-         /[A-Z]/.test(password) && 
-         /[a-z]/.test(password) && 
-         /[0-9]/.test(password);
+  return password && password.length >= 8 &&
+    /[A-Z]/.test(password) &&
+    /[a-z]/.test(password) &&
+    /[0-9]/.test(password);
 };
 
 /**
@@ -94,12 +96,12 @@ router.post('/signup', rateLimiter, async (req, res) => {
     }
 
     console.log('✅ Validation passed');
-    
+
     // Check if email exists
     console.log('Checking if email exists...');
     const emailExists = await authService.emailExists(email);
     console.log('Email exists:', emailExists);
-    
+
     if (emailExists) {
       console.log('❌ Email already registered');
       return res.status(409).json({
@@ -120,7 +122,7 @@ router.post('/signup', rateLimiter, async (req, res) => {
     const accessToken = authService.generateAccessToken(user);
     const refreshToken = authService.generateRefreshToken(user);
     console.log('✅ Tokens generated');
-    
+
     console.log('Storing refresh token...');
     await authService.storeRefreshToken(user.id, refreshToken);
     console.log('✅ Refresh token stored');
@@ -136,7 +138,7 @@ router.post('/signup', rateLimiter, async (req, res) => {
       accessToken,
       refreshToken
     };
-    
+
     console.log('✅ Signup successful! Sending response...');
     res.status(201).json(responseData);
 
@@ -349,5 +351,33 @@ router.get('/me', authenticate, async (req, res) => {
     });
   }
 });
+
+/**
+ * GET /api/auth/google
+ * Initiate Google OAuth flow
+ */
+router.get('/google',
+  passport.authenticate('google', { scope: ['profile', 'email'], session: false })
+);
+
+/**
+ * GET /api/auth/google/callback
+ * Handle Google OAuth callback, issue JWTs, redirect to frontend
+ */
+router.get('/google/callback',
+  passport.authenticate('google', { session: false, failureRedirect: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=google_failed` }),
+  async (req, res) => {
+    try {
+      const { googleId, email, name, picture } = req.user;
+      const result = await authService.loginOrRegisterGoogleUser(googleId, email, name, picture);
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      res.redirect(`${frontendUrl}/auth/callback?token=${result.accessToken}&refresh=${result.refreshToken}`);
+    } catch (err) {
+      console.error('Google OAuth callback error:', err);
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      res.redirect(`${frontendUrl}/login?error=oauth_failed`);
+    }
+  }
+);
 
 module.exports = router;
