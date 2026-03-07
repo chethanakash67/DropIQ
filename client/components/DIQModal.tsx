@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { IconLightbulb, IconArrowLeft, IconArrowRight } from '@/components/Icons';
 
 interface DIQOption {
     id: string;
@@ -152,7 +153,7 @@ export default function DIQModal({ onClose }: DIQModalProps) {
                                 <div className="diq-question-card">
                                     <h3 className="diq-question-title">{currentQuestion.question}</h3>
                                     {currentQuestion.helpText && (
-                                        <p className="diq-help-text">💡 {currentQuestion.helpText}</p>
+                                        <p className="diq-help-text"><IconLightbulb size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />{currentQuestion.helpText}</p>
                                     )}
                                     <div className="diq-options">
                                         {currentQuestion.options.map(opt => (
@@ -199,11 +200,11 @@ export default function DIQModal({ onClose }: DIQModalProps) {
 
                                 <div className="diq-navigation">
                                     {currentIndex > 0
-                                        ? <button className="diq-nav-button diq-prev-button" onClick={goPrev}>← Previous</button>
+                                        ? <button className="diq-nav-button diq-prev-button" onClick={goPrev}><IconArrowLeft size={15} style={{ marginRight: 6, verticalAlign: 'middle' }} />Previous</button>
                                         : <span />
                                     }
                                     {!isLast
-                                        ? <button className="diq-nav-button diq-next-button" onClick={goNext}>Next →</button>
+                                        ? <button className="diq-nav-button diq-next-button" onClick={goNext}>Next<IconArrowRight size={15} style={{ marginLeft: 6, verticalAlign: 'middle' }} /></button>
                                         : <button className="diq-nav-button diq-submit-button" onClick={handleSubmit}>Get Recommendations</button>
                                     }
                                 </div>

@@ -2,6 +2,7 @@
 
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
+import { IconCart } from '@/components/Icons';
 
 export default function Navbar() {
     const { currentUser, logout } = useAuth();
@@ -19,7 +20,7 @@ export default function Navbar() {
                 {name && <span className="navbar-greeting">Hi, {name.split(' ')[0]}!</span>}
 
                 <button className="cart-button" onClick={() => setShowCart(true)}>
-                    🛒
+                    <IconCart size={18} />
                     {totalItems > 0 && <span className="cart-count">{totalItems}</span>}
                 </button>
 

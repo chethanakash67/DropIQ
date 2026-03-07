@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useCart } from '@/context/CartContext';
+import { IconStore, IconUser, IconPhone, IconCart, IconArrowRight } from '@/components/Icons';
 
 interface Product {
     id: string | number;
@@ -98,12 +99,12 @@ export default function ProductCard({ product }: { product: Product }) {
     return (
         <div className={`product-card${isOfflineStore ? ' offline-store-product' : ''}`}>
             <div className={`store-tag${isOfflineStore ? ' offline-tag' : ''}`}>
-                {isOfflineStore ? '🏪 ' : ''}{product.retailer_name}
+                {isOfflineStore ? <><IconStore size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} /> </> : ''}{product.retailer_name}
             </div>
 
             {isOfflineStore && product.store_owner && (
                 <div className="store-owner-tag">
-                    👤 {product.store_owner}{product.store_phone ? ` • 📞 ${product.store_phone}` : ''}
+                    <IconUser size={13} style={{ marginRight: 4, verticalAlign: 'middle' }} /> {product.store_owner}{product.store_phone ? <> &bull; <IconPhone size={13} style={{ marginRight: 4, verticalAlign: 'middle' }} /> {product.store_phone}</> : ''}
                 </div>
             )}
 
@@ -146,7 +147,7 @@ export default function ProductCard({ product }: { product: Product }) {
 
             <div className="product-actions">
                 <button className="add-to-cart-btn" onClick={() => addToCart(product as Record<string, unknown>)}>
-                    🛒 Add to Cart
+                    <IconCart size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} /> Add to Cart
                 </button>
 
                 {!isOfflineStore && (product.affiliate_url || product.product_url) && (
@@ -159,7 +160,7 @@ export default function ProductCard({ product }: { product: Product }) {
                     <div className="offline-store-info">
                         <span className="badge">Available In-Store</span>
                         {product.store_phone && (
-                            <a href={`tel:${product.store_phone}`} className="call-store-btn">📞 Call Store</a>
+                            <a href={`tel:${product.store_phone}`} className="call-store-btn"><IconPhone size={13} style={{ marginRight: 4, verticalAlign: 'middle' }} /> Call Store</a>
                         )}
                     </div>
                 )}

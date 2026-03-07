@@ -1,6 +1,7 @@
 'use client';
 
 import { useCart } from '@/context/CartContext';
+import { IconCart, IconPhone, IconLink, IconTrash } from '@/components/Icons';
 
 export default function CartModal() {
     const { cart, showCart, setShowCart, removeFromCart, updateQuantity, clearCart, getCartTotal } = useCart();
@@ -13,7 +14,7 @@ export default function CartModal() {
         <div className="cart-modal show" onClick={(e) => { if (e.target === e.currentTarget) setShowCart(false); }}>
             <div className="cart-modal-content">
                 <div className="cart-header">
-                    <h2>🛒 Your Cart</h2>
+                    <h2><IconCart size={20} style={{ marginRight: 8, verticalAlign: 'middle' }} />Your Cart</h2>
                     <button className="cart-close" onClick={() => setShowCart(false)}>×</button>
                 </div>
 
@@ -37,9 +38,9 @@ export default function CartModal() {
                                         <p className="cart-item-store">Store: {item.retailer_name}</p>
                                         <p className="cart-item-price">₹{price.toLocaleString('en-IN')}</p>
                                         {item.store_phone
-                                            ? <a href={`tel:${item.store_phone}`} className="cart-item-link cart-call-btn">📞 Call Store: {item.store_phone}</a>
-                                            : item.affiliate_url
-                                                ? <a href={item.affiliate_url} target="_blank" rel="noreferrer" className="cart-item-link">🔗 View Product</a>
+                                            ? <a href={`tel:${item.store_phone}`} className="cart-item-link cart-call-btn"><IconPhone size={13} style={{ marginRight: 4, verticalAlign: 'middle' }} />Call Store: {item.store_phone}</a>
+                                                : item.affiliate_url
+                                                    ? <a href={item.affiliate_url} target="_blank" rel="noreferrer" className="cart-item-link"><IconLink size={13} style={{ marginRight: 4, verticalAlign: 'middle' }} />View Product</a>
                                                 : null
                                         }
                                     </div>
@@ -50,7 +51,7 @@ export default function CartModal() {
                                     </div>
                                     <div className="cart-item-subtotal">
                                         <p>₹{subtotal.toLocaleString('en-IN')}</p>
-                                        <button className="remove-btn" onClick={() => removeFromCart(index)}>🗑️</button>
+                                        <button className="remove-btn" onClick={() => removeFromCart(index)}><IconTrash size={14} /></button>
                                     </div>
                                 </div>
                             );

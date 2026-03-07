@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { IconTarget, IconDollar, IconCart, IconStore, IconWarning, IconEyeOpen, IconEyeClosed } from '@/components/Icons';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -45,10 +46,10 @@ export default function LoginPage() {
                     <p className="auth-hero-tagline">AI-powered product discovery — find what fits you perfectly.</p>
                     <div className="auth-hero-features">
                         {[
-                            { icon: '🎯', text: 'Personalized D_IQ recommendations' },
-                            { icon: '💰', text: 'Price comparison across stores' },
-                            { icon: '🛒', text: 'Smart cart management' },
-                            { icon: '🏪', text: 'Online & offline store search' },
+                            { icon: <IconTarget size={18} />, text: 'Personalized D_IQ recommendations' },
+                            { icon: <IconDollar size={18} />, text: 'Price comparison across stores' },
+                            { icon: <IconCart size={18} />, text: 'Smart cart management' },
+                            { icon: <IconStore size={18} />, text: 'Online & offline store search' },
                         ].map(f => (
                             <div key={f.text} className="auth-hero-feature">
                                 <div className="auth-hero-feature-icon">{f.icon}</div>
@@ -85,7 +86,7 @@ export default function LoginPage() {
                     <div className="auth-divider">or sign in with email</div>
 
                     <form className="auth-form" onSubmit={handleSubmit}>
-                        {error && <div className="auth-error">⚠️ {error}</div>}
+                        {error && <div className="auth-error"><IconWarning size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />{error}</div>}
 
                         <div className="form-group">
                             <label htmlFor="loginEmail">Email</label>
@@ -100,7 +101,7 @@ export default function LoginPage() {
                                     placeholder="••••••••" required
                                     value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" />
                                 <button type="button" className="password-toggle" onClick={() => setShowPassword(p => !p)}>
-                                    {showPassword ? '🙈' : '👁️'}
+                                    {showPassword ? <IconEyeClosed size={16} /> : <IconEyeOpen size={16} />}
                                 </button>
                             </div>
                         </div>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import Navbar from '@/components/Navbar';
 import DIQModal from '@/components/DIQModal';
+import { IconClock, IconTrending, IconTarget } from '@/components/Icons';
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -48,7 +49,8 @@ export default function DashboardPage() {
     if (loading || !currentUser) return null;
 
     const suggestions = searchHistory.length > 0 ? searchHistory.map(h => h.search_query) : frequentSearches;
-    const suggestionsLabel = searchHistory.length > 0 ? '🕐 Recent Searches' : '🔥 Trending';
+    const suggestionsLabel = searchHistory.length > 0 ? 'Recent Searches' : 'Trending';
+    const SuggestionsIcon = searchHistory.length > 0 ? IconClock : IconTrending;
 
     return (
         <>
@@ -77,7 +79,7 @@ export default function DashboardPage() {
 
                         {showSuggestions && suggestions.length > 0 && (
                             <div className="frequent-searches">
-                                <h3>{suggestionsLabel}</h3>
+                                <h3><SuggestionsIcon size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />{suggestionsLabel}</h3>
                                 <div className="frequent-searches-list">
                                     {suggestions.map((s, i) => (
                                         <div key={i} className="frequent-search-item" onClick={() => selectSearch(s)}>{s}</div>
@@ -89,7 +91,7 @@ export default function DashboardPage() {
                         <div className="diq-divider">or</div>
 
                         <button className="diq-button" onClick={() => setShowDIQ(true)}>
-                            🎯 Find Perfect Match with D_IQ Intelligence
+                            <IconTarget size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Find Perfect Match with D_IQ Intelligence
                         </button>
                     </div>
                 </div>

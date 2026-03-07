@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
+import { IconCart, IconTrophy, IconStore, IconClipboard, IconInfo, IconMapPin, IconPhone } from '@/components/Icons';
 
 interface ProductResult {
     id: string | number;
@@ -74,7 +75,7 @@ export default function DIQResultsPage() {
                     ← Back to Dashboard
                 </button>
                 <button className="cart-button" onClick={() => setShowCart(true)}>
-                    🛒 Cart {totalItems > 0 && <span className="cart-count">{totalItems}</span>}
+                    <IconCart size={16} style={{ marginRight: 4, verticalAlign: 'middle' }} /> Cart {totalItems > 0 && <span className="cart-count">{totalItems}</span>}
                 </button>
             </div>
 
@@ -86,7 +87,7 @@ export default function DIQResultsPage() {
             {/* User Preferences Summary */}
             {questions.length > 0 && Object.keys(answers).length > 0 && (
                 <div className="user-preferences-summary">
-                    <h3 className="preferences-title">📋 Your Preferences</h3>
+                    <h3 className="preferences-title"><IconClipboard size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Your Preferences</h3>
                     <div className="preferences-list">
                         {questions.map(q => {
                             const ans = answers[q.id];
@@ -126,9 +127,9 @@ export default function DIQResultsPage() {
                     return (
                         <div key={`${product.id}-${index}`} className={`product-card${isOffline ? ' offline-product' : ''}`} style={{ display: 'flex', flexDirection: 'column' }}>
                             <span className={`diq-rank-badge${rankClass}`}>
-                                {rank <= 3 ? `🏆 #${rank}` : `#${rank}`}
+                                {rank <= 3 ? <><IconTrophy size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} /> #{rank}</> : `#${rank}`}
                             </span>
-                            {isOffline && <span className="offline-badge">🏪 Offline Store</span>}
+                            {isOffline && <span className="offline-badge"><IconStore size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} /> Offline Store</span>}
 
                             {(product.image_url || product.image) && (!isOffline || (product.image_url && product.image_url.trim()))
                                 ? <img src={product.image_url || product.image} alt={product.product_name || product.name} className="diq-product-image" />
@@ -152,21 +153,21 @@ export default function DIQResultsPage() {
 
                             {isOffline && product.disclaimer && (
                                 <div className="diq-offline-disclaimer">
-                                    <span className="disclaimer-icon">ℹ️</span>
+                                    <span className="disclaimer-icon"><IconInfo size={14} /></span>
                                     <span className="disclaimer-text">{product.disclaimer}</span>
                                 </div>
                             )}
 
                             {isOffline && product.store_name && (
                                 <div className="diq-store-info">
-                                    <strong>📍 Available at: {product.store_name}</strong>
-                                    {product.owner_phone && <span><br />📞 Contact: {product.owner_phone}</span>}
+                                    <strong><IconMapPin size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} /> Available at: {product.store_name}</strong>
+                                    {product.owner_phone && <span><br /><IconPhone size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} /> Contact: {product.owner_phone}</span>}
                                 </div>
                             )}
 
                             <div className="diq-product-actions">
                                 <button className="add-to-cart-btn" onClick={() => addToCart(product as Record<string, unknown>)}>
-                                    🛒 Add to Cart
+                                    <IconCart size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} /> Add to Cart
                                 </button>
                                 <button className="diq-buy-button"
                                     onClick={() => window.open(String(product.affiliate_url || product.product_url || product.link || '#'), '_blank')}>

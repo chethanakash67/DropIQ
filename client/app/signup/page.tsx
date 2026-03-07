@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { IconZap, IconLock, IconBot, IconGift, IconWarning, IconEyeOpen, IconEyeClosed } from '@/components/Icons';
 
 export default function SignupPage() {
     const router = useRouter();
@@ -48,10 +49,10 @@ export default function SignupPage() {
                     <p className="auth-hero-tagline">Join thousands finding their perfect products with AI precision.</p>
                     <div className="auth-hero-features">
                         {[
-                            { icon: '⚡', text: 'Set up in under 60 seconds' },
-                            { icon: '🔒', text: 'Secure and private by design' },
-                            { icon: '🤖', text: 'AI that learns your preferences' },
-                            { icon: '🆓', text: 'Free to use — always' },
+                            { icon: <IconZap size={18} />, text: 'Set up in under 60 seconds' },
+                            { icon: <IconLock size={18} />, text: 'Secure and private by design' },
+                            { icon: <IconBot size={18} />, text: 'AI that learns your preferences' },
+                            { icon: <IconGift size={18} />, text: 'Free to use — always' },
                         ].map(f => (
                             <div key={f.text} className="auth-hero-feature">
                                 <div className="auth-hero-feature-icon">{f.icon}</div>
@@ -88,7 +89,7 @@ export default function SignupPage() {
                     <div className="auth-divider">or create with email</div>
 
                     <form className="auth-form" onSubmit={handleSubmit}>
-                        {error && <div className="auth-error">⚠️ {error}</div>}
+                        {error && <div className="auth-error"><IconWarning size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />{error}</div>}
 
                         <div className="form-group">
                             <label htmlFor="signupName">Full Name</label>
@@ -109,7 +110,7 @@ export default function SignupPage() {
                                     placeholder="Create a strong password" required
                                     value={password} onChange={e => setPassword(e.target.value)} autoComplete="new-password" />
                                 <button type="button" className="password-toggle" onClick={() => setShowPassword(p => !p)}>
-                                    {showPassword ? '🙈' : '👁️'}
+                                    {showPassword ? <IconEyeClosed size={16} /> : <IconEyeOpen size={16} />}
                                 </button>
                             </div>
                             <p className="password-requirements">Min 8 chars · uppercase · lowercase · number</p>
