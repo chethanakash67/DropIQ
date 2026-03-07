@@ -1,5 +1,6 @@
 import WaitlistForm from "./waitlist-form"
 import Logo from "./logo"
+import Link from "next/link"
 
 export default function FinalCta() {
   return (
@@ -42,6 +43,26 @@ export default function FinalCta() {
 
           <div className="mt-6 max-w-xl mx-auto">
             <WaitlistForm size="lg" placeholder="you@university.edu" buttonText="Join Early Access" />
+          </div>
+
+          {/* Direct app access */}
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              href="http://localhost:3002/signup"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-emerald-600 hover:bg-emerald-700 dark:bg-cyan-500 dark:hover:bg-cyan-600 text-white font-semibold text-sm transition-colors shadow-md"
+            >
+              Sign Up — Start Free
+            </Link>
+            <Link
+              href="http://localhost:3002/login"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-emerald-600 dark:border-cyan-400 text-emerald-700 dark:text-cyan-300 hover:bg-emerald-50 dark:hover:bg-cyan-900/20 font-semibold text-sm transition-colors"
+            >
+              Already have an account? Login
+            </Link>
           </div>
         </div>
       </div>

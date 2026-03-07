@@ -46,9 +46,14 @@ export default function Navbar() {
         {/* Right: Actions - professionally aligned */}
         <div className="flex items-center justify-end gap-4">
           <ThemeToggle />
-          <Link href="http://localhost:3001" target="_blank" rel="noopener noreferrer">
+          <Link href="http://localhost:3002/login" target="_blank" rel="noopener noreferrer">
             <Button variant="outline" size="lg" className="rounded-full">
-              Go to Dashboard
+              Login
+            </Button>
+          </Link>
+          <Link href="http://localhost:3002/signup" target="_blank" rel="noopener noreferrer">
+            <Button size="lg" className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600">
+              Sign Up
             </Button>
           </Link>
         </div>
@@ -64,9 +69,14 @@ export default function Navbar() {
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Link href="http://localhost:3001" target="_blank" rel="noopener noreferrer">
+          <Link href="http://localhost:3002/login" target="_blank" rel="noopener noreferrer">
             <Button variant="outline" size="sm" className="rounded-full">
-              Dashboard
+              Login
+            </Button>
+          </Link>
+          <Link href="http://localhost:3002/signup" target="_blank" rel="noopener noreferrer">
+            <Button size="sm" className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600">
+              Sign Up
             </Button>
           </Link>
         </div>

@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
+    "dev:landing": "cd Landing_page && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "dev:all": "concurrently \"npm run dev\" \"npm run dev:landing\" \"npm run dev:client\"",
     "scheduler": "node src/scheduler/monthly-ingestion.js",
     "ingest": "node src/jobs/ingest-apify-data.js",
     "ingest:brands": "node src/jobs/ingest-brand-stores.js",
@@ -45,6 +48,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "concurrently": "^9.2.1",
     "nodemon": "^3.0.2"
   }
 }

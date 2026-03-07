@@ -6,9 +6,10 @@ import GlowButton from "./glow-button"
 import { Badge } from "@/components/ui/badge"
 import WaitlistForm from "./waitlist-form"
 import SmoothScrollLink from "./smooth-scroll-link"
-import { PlayCircle, Star } from "lucide-react"
+import { PlayCircle, Star, LogIn, UserPlus } from "lucide-react"
 import Logo from "./logo"
 import dynamic from "next/dynamic"
+import Link from "next/link"
 
 // Lazy load the heavy AnimatedCounter component
 const AnimatedCounter = dynamic(() => import("./animated-counter"), {
@@ -119,6 +120,21 @@ export default function Hero() {
                     {"Waitlist"}
                   </GlowButton>
                 </SmoothScrollLink>
+              </div>
+              {/* Auth CTAs */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-1">
+                <Link href="http://localhost:3002/signup" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
+                  <GlowButton size="lg" className="w-full sm:w-auto">
+                    <UserPlus className="mr-2 h-5 w-5" aria-hidden="true" />
+                    {"Get Started — Sign Up"}
+                  </GlowButton>
+                </Link>
+                <Link href="http://localhost:3002/login" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
+                  <GlowButton variant="outline" size="lg" className="w-full sm:w-auto rounded-full">
+                    <LogIn className="mr-2 h-5 w-5" aria-hidden="true" />
+                    {"Login"}
+                  </GlowButton>
+                </Link>
               </div>
             </div>
           </div>
