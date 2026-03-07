@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const passport = require('passport');
 const { Strategy: GoogleStrategy } = require('passport-google-oauth20');
@@ -44,6 +45,9 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ── Serve Static Files ───────────────────────────────────────────────────────
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // ── API Routes ────────────────────────────────────────────────────────────────
 app.use('/api/auth', authRouter);

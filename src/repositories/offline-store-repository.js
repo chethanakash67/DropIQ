@@ -28,7 +28,7 @@ function generateTableName(storeName) {
 
 class OfflineStoreRepository {
   async getStoreByStoreId(storeId) {
-    const query = 'SELECT * FROM offline_stores WHERE store_id = $1';
+    const query = 'SELECT * FROM offline_stores WHERE UPPER(store_id) = UPPER($1)';
     const result = await db.query(query, [storeId]);
     return result.rows[0];
   }

@@ -46,7 +46,7 @@ function ResultsContent() {
     const [minPrice, setMinPrice] = useState('');
     const [maxPrice, setMaxPrice] = useState('');
     const [retailer, setRetailer] = useState('');
-    const [retailers, setRetailers] = useState<{ online: Retailer[]; offline: Retailer[] }>({ online: [], offline: [] });
+    const [retailers, setRetailers] = useState<Retailer[]>([]);
 
     useEffect(() => {
         if (!loading && !currentUser) router.replace('/login');
@@ -149,16 +149,7 @@ function ResultsContent() {
                         <label>Store</label>
                         <select value={retailer} onChange={e => { setRetailer(e.target.value); handleFilterChange(undefined, undefined, undefined, e.target.value); }}>
                             <option value="">All Stores</option>
-                            <optgroup label="Online Stores">
-                                {retailers.online.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                            </optgroup>
-                            {retailers.offline.length > 0 && (
-                                <optgroup label="🏪 Offline Stores">
-                                    {retailers.offline.map(r => (
-                                        <option key={r.id} value={r.id}>{r.name}{r.location ? ` - ${r.location}` : ''}</option>
-                                    ))}
-                                </optgroup>
-                            )}
+                            {retailers.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                         </select>
                     </div>
                 </div>

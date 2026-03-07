@@ -531,29 +531,13 @@ async function loadRetailers() {
       // Clear existing options except "All Stores"
       retailerDropdown.innerHTML = '<option value="">All Stores</option>';
 
-      // Add online retailers
-      const onlineGroup = document.createElement('optgroup');
-      onlineGroup.label = 'Online Stores';
-      data.retailers.online.forEach(retailer => {
+      // Add retailers
+      data.retailers.forEach(retailer => {
         const option = document.createElement('option');
         option.value = retailer.id;
         option.textContent = retailer.name;
-        onlineGroup.appendChild(option);
+        retailerDropdown.appendChild(option);
       });
-      retailerDropdown.appendChild(onlineGroup);
-
-      // Add offline retailers
-      if (data.retailers.offline.length > 0) {
-        const offlineGroup = document.createElement('optgroup');
-        offlineGroup.label = '🏪 Offline Stores';
-        data.retailers.offline.forEach(retailer => {
-          const option = document.createElement('option');
-          option.value = retailer.id;
-          option.textContent = `${retailer.name}${retailer.location ? ' - ' + retailer.location : ''}`;
-          offlineGroup.appendChild(option);
-        });
-        retailerDropdown.appendChild(offlineGroup);
-      }
     }
   } catch (error) {
     console.error('Error loading retailers:', error);

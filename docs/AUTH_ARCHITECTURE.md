@@ -306,7 +306,7 @@ docs/
 └── AUTHENTICATION.md                   # Full documentation
 
 scripts/
-└── setup-auth.js                       # Automated setup script
+└── setup-auth.js                       # Automated setup script (moved to test-files/)
 ```
 
 ---
@@ -376,4 +376,4 @@ This authentication system provides:
 - ✅ Comprehensive documentation
 - ✅ Easy integration with existing features
 
-**Next Step:** Run `node scripts/setup-auth.js` to configure system.
+**Next Step:** Run `node test-files/setup-auth.js` to configure system (if needed).

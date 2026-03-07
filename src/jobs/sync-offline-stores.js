@@ -46,7 +46,7 @@ async function processStoreRow(row) {
   try {
     // Extract data from the row
     const timestamp = row['Timestamp'];
-    const shopName = row['Shop Name']?.trim();
+    const shopName = row['Shop name']?.trim();
     const ownerName = row["Owner's Full Name"]?.trim();
     const ownerPhone = row["Owner's Phone Number (for Store ID generation)"]?.trim();
     const shopLocation = row["Shop Location / Address (Include Street, City, and Postal Code)"]?.trim();
