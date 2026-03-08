@@ -123,13 +123,13 @@ export default function Hero() {
               </div>
               {/* Auth CTAs */}
               <div className="flex flex-col sm:flex-row gap-3 pt-1">
-                <Link href="http://localhost:3002/signup" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
+                <Link href="http://localhost:3002/signup" className="w-full sm:w-auto">
                   <GlowButton size="lg" className="w-full sm:w-auto">
                     <UserPlus className="mr-2 h-5 w-5" aria-hidden="true" />
                     {"Get Started — Sign Up"}
                   </GlowButton>
                 </Link>
-                <Link href="http://localhost:3002/login" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
+                <Link href="http://localhost:3002/login" className="w-full sm:w-auto">
                   <GlowButton variant="outline" size="lg" className="w-full sm:w-auto rounded-full">
                     <LogIn className="mr-2 h-5 w-5" aria-hidden="true" />
                     {"Login"}

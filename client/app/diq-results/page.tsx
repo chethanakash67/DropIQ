@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
-import { IconCart, IconTrophy, IconStore, IconClipboard, IconInfo, IconMapPin, IconPhone } from '@/components/Icons';
+import { IconCart, IconTrophy, IconStore, IconClipboard, IconInfo, IconMapPin, IconPhone, IconArrowLeft } from '@/components/Icons';
 
 interface ProductResult {
     id: string | number;
@@ -72,7 +72,7 @@ export default function DIQResultsPage() {
         <div className="diq-results-page">
             <div className="diq-results-header-bar">
                 <button className="back-button" onClick={() => { sessionStorage.removeItem('diq_results'); router.push('/dashboard'); }}>
-                    ← Back to Dashboard
+                    <IconArrowLeft size={15} style={{ marginRight: 4, verticalAlign: 'middle' }} /> Back to Dashboard
                 </button>
                 <button className="cart-button" onClick={() => setShowCart(true)}>
                     <IconCart size={16} style={{ marginRight: 4, verticalAlign: 'middle' }} /> Cart {totalItems > 0 && <span className="cart-count">{totalItems}</span>}

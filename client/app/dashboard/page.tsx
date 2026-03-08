@@ -53,15 +53,19 @@ export default function DashboardPage() {
     const SuggestionsIcon = searchHistory.length > 0 ? IconClock : IconTrending;
 
     return (
-        <>
+    <>
+            {/* Ambient floating orbs */}
+            <div className="orb orb-1" />
+            <div className="orb orb-2" />
+
             <div className="dashboard">
                 <Navbar />
 
                 <div className="dashboard-hero">
-                    <h1>Find Your Perfect Product</h1>
-                    <p>Search millions of products or let our AI match you with exactly what you need</p>
+                    <h1 className="anim-fade-up">Find Your <span className="gradient-text">Perfect Product</span></h1>
+                    <p className="anim-fade-up-2">Search millions of products or let our AI match you with exactly what you need</p>
 
-                    <div className="search-container">
+                    <div className="search-container anim-fade-up-3">
                         <div className="search-box">
                             <input
                                 type="text"

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import ProductCard from '@/components/ProductCard';
+import { IconCart, IconArrowLeft } from '@/components/Icons';
 
 interface Product {
     id: string | number;
@@ -106,9 +107,13 @@ function ResultsContent() {
     return (
         <div className="results-page">
             <div className="results-header-bar">
-                <button className="back-button" onClick={() => router.push('/dashboard')}>← Back to Dashboard</button>
+                <button className="back-button" onClick={() => router.push('/dashboard')}>
+                    <IconArrowLeft size={15} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+                    Back to Dashboard
+                </button>
                 <button className="cart-button" onClick={() => setShowCart(true)}>
-                    🛒 Cart {totalItems > 0 && <span className="cart-count">{totalItems}</span>}
+                    <IconCart size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+                    Cart {totalItems > 0 && <span className="cart-count">{totalItems}</span>}
                 </button>
             </div>
 
