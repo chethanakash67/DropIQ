@@ -27,8 +27,8 @@
     "apify",
     "ecommerce"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "chethanakash67",
+  "license": "MIT",
   "dependencies": {
     "@api/viglink-developer-center": "file:.api/apis/viglink-developer-center",
     "@google/genai": "^1.38.0",
