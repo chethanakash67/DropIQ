@@ -1,19 +1,16 @@
 import type { Metadata } from "next";
-import { GeistSans } from "geist/font/sans";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import CartModal from "@/components/CartModal";
 import CartNotification from "@/components/CartNotification";
-import CursorTail from "@/components/CursorTail";
+import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "DropIQ — Find Your Perfect Product",
-  description: "AI-powered product discovery. Search millions of products or let D_IQ Intelligence match you perfectly.",
+  title: "DropIQ Product Search",
+  description: "Find the best products with AI-powered recommendations",
   icons: {
-    icon: [
-      { url: '/dropiq-logo.png', type: 'image/png' },
-    ],
+    icon: "/dropiq-logo.png",
   },
 };
 
@@ -23,15 +20,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={GeistSans.variable}>
-      <head>
-        <link rel="icon" href="/dropiq-logo.png" type="image/png" />
-      </head>
-      <body className={GeistSans.className}>
-        <CursorTail />
+    <html lang="en">
+      <body style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <AuthProvider>
           <CartProvider>
-            {children}
+            <div className="container" style={{ flex: 1 }}>
+              {children}
+            </div>
+            <Footer />
             <CartModal />
             <CartNotification />
           </CartProvider>

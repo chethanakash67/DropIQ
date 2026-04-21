@@ -2,7 +2,6 @@
 
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
-import { IconCart } from '@/components/Icons';
 
 export default function Navbar() {
     const { currentUser, logout } = useAuth();
@@ -14,13 +13,16 @@ export default function Navbar() {
 
     return (
         <nav className="navbar">
-            <span className="navbar-brand">DropIQ</span>
+            <div className="navbar-brand" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }} onClick={() => window.location.href = '/'}>
+                <img src="/dropiq-logo.png" alt="DropIQ" style={{ height: '48px', objectFit: 'contain' }} />
+                <span style={{ fontSize: '32px', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-1px' }}>DropIQ</span>
+            </div>
 
             <div className="navbar-actions">
                 {name && <span className="navbar-greeting">Hi, {name.split(' ')[0]}!</span>}
 
                 <button className="cart-button" onClick={() => setShowCart(true)}>
-                    <IconCart size={18} />
+                    🛒
                     {totalItems > 0 && <span className="cart-count">{totalItems}</span>}
                 </button>
 

@@ -7,6 +7,7 @@ const { Strategy: GoogleStrategy } = require('passport-google-oauth20');
 const productsRouter = require('./routes/products');
 const diqRouter = require('./routes/diq');
 const authRouter = require('./routes/auth');
+const webhooksRouter = require('./routes/webhooks');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -53,6 +54,7 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use('/api/auth', authRouter);
 app.use('/api/products', productsRouter);
 app.use('/api/diq', diqRouter);
+app.use('/api/webhooks', webhooksRouter);
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {

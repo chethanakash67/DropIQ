@@ -2,7 +2,6 @@ import type React from "react"
 import type { Metadata } from "next"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
-import { ThemeProvider } from "@/components/theme-provider"
 import CursorTail from "@/components/cursor-tail"
 import ScrollToTop from "@/components/scroll-to-top"
 import "./globals.css"
@@ -37,14 +36,10 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      <body
-        className={`${GeistSans.className} bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300`}
-      >
-        <ThemeProvider>
-          {children}
-          <CursorTail />
-          <ScrollToTop />
-        </ThemeProvider>
+      <body className={`${GeistSans.className} bg-white text-slate-900`}>
+        {children}
+        <CursorTail />
+        <ScrollToTop />
       </body>
     </html>
   )

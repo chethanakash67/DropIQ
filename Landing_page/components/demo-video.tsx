@@ -1,5 +1,9 @@
 import SectionReveal from "./section-reveal"
-import WaitlistForm from "./waitlist-form"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { UserPlus } from "lucide-react"
+
+const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || "http://localhost:3001"
 
 export default function DemoVideo() {
   return (
@@ -36,16 +40,18 @@ export default function DemoVideo() {
   {/* CTA Section */}
   <div className="flex flex-col items-center text-center max-w-md">
     <div className="space-y-4">
-      <h3 className="text-xl sm:text-2xl font-semibold dark:text-white">
-        {"Join the Waitlist"}
+      <h3 className="text-xl sm:text-2xl font-semibold">
+        {"Ready to Find the Best Deals?"}
       </h3>
-      <p className="text-gray-600 dark:text-gray-300">
-        {"Be among the first to experience DropIQ and get exclusive early access perks."}
+      <p className="text-gray-600">
+        {"Create your free account and start comparing prices instantly."}
       </p>
-      <WaitlistForm size="md" buttonText="Join the Waitlist Now" />
-      <p className="text-xs text-gray-500 dark:text-gray-300">
-        {"Early users get priority alerts and perks."}
-      </p>
+      <Link href={`${DASHBOARD_URL}/signup`} target="_blank" rel="noopener noreferrer">
+        <Button size="lg" className="w-full rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-lg whitespace-nowrap">
+          <UserPlus className="mr-2 h-5 w-5 shrink-0" />
+          {"Sign Up — It's Free"}
+        </Button>
+      </Link>
     </div>
   </div>
 </div>

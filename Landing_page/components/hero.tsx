@@ -4,12 +4,13 @@ import type React from "react"
 
 import GlowButton from "./glow-button"
 import { Badge } from "@/components/ui/badge"
-import WaitlistForm from "./waitlist-form"
 import SmoothScrollLink from "./smooth-scroll-link"
 import { PlayCircle, Star, LogIn, UserPlus } from "lucide-react"
 import Logo from "./logo"
-import dynamic from "next/dynamic"
 import Link from "next/link"
+import dynamic from "next/dynamic"
+
+const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || "http://localhost:3001"
 
 // Lazy load the heavy AnimatedCounter component
 const AnimatedCounter = dynamic(() => import("./animated-counter"), {
@@ -102,40 +103,26 @@ export default function Hero() {
               {" instantly."}
             </p>
 
-            {/* Email form */}
-            <div className="mt-6 space-y-4">
-              <WaitlistForm size="md" className="w-full sm:max-w-xl" />
-              <div className="text-xs text-gray-500 dark:text-gray-300">{"No spam. Unsubscribe anytime."}</div>
-
-              {/* CTAs remain below */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                <SmoothScrollLink href="#demo-video">
-                  <GlowButton size="lg" className="w-full sm:w-auto">
-                    <PlayCircle className="mr-2 h-5 w-5" aria-hidden="true" />
-                    {"See DropiQ in Action"}
-                  </GlowButton>
-                </SmoothScrollLink>
-                <SmoothScrollLink href="#final-cta">
-                  <GlowButton variant="outline" size="lg" className="w-full sm:w-auto rounded-full">
-                    {"Waitlist"}
-                  </GlowButton>
-                </SmoothScrollLink>
-              </div>
-              {/* Auth CTAs */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-1">
-                <Link href="http://localhost:3002/signup" className="w-full sm:w-auto">
-                  <GlowButton size="lg" className="w-full sm:w-auto">
-                    <UserPlus className="mr-2 h-5 w-5" aria-hidden="true" />
-                    {"Get Started — Sign Up"}
-                  </GlowButton>
-                </Link>
-                <Link href="http://localhost:3002/login" className="w-full sm:w-auto">
-                  <GlowButton variant="outline" size="lg" className="w-full sm:w-auto rounded-full">
-                    <LogIn className="mr-2 h-5 w-5" aria-hidden="true" />
-                    {"Login"}
-                  </GlowButton>
-                </Link>
-              </div>
+            {/* CTAs */}
+            <div className="mt-6 flex flex-col sm:flex-row gap-3">
+              <Link href={`${DASHBOARD_URL}/signup`} target="_blank" rel="noopener noreferrer">
+                <GlowButton size="lg" className="w-full sm:w-auto whitespace-nowrap">
+                  <UserPlus className="mr-2 h-5 w-5 shrink-0" aria-hidden="true" />
+                  {"Sign Up"}
+                </GlowButton>
+              </Link>
+              <Link href={`${DASHBOARD_URL}/login`} target="_blank" rel="noopener noreferrer">
+                <GlowButton variant="outline" size="lg" className="w-full sm:w-auto rounded-full whitespace-nowrap">
+                  <LogIn className="mr-2 h-5 w-5 shrink-0" aria-hidden="true" />
+                  {"Log In"}
+                </GlowButton>
+              </Link>
+              <SmoothScrollLink href="#demo-video">
+                <GlowButton variant="outline" size="lg" className="w-full sm:w-auto rounded-full whitespace-nowrap">
+                  <PlayCircle className="mr-2 h-5 w-5 shrink-0" aria-hidden="true" />
+                  {"See DropiQ in Action"}
+                </GlowButton>
+              </SmoothScrollLink>
             </div>
           </div>
 

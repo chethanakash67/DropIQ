@@ -67,6 +67,8 @@ export default function ProductDetailPage() {
     const [error, setError] = useState('');
     const [comparisons, setComparisons] = useState<Comparison[]>([]);
     const [compsLoading, setCompsLoading] = useState(false);
+    const [recommendations, setRecommendations] = useState<any[]>([]);
+    const [recsLoading, setRecsLoading] = useState(false);
     const [added, setAdded] = useState(false);
 
     useEffect(() => {
@@ -89,12 +91,23 @@ export default function ProductDetailPage() {
     useEffect(() => {
         if (!product) return;
         const retailer = (product.retailer_name || '').toLowerCase();
+        
+        // Fetch Comparisons
         setCompsLoading(true);
         fetch(`/api/products/${retailer}/${product.id}/price-comparisons`)
             .then(r => r.json())
             .then(d => { if (d.success) setComparisons(d.comparisons || []); })
             .catch(() => { })
             .finally(() => setCompsLoading(false));
+
+        // Fetch Recommendations
+        setRecsLoading(true);
+        fetch(`/api/products/${retailer}/${product.id}/recommendations`)
+            .then(r => r.json())
+            .then(d => { if (d.success) setRecommendations(d.recommendations || []); })
+            .catch(() => { })
+            .finally(() => setRecsLoading(false));
+
     }, [product]);
 
     const handleAddToCart = () => {
@@ -129,9 +142,14 @@ export default function ProductDetailPage() {
     const rating = parseFloat(String(product.rating));
     const inStock = product.availability_status !== 'out_of_stock';
 
+    const getAbsoluteUrl = (url: string | undefined): string => {
+        if (!url) return '#';
+        if (url.startsWith('http')) return url;
+        return `https://${url}`;
+    };
+
     return (
         <div className="product-detail-page">
-            {/* Top bar */}
             <div className="product-detail-topbar">
                 <button className="back-button" onClick={() => router.back()}>
                     <IconArrowLeft size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
@@ -140,7 +158,6 @@ export default function ProductDetailPage() {
             </div>
 
             <div className="product-detail-layout">
-                {/* Left: image + actions */}
                 <div className="product-detail-left">
                     <div className="product-detail-image-wrap">
                         {product.image_url
@@ -150,23 +167,21 @@ export default function ProductDetailPage() {
                         }
                     </div>
 
-                    {/* Store badge */}
                     <div className="product-detail-store">
                         <IconStore size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
                         {product.retailer_name}
                     </div>
 
-                    {/* Stock status */}
                     <div className={`stock-badge ${inStock ? 'in-stock' : 'out-of-stock'}`}>
                         <IconCheckCircle size={13} style={{ marginRight: 4, verticalAlign: 'middle' }} />
                         {inStock ? 'In Stock' : 'Out of Stock'}
                     </div>
 
-                    {/* CTA buttons */}
                     <button
-                        className={`add-to-cart-btn-lg ${added ? 'added' : ''}`}
+                        className={`add-to-cart-btn-lg shiny-shield-btn ${added ? 'added' : ''}`}
                         onClick={handleAddToCart}
                         disabled={!inStock}
+                        style={{ marginTop: '20px' }}
                     >
                         <IconCart size={16} style={{ marginRight: 8, verticalAlign: 'middle' }} />
                         {added ? 'Added to Cart!' : 'Add to Cart'}
@@ -174,7 +189,7 @@ export default function ProductDetailPage() {
 
                     {(product.affiliate_url || product.product_url) && (
                         <a
-                            href={product.affiliate_url || product.product_url}
+                            href={getAbsoluteUrl(product.affiliate_url || product.product_url)}
                             target="_blank"
                             rel="noreferrer"
                             className="view-on-store-btn"
@@ -185,12 +200,10 @@ export default function ProductDetailPage() {
                     )}
                 </div>
 
-                {/* Right: details */}
                 <div className="product-detail-right">
                     {product.brand && <div className="product-detail-brand">{product.brand}</div>}
                     <h1 className="product-detail-title">{product.product_name}</h1>
 
-                    {/* Price + Rating row */}
                     <div className="product-detail-meta">
                         <div className="product-detail-price">
                             {!isNaN(price) && price > 0
@@ -212,15 +225,6 @@ export default function ProductDetailPage() {
                         )}
                     </div>
 
-                    {/* Description */}
-                    {product.description && (
-                        <div className="product-detail-section">
-                            <h3>Description</h3>
-                            <p className="product-detail-description">{product.description}</p>
-                        </div>
-                    )}
-
-                    {/* Key Features */}
                     {features.length > 0 && (
                         <div className="product-detail-section">
                             <h3>Key Features</h3>
@@ -235,27 +239,54 @@ export default function ProductDetailPage() {
                         </div>
                     )}
 
-                    {/* Specifications */}
-                    {Object.keys(specs).length > 0 && (
+                    <div className="product-detail-section" id="compare">
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                            <h3 style={{ margin: 0 }}>Know How Much You&apos;ll Save</h3>
+                            <span style={{ fontSize: '12px', background: '#ecfdf5', color: '#059669', padding: '4px 10px', borderRadius: '12px', fontWeight: 600 }}>Cross-Store Comparison</span>
+                        </div>
+                        {compsLoading
+                            ? <p style={{ opacity: 0.6, fontSize: 14 }}>Searching other stores...</p>
+                            : comparisons.length === 0
+                                ? <p style={{ opacity: 0.5, fontSize: 14 }}>No other listings found</p>
+                                : <div className="comparison-list">
+                                    {comparisons.map((c, i) => {
+                                        const savings = price - (c.price_inr || 0);
+                                        const linkUrl = getAbsoluteUrl(c.affiliate_url || c.product_url);
+                                        return (
+                                            <div key={i} className="comparison-row">
+                                                <span className="comp-merchant">{c.merchant}</span>
+                                                <span className="comp-price">
+                                                    ₹{c.price_inr?.toLocaleString('en-IN') ?? 'N/A'}
+                                                </span>
+                                                <span className="comp-savings" style={{ margin: 0 }}>Save ₹{Math.abs(savings).toLocaleString('en-IN')}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                        }
+                    </div>
+
+                    {recommendations.length > 0 && (
                         <div className="product-detail-section">
-                            <h3>Specifications</h3>
-                            <div className="product-detail-specs">
-                                {Object.entries(specs).map(([k, v]) => (
-                                    typeof v === 'string' || typeof v === 'number' ? (
-                                        <div key={k} className="spec-row">
-                                            <span className="spec-key">{k}</span>
-                                            <span className="spec-val">{v}</span>
+                            <h3>Recommended For You</h3>
+                            <div className="detail-recommendations-list">
+                                {recommendations.map((rec, i) => (
+                                    <div key={i} className="detail-rec-item" onClick={() => router.push(`/product/${rec.id}?retailer=${encodeURIComponent(rec.merchant)}`)}>
+                                        <img src={rec.image_url} alt={rec.name} className="detail-rec-image" />
+                                        <div className="detail-rec-info">
+                                            <div className="detail-rec-name">{rec.name}</div>
+                                            <div className="detail-rec-price">₹{rec.price_inr?.toLocaleString('en-IN')}</div>
+                                            <div className="detail-rec-merchant">{rec.merchant}</div>
                                         </div>
-                                    ) : null
+                                    </div>
                                 ))}
                             </div>
                         </div>
                     )}
 
-                    {/* Reviews */}
                     {reviews.length > 0 && (
                         <div className="product-detail-section">
-                            <h3>Customer Reviews</h3>
+                            <h3>Customer Stories</h3>
                             <div className="product-detail-reviews">
                                 {reviews.slice(0, 5).map((r, i) => (
                                     <div key={i} className="review-card">
@@ -266,36 +297,6 @@ export default function ProductDetailPage() {
                             </div>
                         </div>
                     )}
-
-                    {/* Price Comparisons */}
-                    <div className="product-detail-section" id="compare">
-                        <h3>Price Comparison</h3>
-                        {compsLoading
-                            ? <p style={{ opacity: 0.6, fontSize: 14 }}>Searching other stores...</p>
-                            : comparisons.length === 0
-                                ? <p style={{ opacity: 0.5, fontSize: 14 }}>No other listings found</p>
-                                : <div className="comparison-list">
-                                    {comparisons.map((c, i) => {
-                                        const savings = price - (c.price_inr || 0);
-                                        return (
-                                            <div key={i} className="comparison-row">
-                                                <span className="comp-merchant">{c.merchant}</span>
-                                                <span className="comp-price">
-                                                    ₹{c.price_inr?.toLocaleString('en-IN') ?? 'N/A'}
-                                                </span>
-                                                {savings > 0 && (
-                                                    <span className="comp-savings">Save ₹{Math.abs(savings).toLocaleString('en-IN')}</span>
-                                                )}
-                                                <a href={c.affiliate_url || c.product_url} target="_blank" rel="noreferrer" className="comp-link">
-                                                    <IconExternalLink size={12} style={{ marginRight: 4 }} />
-                                                    Visit
-                                                </a>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                        }
-                    </div>
                 </div>
             </div>
         </div>
