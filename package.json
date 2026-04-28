@@ -10,6 +10,7 @@
     "dev:client": "cd client && npm run dev",
     "dev:all": "concurrently \"npm run dev\" \"npm run dev:landing\" \"npm run dev:client\"",
     "scheduler": "node src/scheduler/monthly-ingestion.js",
+    "scheduler:samsung": "node src/scheduler/samsung-ingestion.js",
     "ingest": "node src/jobs/ingest-apify-data.js",
     "ingest:brands": "node src/jobs/ingest-brand-stores.js",
     "ingest:samsung": "node src/jobs/ingest-samsung-data.js",
@@ -19,7 +20,10 @@
     "scheduler:stores": "node src/scheduler/offline-store-sync.js",
     "delete:recent-store": "node delete-recent-store.js",
     "migrate": "node src/database/migrate.js",
-    "export": "node src/utils/export-to-excel.js"
+    "export": "node src/utils/export-to-excel.js",
+    "export:table": "node src/utils/export-table.js",
+    "ingest:all": "node src/jobs/ingest-all-stores.js",
+    "fetch:stores": "node src/utils/fetch-stores.js"
   },
   "keywords": [
     "product",
@@ -35,6 +39,7 @@
     "@google/generative-ai": "^0.24.1",
     "axios": "^1.6.5",
     "bcrypt": "^5.1.1",
+    "commander": "^14.0.3",
     "cors": "^2.8.5",
     "csv-parse": "^6.1.0",
     "dotenv": "^16.3.1",

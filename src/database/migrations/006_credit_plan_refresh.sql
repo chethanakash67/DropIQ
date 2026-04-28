@@ -1,7 +1,7 @@
 -- Normalize plan and credit defaults for credits system
 
 ALTER TABLE users
-  ALTER COLUMN credits SET DEFAULT 10;
+  ALTER COLUMN credits SET DEFAULT 20;
 
 UPDATE users
 SET plan_type = 'max'

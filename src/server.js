@@ -9,6 +9,11 @@ const diqRouter = require('./routes/diq');
 const authRouter = require('./routes/auth');
 const webhooksRouter = require('./routes/webhooks');
 
+// ── Background Schedulers ────────────────────────────────────────────────────
+require('./scheduler/monthly-ingestion');
+require('./scheduler/samsung-ingestion');
+require('./scheduler/offline-store-sync');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 

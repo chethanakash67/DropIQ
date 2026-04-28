@@ -34,3 +34,17 @@ value score in the search page will only work for online stores for now - give t
 
 pro accc - 523cs0014@iiitk.ac.in - google signin
 normal acc - saividesh29@gmail.com - google signin
+
+
+add more stores with scrappers
+
+user's data return update logic to db
+
+recommendation engine + normalised formula 
+
+know how much you'll save option
+
+Add data freshness labels. Every price shown should display "Updated today" or "Updated 3 days ago." This builds trust. Without it, users don't know if the ₹2,800 price is from this morning or 6 months ago. For your scraped sources this is easy — just store the scrape timestamp and display it.
+Add a simple product comparison view. Side by side: two products, their DropIQ scores, their individual feature scores across your 5–7 dimensions, and their prices. This is the feature that makes the score engine tangible — users can see exactly why Product A scored higher than Product B. This is what Smartprix doesn't do and what justifies DropIQ's existence.
+
+Add barcode scanner. This is phase 2 in the roadmap but actually very easy to implement and creates an immediate "wow" moment. User scans a barcode at a store, gets the product's DropIQ score and online prices instantly. Even without offline store prices, this is useful — it tells someone standing in Croma whether the price they're about to pay is the market price. HTML5 BarcodeDetector API or a library like ZXing handles this with minimal code. - only if possible.

@@ -203,7 +203,10 @@ router.get('/retailers', async (req, res) => {
       { id: 'Amazon', name: 'Amazon' },
       { id: 'Flipkart', name: 'Flipkart' },
       { id: 'Samsung', name: 'Samsung Store' },
-      { id: 'Sony', name: 'Sony Store' }
+      { id: 'Sony', name: 'Sony Store' },
+      { id: 'Croma', name: 'Croma' },
+      { id: 'VijaySales', name: 'Vijay Sales' },
+      { id: 'TataCliq', name: 'TataCliq' }
     ];
 
     res.json({
@@ -217,6 +220,65 @@ router.get('/retailers', async (req, res) => {
       error: 'Failed to fetch retailers',
       message: error.message,
     });
+  }
+});
+
+/**
+ * GET /api/products/search-index
+ * Returns a lightweight product index for client-side search.
+ * Dynamically reads ALL *_products tables so it works for future stores too.
+ * Each item contains: id, product_name, brand, category, price_inr, image_url, retailer_name, normalized_key
+ */
+router.get('/search-index', async (req, res) => {
+  try {
+    // Dynamically discover all product tables in the DB
+    const tablesResult = await db.query(`
+      SELECT table_name FROM information_schema.tables
+      WHERE table_schema = 'public'
+        AND table_name LIKE '%_products'
+        AND table_type = 'BASE TABLE'
+      ORDER BY table_name
+    `);
+
+    const allProducts = [];
+
+    for (const row of tablesResult.rows) {
+      const table = row.table_name;
+      // Derive a human-readable store name from table name
+      // e.g. amazon_products → Amazon, vijay_sales_products → Vijay Sales
+      const storeName = table
+        .replace(/_products$/, '')
+        .split('_')
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+
+      try {
+        const result = await db.query(`
+          SELECT
+            id,
+            product_name,
+            brand,
+            category,
+            price_inr,
+            image_url,
+            LOWER(REGEXP_REPLACE(product_name, '[^a-zA-Z0-9]', '', 'g')) AS normalized_key
+          FROM ${table}
+          WHERE is_deleted = FALSE
+            AND product_name IS NOT NULL
+        `);
+        result.rows.forEach(p => {
+          allProducts.push({ ...p, retailer_name: storeName });
+        });
+      } catch (tableErr) {
+        // Skip tables that don't have the expected columns (e.g. offline_stores)
+        console.warn(`Skipping table ${table}:`, tableErr.message);
+      }
+    }
+
+    res.json({ success: true, count: allProducts.length, products: allProducts });
+  } catch (error) {
+    console.error('Error in /api/products/search-index:', error);
+    res.status(500).json({ success: false, error: 'Failed to build search index' });
   }
 });
 
@@ -281,10 +343,42 @@ router.get('/:id', async (req, res) => {
       [id]
     );
 
-    // If not found, try Flipkart
+    // If not found, try Sony
     if (result.rows.length === 0) {
       result = await db.query(
-        `SELECT *, 'Flipkart' as retailer_name FROM flipkart_products WHERE id = $1`,
+        `SELECT *, 'Sony' as retailer_name FROM sony_products WHERE id = $1`,
+        [id]
+      );
+    }
+
+    // If not found, try Samsung
+    if (result.rows.length === 0) {
+      result = await db.query(
+        `SELECT *, 'Samsung' as retailer_name FROM samsung_products WHERE id = $1`,
+        [id]
+      );
+    }
+
+    // If not found, try Croma
+    if (result.rows.length === 0) {
+      result = await db.query(
+        `SELECT *, 'Croma' as retailer_name FROM croma_products WHERE id = $1`,
+        [id]
+      );
+    }
+
+    // If not found, try Vijay Sales
+    if (result.rows.length === 0) {
+      result = await db.query(
+        `SELECT *, 'Vijay Sales' as retailer_name FROM vijay_sales_products WHERE id = $1`,
+        [id]
+      );
+    }
+
+    // If not found, try TataCliq
+    if (result.rows.length === 0) {
+      result = await db.query(
+        `SELECT *, 'TataCliq' as retailer_name FROM tatacliq_products WHERE id = $1`,
         [id]
       );
     }
@@ -323,11 +417,11 @@ router.get('/:retailer/:id/recommendations', async (req, res) => {
     const { retailer, id } = req.params;
 
     // Validate retailer
-    const validRetailers = ['amazon', 'flipkart', 'samsung', 'sony'];
+    const validRetailers = ['amazon', 'flipkart', 'samsung', 'sony', 'croma', 'vijaysales', 'tatacliq'];
     if (!validRetailers.includes(retailer.toLowerCase())) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid retailer. Must be: amazon, flipkart, samsung, or sony'
+        error: 'Invalid retailer. Must be: amazon, flipkart, samsung, sony, croma, vijaysales, or tatacliq'
       });
     }
 
@@ -416,11 +510,11 @@ router.get('/:retailer/:id/price-comparisons', async (req, res) => {
     const { retailer, id } = req.params;
 
     // Validate retailer
-    const validRetailers = ['amazon', 'flipkart', 'samsung', 'sony'];
+    const validRetailers = ['amazon', 'flipkart', 'samsung', 'sony', 'croma', 'vijaysales'];
     if (!validRetailers.includes(retailer.toLowerCase())) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid retailer. Must be: amazon, flipkart, samsung, or sony'
+        error: 'Invalid retailer. Must be: amazon, flipkart, samsung, sony, croma, or vijaysales'
       });
     }
 

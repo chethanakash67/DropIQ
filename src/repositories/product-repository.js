@@ -584,6 +584,45 @@ class ProductRepository {
         results = results.concat(sonyResult.rows);
       }
 
+      // Query Croma if not filtered by other retailers
+      if (!retailer || retailer === 'Croma') {
+        const cromaQuery = `
+          SELECT 
+            p.*,
+            'Croma' as retailer_name
+          FROM croma_products p
+          ${whereConditions}
+        `;
+        const cromaResult = await db.query(cromaQuery, params);
+        results = results.concat(cromaResult.rows);
+      }
+
+      // Query Vijay Sales if not filtered by other retailers
+      if (!retailer || retailer === 'VijaySales') {
+        const vijayQuery = `
+          SELECT 
+            p.*,
+            'VijaySales' as retailer_name
+          FROM vijay_sales_products p
+          ${whereConditions}
+        `;
+        const vijayResult = await db.query(vijayQuery, params);
+        results = results.concat(vijayResult.rows);
+      }
+
+      // Query TataCliq if not filtered by other retailers
+      if (!retailer || retailer === 'TataCliq') {
+        const tatacliqQuery = `
+          SELECT 
+            p.*,
+            'TataCliq' as retailer_name
+          FROM tatacliq_products p
+          ${whereConditions}
+        `;
+        const tatacliqResult = await db.query(tatacliqQuery, params);
+        results = results.concat(tatacliqResult.rows);
+      }
+
       // Query Offline Stores
       if (!retailer || retailer.includes('_o')) {
         try {
@@ -1084,6 +1123,309 @@ class ProductRepository {
     } catch (error) {
       console.error('Error checking recent search:', error);
       return false;
+    }
+  }
+
+  /**
+   * UPSERT Croma product
+   */
+  async upsertCromaProduct(productData) {
+    const {
+      productName,
+      brand,
+      productId,
+      category,
+      priceInr,
+      rating,
+      reviewsCount,
+      description,
+      features,
+      specifications,
+      imageUrl,
+      productUrl,
+      availabilityStatus,
+    } = productData;
+
+    try {
+      // Generate Sovrn affiliate link
+      const affiliateUrl = productUrl
+        ? sovrnAffiliate.generateAffiliateLink(productUrl, {
+          cuid: `croma_${productId || 'unknown'}`,
+          utm_campaign: 'croma'
+        })
+        : null;
+
+      const query = `
+        INSERT INTO croma_products (
+          product_name, brand, product_id, category, price_inr, rating, reviews_count,
+          description, features, specifications, image_url, 
+          product_url, affiliate_url, availability_status,
+          review_score, brand_score, has_anc, battery_hours, has_fast_charge, 
+          mic_quality_score, has_app_support, color, design_style, classified_tag,
+          last_updated
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, NOW())
+        ON CONFLICT (product_name) 
+        DO UPDATE SET
+          brand = EXCLUDED.brand,
+          product_id = EXCLUDED.product_id,
+          price_inr = EXCLUDED.price_inr,
+          rating = EXCLUDED.rating,
+          reviews_count = EXCLUDED.reviews_count,
+          description = EXCLUDED.description,
+          features = EXCLUDED.features,
+          specifications = EXCLUDED.specifications,
+          image_url = EXCLUDED.image_url,
+          product_url = EXCLUDED.product_url,
+          affiliate_url = EXCLUDED.affiliate_url,
+          availability_status = EXCLUDED.availability_status,
+          review_score = EXCLUDED.review_score,
+          brand_score = EXCLUDED.brand_score,
+          has_anc = EXCLUDED.has_anc,
+          battery_hours = EXCLUDED.battery_hours,
+          has_fast_charge = EXCLUDED.has_fast_charge,
+          mic_quality_score = EXCLUDED.mic_quality_score,
+          has_app_support = EXCLUDED.has_app_support,
+          color = EXCLUDED.color,
+          design_style = EXCLUDED.design_style,
+          classified_tag = EXCLUDED.classified_tag,
+          last_updated = NOW()
+        RETURNING id, (xmax = 0) AS inserted
+      `;
+
+      const values = [
+        productName,
+        brand || 'Croma',
+        productId || null,
+        category,
+        priceInr,
+        rating || null,
+        reviewsCount || null,
+        description || null,
+        features ? JSON.stringify(features) : null,
+        specifications ? JSON.stringify(specifications) : null,
+        imageUrl || null,
+        productUrl || null,
+        affiliateUrl || null,
+        availabilityStatus || 'in_stock',
+        productData.reviewScore || 0,
+        productData.brandScore || 0,
+        productData.hasAnc || false,
+        productData.batteryHours || null,
+        productData.hasFastCharge || false,
+        productData.micQualityScore || 0,
+        productData.hasAppSupport || false,
+        productData.color || null,
+        productData.designStyle || null,
+        productData.classifiedTag || null,
+      ];
+
+      const result = await db.query(query, values);
+
+      return {
+        id: result.rows[0].id,
+        inserted: result.rows[0].inserted,
+      };
+    } catch (error) {
+      console.error('Error in upsertCromaProduct:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * UPSERT Vijay Sales product
+   */
+  async upsertVijaySalesProduct(productData) {
+    const {
+      productName,
+      brand,
+      productId,
+      category,
+      priceInr,
+      rating,
+      reviewsCount,
+      description,
+      features,
+      specifications,
+      imageUrl,
+      productUrl,
+      availabilityStatus,
+    } = productData;
+
+    try {
+      // Generate Sovrn affiliate link
+      const affiliateUrl = productUrl
+        ? sovrnAffiliate.generateAffiliateLink(productUrl, {
+          cuid: `vijaysales_${productId || 'unknown'}`,
+          utm_campaign: 'vijaysales'
+        })
+        : null;
+
+      const query = `
+        INSERT INTO vijay_sales_products (
+          product_name, brand, product_id, category, price_inr, rating, reviews_count,
+          description, features, specifications, image_url, 
+          product_url, affiliate_url, availability_status,
+          review_score, brand_score, has_anc, battery_hours, has_fast_charge, 
+          mic_quality_score, has_app_support, color, design_style, classified_tag,
+          last_updated
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, NOW())
+        ON CONFLICT (product_name) 
+        DO UPDATE SET
+          brand = EXCLUDED.brand,
+          product_id = EXCLUDED.product_id,
+          price_inr = EXCLUDED.price_inr,
+          rating = EXCLUDED.rating,
+          reviews_count = EXCLUDED.reviews_count,
+          description = EXCLUDED.description,
+          features = EXCLUDED.features,
+          specifications = EXCLUDED.specifications,
+          image_url = EXCLUDED.image_url,
+          product_url = EXCLUDED.product_url,
+          affiliate_url = EXCLUDED.affiliate_url,
+          availability_status = EXCLUDED.availability_status,
+          review_score = EXCLUDED.review_score,
+          brand_score = EXCLUDED.brand_score,
+          has_anc = EXCLUDED.has_anc,
+          battery_hours = EXCLUDED.battery_hours,
+          has_fast_charge = EXCLUDED.has_fast_charge,
+          mic_quality_score = EXCLUDED.mic_quality_score,
+          has_app_support = EXCLUDED.has_app_support,
+          color = EXCLUDED.color,
+          design_style = EXCLUDED.design_style,
+          classified_tag = EXCLUDED.classified_tag,
+          last_updated = NOW()
+        RETURNING id, (xmax = 0) AS inserted
+      `;
+
+      const values = [
+        productName,
+        brand || 'Vijay Sales',
+        productId || null,
+        category,
+        priceInr,
+        rating || null,
+        reviewsCount || null,
+        description || null,
+        features ? JSON.stringify(features) : null,
+        specifications ? JSON.stringify(specifications) : null,
+        imageUrl || null,
+        productUrl || null,
+        affiliateUrl || null,
+        availabilityStatus || 'in_stock',
+        productData.reviewScore || 0,
+        productData.brandScore || 0,
+        productData.hasAnc || false,
+        productData.batteryHours || null,
+        productData.hasFastCharge || false,
+        productData.micQualityScore || 0,
+        productData.hasAppSupport || false,
+        productData.color || null,
+        productData.designStyle || null,
+        productData.classifiedTag || null,
+      ];
+
+      const result = await db.query(query, values);
+
+      return {
+        id: result.rows[0].id,
+        inserted: result.rows[0].inserted,
+      };
+    } catch (error) {
+      console.error('Error in upsertVijaySalesProduct:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * UPSERT TataCliq product
+   */
+  async upsertTataCliqProduct(productData) {
+    const {
+      productName, brand, productId, category, priceInr, rating, reviewsCount,
+      description, features, specifications, imageUrl, productUrl, affiliateUrl,
+      availabilityStatus
+    } = productData;
+
+    try {
+      const query = `
+        INSERT INTO tatacliq_products (
+          product_name, brand, product_id, category, price_inr, rating, reviews_count,
+          description, features, specifications, image_url, 
+          product_url, affiliate_url, availability_status, 
+          review_score, brand_score, has_anc, battery_hours,
+          has_fast_charge, mic_quality_score, has_app_support,
+          color, design_style, classified_tag, last_updated
+        )
+        VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
+          $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, NOW()
+        )
+        ON CONFLICT (product_name) 
+        DO UPDATE SET
+          brand = EXCLUDED.brand,
+          product_id = EXCLUDED.product_id,
+          price_inr = EXCLUDED.price_inr,
+          rating = EXCLUDED.rating,
+          reviews_count = EXCLUDED.reviews_count,
+          description = EXCLUDED.description,
+          features = EXCLUDED.features,
+          specifications = EXCLUDED.specifications,
+          image_url = EXCLUDED.image_url,
+          product_url = EXCLUDED.product_url,
+          affiliate_url = EXCLUDED.affiliate_url,
+          availability_status = EXCLUDED.availability_status,
+          review_score = EXCLUDED.review_score,
+          brand_score = EXCLUDED.brand_score,
+          has_anc = EXCLUDED.has_anc,
+          battery_hours = EXCLUDED.battery_hours,
+          has_fast_charge = EXCLUDED.has_fast_charge,
+          mic_quality_score = EXCLUDED.mic_quality_score,
+          has_app_support = EXCLUDED.has_app_support,
+          color = EXCLUDED.color,
+          design_style = EXCLUDED.design_style,
+          classified_tag = EXCLUDED.classified_tag,
+          last_updated = NOW()
+        RETURNING id, (xmax = 0) AS inserted
+      `;
+
+      const values = [
+        productName,
+        brand || 'TataCliq',
+        productId || null,
+        category,
+        priceInr,
+        rating || null,
+        reviewsCount || null,
+        description || null,
+        features ? JSON.stringify(features) : null,
+        specifications ? JSON.stringify(specifications) : null,
+        imageUrl || null,
+        productUrl || null,
+        affiliateUrl || null,
+        availabilityStatus || 'in_stock',
+        productData.reviewScore || 0,
+        productData.brandScore || 0,
+        productData.hasAnc || false,
+        productData.batteryHours || null,
+        productData.hasFastCharge || false,
+        productData.micQualityScore || 0,
+        productData.hasAppSupport || false,
+        productData.color || null,
+        productData.designStyle || null,
+        productData.classifiedTag || null,
+      ];
+
+      const result = await db.query(query, values);
+
+      return {
+        id: result.rows[0].id,
+        inserted: result.rows[0].inserted,
+      };
+    } catch (error) {
+      console.error('Error in upsertTataCliqProduct:', error);
+      throw error;
     }
   }
 }

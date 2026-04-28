@@ -74,6 +74,7 @@ export default function ProductDetailPage() {
     const [recsLoading, setRecsLoading] = useState(false);
     const [cartAdded, setCartAdded] = useState(false);
     const [bagAdded, setBagAdded] = useState(false);
+    const [showAllSpecs, setShowAllSpecs] = useState(false);
 
     useEffect(() => {
         if (!authLoading && !currentUser) router.replace('/login');
@@ -290,6 +291,37 @@ export default function ProductDetailPage() {
                                     </li>
                                 ))}
                             </ul>
+                        </div>
+                    )}
+
+                    {Object.keys(specs).length > 0 && (
+                        <div className="product-detail-section">
+                            <h3>Specifications</h3>
+                            <div className="product-detail-specs-grid">
+                                {Object.entries(specs).slice(0, showAllSpecs ? undefined : 5).map(([key, value]) => (
+                                    <div key={key} className="spec-item">
+                                        <span className="spec-label">{key}</span>
+                                        <span className="spec-value">{String(value)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            {Object.keys(specs).length > 5 && (
+                                <button
+                                    onClick={() => setShowAllSpecs(!showAllSpecs)}
+                                    style={{
+                                        marginTop: '12px',
+                                        background: 'none',
+                                        border: 'none',
+                                        color: 'var(--accent)',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        fontSize: '14px',
+                                        padding: '4px 0'
+                                    }}
+                                >
+                                    {showAllSpecs ? 'View Less' : 'View More'}
+                                </button>
+                            )}
                         </div>
                     )}
 

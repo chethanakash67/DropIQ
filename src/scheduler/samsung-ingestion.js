@@ -3,12 +3,12 @@ const { exec } = require('child_process');
 const path = require('path');
 
 /**
- * Monthly Data Ingestion Scheduler
+ * Samsung Store Data Ingestion Scheduler
  * 
  * Schedule: Runs on the 30th of every month at 4:00 AM (04:00)
  * 
  * Cron Expression: '0 4 30 * *'
- * - Minute: 0 (at the start of the hour)
+ * - Minute: 0
  * - Hour: 4 (4 AM)
  * - Day of Month: 30 (30th day)
  * - Month: * (every month)
@@ -16,25 +16,25 @@ const path = require('path');
  */
 
 console.log('========================================');
-console.log('Monthly Ingestion Scheduler Started');
+console.log('Samsung Ingestion Scheduler Started');
 console.log('========================================');
 console.log('Schedule: 30th of every month at 4:00 AM');
 console.log('Current time:', new Date().toLocaleString());
 console.log('========================================\n');
 
-// Schedule the ingestion job to run monthly on the 30th at 4:00 AM
-const monthlyJob = cron.schedule('0 4 30 * *', () => {
+// Schedule the ingestion job
+const samsungJob = cron.schedule('0 4 30 * *', () => {
   console.log('\n========================================');
-  console.log('Scheduled Monthly Ingestion Triggered');
+  console.log('Scheduled Samsung Ingestion Triggered');
   console.log('Time:', new Date().toLocaleString());
   console.log('========================================\n');
 
-  // Execute the global ingestion script which includes Vijay Sales, Croma, and Brands
-  const ingestionScript = path.join(__dirname, '..', 'jobs', 'ingest-all-stores.js');
+  // Execute the ingestion script
+  const ingestionScript = path.join(__dirname, '..', 'jobs', 'ingest-samsung-data.js');
 
   exec(`node "${ingestionScript}"`, (error, stdout, stderr) => {
     if (error) {
-      console.error('✗ Ingestion job failed:', error.message);
+      console.error('✗ Samsung Ingestion job failed:', error.message);
       console.error('Error details:', stderr);
       return;
     }
@@ -45,29 +45,24 @@ const monthlyJob = cron.schedule('0 4 30 * *', () => {
       console.error('Warnings:', stderr);
     }
 
-    console.log('✓ Monthly ingestion completed successfully');
+    console.log('✓ Samsung ingestion completed successfully');
   });
 }, {
   scheduled: true,
   timezone: "Asia/Kolkata" // Indian Standard Time (IST)
 });
 
-// Optional: Schedule for testing - runs every minute (comment out in production)
-// const testJob = cron.schedule('* * * * *', () => {
-//   console.log('Test run at:', new Date().toLocaleString());
-// });
-
 // Keep the process running
 process.on('SIGINT', () => {
   console.log('\n========================================');
-  console.log('Stopping Monthly Ingestion Scheduler...');
+  console.log('Stopping Samsung Ingestion Scheduler...');
   console.log('========================================');
-  monthlyJob.stop();
+  samsungJob.stop();
   process.exit(0);
 });
 
 console.log('Scheduler is running. Press Ctrl+C to stop.\n');
 console.log('Next scheduled run:');
-console.log('- Date: 28th of current/next month');
-console.log('- Time: 11:00 PM IST');
+console.log('- Date: 30th of current/next month');
+console.log('- Time: 4:00 AM IST');
 console.log('========================================\n');

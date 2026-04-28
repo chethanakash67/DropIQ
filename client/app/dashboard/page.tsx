@@ -8,6 +8,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import CountdownTimer from '@/components/CountdownTimer';
 import DIQModal from '@/components/DIQModal';
+import { useSearch } from '@/hooks/useSearch';
 
 const CategoryItem = ({ cat, router }: { cat: any, router: any }) => {
     const [bloomProducts, setBloomProducts] = useState<any[]>([]);
@@ -66,6 +67,7 @@ export default function DashboardPage() {
     const router = useRouter();
     const { currentUser, loading, authenticatedFetch } = useAuth();
     const { cart } = useCart();
+    const { search: clientSearch, indexLoaded } = useSearch(); // client-side instant search
     
     const [searchTerm, setSearchTerm] = useState('');
     const [showDIQ, setShowDIQ] = useState(false);
@@ -217,6 +219,7 @@ export default function DashboardPage() {
     }, [currentUser, authenticatedFetch]);
 
     // Handle dynamic search suggestions as user types
+    // Priority: client-side instant search → server suggestions fallback
     useEffect(() => {
         if (!searchTerm.trim()) {
             setFrequentSearches(initialFrequent);
@@ -224,15 +227,33 @@ export default function DashboardPage() {
         }
 
         const timer = setTimeout(async () => {
+            // ── Client-side search (instant, no network) ─────────────────────
+            if (indexLoaded) {
+                const clientResults = clientSearch(searchTerm);
+                if (clientResults.length > 0) {
+                    // Extract short keyword suggestions: brand + first meaningful word(s) of model
+                    const toKeyword = (name: string): string => {
+                        // Strip color/variant info in parentheses, then take first 4 words max
+                        const clean = name.replace(/\(.*?\)/g, '').trim();
+                        const words = clean.split(/\s+/).filter(Boolean);
+                        return words.slice(0, 4).join(' ');
+                    };
+                    const keywords = [...new Set(clientResults.map((p: any) => toKeyword(p.product_name)))].slice(0, 8);
+                    setFrequentSearches(keywords);
+                    setIsHistoryVisible(true);
+                    return; // skip server call entirely
+                }
+            }
+
+            // ── Server fallback (when client has 0 results or index not loaded yet) ─
             try {
                 const res = await fetch(`/api/products/search-suggestions?q=${encodeURIComponent(searchTerm)}&limit=5`);
                 const data = await res.json();
                 if (data.success && data.suggestions.length > 0) {
                     setFrequentSearches(data.suggestions);
-                    setIsHistoryVisible(true); // Re-open if we found matches
+                    setIsHistoryVisible(true);
                 } else {
                     setFrequentSearches([]);
-                    // Auto-close if no matches found after 3 characters
                     if (searchTerm.trim().length >= 3) {
                         setIsHistoryVisible(false);
                     }
@@ -240,10 +261,10 @@ export default function DashboardPage() {
             } catch (err) {
                 console.error("Failed to fetch suggestions:", err);
             }
-        }, 200);
+        }, 250); // 250ms debounce
 
         return () => clearTimeout(timer);
-    }, [searchTerm, initialFrequent]);
+    }, [searchTerm, initialFrequent, indexLoaded, clientSearch]);
 
     const handleClearHistory = async (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -425,9 +446,8 @@ export default function DashboardPage() {
             );
         }
 
-        const cardClass = isFestive ? "product-card revolving-border-card" : 
-                        (isFav ? "product-card periodic-shine-card" : 
-                        (isGrab ? "product-card" : "product-card floating-card"));
+        const cardClass = isFestive ? "product-card revolving-border-card" :
+                        (isFav ? "product-card periodic-shine-card" : "product-card");
         const widthStyle = (isFestive || isFav || isCart) ? { width: '100%' } : { minWidth: '200px', maxWidth: '200px' };
 
         return (
@@ -490,6 +510,7 @@ export default function DashboardPage() {
                         <input
                             type="text"
                             id="searchInput"
+                            spellCheck="true"
                             placeholder={currentCredits < 3 ? "Insufficient credits to search..." : "Search for products, brands and more..."}
                             autoComplete="off"
                             value={searchTerm}
@@ -516,29 +537,7 @@ export default function DashboardPage() {
                         >
                             Search
                         </button>
-                        {cooldownTime > 0 && currentCredits >= 3 && (
-                            <div style={{
-                                position: 'absolute',
-                                right: '110px',
-                                top: '50%',
-                                transform: 'translateY(-50%)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                color: '#10b981',
-                                fontSize: '11px',
-                                fontWeight: 700,
-                                background: 'rgba(16, 185, 129, 0.1)',
-                                padding: '4px 10px',
-                                borderRadius: '20px',
-                                border: '1px solid rgba(16, 185, 129, 0.2)',
-                                pointerEvents: 'none',
-                                animation: 'fadeIn 0.3s ease'
-                            }}>
-                                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
-                                FREE REFRESH: {cooldownTime}s
-                            </div>
-                        )}
+
                         {currentCredits < 3 && (
                             <div style={{ 
                                 position: 'absolute', 
