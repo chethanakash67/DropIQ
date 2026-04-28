@@ -3,8 +3,10 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import CartModal from "@/components/CartModal";
+import BagModal from "@/components/BagModal";
 import CartNotification from "@/components/CartNotification";
 import Footer from "@/components/Footer";
+import PageTransition from "@/components/PageTransition";
 
 export const metadata: Metadata = {
   title: "DropIQ Product Search",
@@ -24,11 +26,12 @@ export default function RootLayout({
       <body style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <AuthProvider>
           <CartProvider>
-            <div className="container" style={{ flex: 1 }}>
+            <PageTransition />
+            <div className="container" style={{ flex: 1, minHeight: '100vh' }}>
               {children}
             </div>
-            <Footer />
             <CartModal />
+            <BagModal />
             <CartNotification />
           </CartProvider>
         </AuthProvider>

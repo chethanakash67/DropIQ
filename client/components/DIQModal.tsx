@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { IconLightbulb, IconArrowLeft, IconArrowRight } from '@/components/Icons';
+import { IconLightbulb, IconArrowLeft, IconArrowRight, IconCart, IconClipboard } from '@/components/Icons';
+import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
+import InsufficientCreditsModal from './InsufficientCreditsModal';
 
 interface DIQOption {
     id: string;
@@ -33,12 +36,19 @@ interface DIQModalProps {
 
 export default function DIQModal({ onClose }: DIQModalProps) {
     const router = useRouter();
+    const { addToCart, addToBag } = useCart();
+    const { authenticatedFetch, currentUser, setCurrentUser } = useAuth();
     const [questions, setQuestions] = useState<DIQQuestion[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [answers, setAnswers] = useState<Record<string, DIQAnswer>>({});
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
+    const [results, setResults] = useState<any[] | null>(null);
+    const [showResults, setShowResults] = useState(false);
+    const [tempImportance, setTempImportance] = useState<Record<string, number>>({});
+    const [creditsModalOpen, setCreditsModalOpen] = useState(false);
+    const [creditErrorMeta, setCreditErrorMeta] = useState<{ required?: number; available?: number }>({});
 
     useEffect(() => {
         (async () => {
@@ -63,9 +73,11 @@ export default function DIQModal({ onClose }: DIQModalProps) {
 
     const selectOption = async (option: DIQOption) => {
         const prev = answers[currentQuestion.id];
+        const importance = tempImportance[currentQuestion.id] ?? prev?.importance ?? 50;
+        
         const newAnswer: DIQAnswer = {
             ...option,
-            importance: prev?.importance ?? 50,
+            importance: importance,
         };
         const newAnswers = { ...answers, [currentQuestion.id]: newAnswer };
         setAnswers(newAnswers);
@@ -96,19 +108,23 @@ export default function DIQModal({ onClose }: DIQModalProps) {
 
         setSubmitting(true);
         try {
-            const res = await fetch('/api/diq/recommendations', {
+            const res = await authenticatedFetch('/api/diq/recommendations', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ answers, limit: 20 }),
+                body: JSON.stringify({ answers, limit: 12 }),
             });
             const data = await res.json();
+            if (res.status === 402 || data?.error === 'INSUFFICIENT_CREDITS') {
+                setCreditErrorMeta({ required: data.requiredCredits, available: data.availableCredits });
+                setCreditsModalOpen(true);
+                return;
+            }
             if (data.success) {
-                // Store in sessionStorage for results page
-                sessionStorage.setItem('diq_results', JSON.stringify(data.products));
-                sessionStorage.setItem('diq_answers', JSON.stringify(answers));
-                sessionStorage.setItem('diq_questions', JSON.stringify(questions));
-                onClose();
-                router.push('/diq-results');
+                if (currentUser && typeof data.credits === 'number') {
+                    setCurrentUser({ ...currentUser, credits: data.credits });
+                }
+                setResults(data.products);
+                setShowResults(true);
             } else {
                 alert('Failed to get recommendations. Please try again.');
             }
@@ -119,23 +135,43 @@ export default function DIQModal({ onClose }: DIQModalProps) {
         }
     };
 
+    const getMatchReason = (product: any) => {
+        // Derived from important answers
+        const highImportanceAnswers = Object.values(answers)
+            .filter(a => a.importance >= 70)
+            .map(a => a.text);
+        
+        if (highImportanceAnswers.length > 0) {
+            return `Matches your preference for ${highImportanceAnswers[0]}${highImportanceAnswers.length > 1 ? ` & ${highImportanceAnswers[1]}` : ''}`;
+        }
+        
+        if (product.has_anc) return "Perfect for quiet listening with Active Noise Cancellation";
+        if (product.battery_hours > 40) return "Exceptional battery life for long usage";
+        
+        return "Top rated match based on your quality preferences";
+    };
+
     const isLast = currentIndex === questions.length - 1;
     const currentAnswer = currentQuestion ? answers[currentQuestion.id] : undefined;
 
     return (
         <div className="diq-modal show" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-            <div className="diq-modal-content">
+            <div className="diq-modal-content" style={{ maxWidth: showResults ? '900px' : '720px' }}>
                 <button className="diq-close" onClick={onClose}>×</button>
 
                 <div className="diq-header">
-                    <h2 className="diq-title">Find Your Perfect Match</h2>
-                    <p className="diq-subtitle-text">Answer a few quick questions to get personalized recommendations</p>
+                    <h2 className="diq-title">{showResults ? 'Your Perfect Matches' : 'Find Your Perfect Match'}</h2>
+                    <p className="diq-subtitle-text">
+                        {showResults 
+                            ? 'Top products ranked by D_IQ Score based on your preferences' 
+                            : 'Answer a few quick questions to get personalized recommendations'}
+                    </p>
                 </div>
 
                 {loading && <div className="diq-loading"><div className="diq-spinner" /><p className="diq-loading-text">Loading questions...</p></div>}
                 {error && <p style={{ color: '#c33', textAlign: 'center' }}>{error}</p>}
 
-                {!loading && !error && currentQuestion && (
+                {!loading && !error && !showResults && currentQuestion && (
                     <>
                         <div className="diq-progress">
                             <div className="diq-progress-bar">
@@ -153,7 +189,10 @@ export default function DIQModal({ onClose }: DIQModalProps) {
                                 <div className="diq-question-card">
                                     <h3 className="diq-question-title">{currentQuestion.question}</h3>
                                     {currentQuestion.helpText && (
-                                        <p className="diq-help-text"><IconLightbulb size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />{currentQuestion.helpText}</p>
+                                        <p className="diq-help-text">
+                                            <IconLightbulb size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+                                            {currentQuestion.helpText}
+                                        </p>
                                     )}
                                     <div className="diq-options">
                                         {currentQuestion.options.map(opt => (
@@ -180,12 +219,18 @@ export default function DIQModal({ onClose }: DIQModalProps) {
                                                 type="range"
                                                 className="diq-importance-slider"
                                                 min={0} max={100}
-                                                value={currentAnswer?.importance ?? 50}
+                                                value={tempImportance[currentQuestion.id] ?? currentAnswer?.importance ?? 50}
+                                                style={{ '--val': `${tempImportance[currentQuestion.id] ?? currentAnswer?.importance ?? 50}%` } as React.CSSProperties}
                                                 onChange={(e) => {
+                                                    const val = parseInt(e.target.value);
+                                                    // Update temp status so slider moves instantly
+                                                    setTempImportance(prev => ({ ...prev, [currentQuestion.id]: val }));
+                                                    
+                                                    // Also update existing answer if present
                                                     if (currentAnswer) {
                                                         setAnswers(prev => ({
                                                             ...prev,
-                                                            [currentQuestion.id]: { ...prev[currentQuestion.id], importance: parseInt(e.target.value) }
+                                                            [currentQuestion.id]: { ...prev[currentQuestion.id], importance: val }
                                                         }));
                                                     }
                                                 }}
@@ -212,6 +257,50 @@ export default function DIQModal({ onClose }: DIQModalProps) {
                         }
                     </>
                 )}
+
+                {showResults && results && (
+                    <div className="diq-results-container">
+                        <div className="diq-results-grid-modal">
+                            {results.map((p, i) => (
+                                <div
+                                    key={`${p.id}-${i}`}
+                                    className={`diq-result-card${p.isLocked ? ' locked' : ''}`}
+                                    onClick={() => {
+                                        if (p.isLocked) return;
+                                        onClose();
+                                        router.push(`/product/${p.id}?retailer=${encodeURIComponent(p.retailer_name || p.retailer || '')}`);
+                                    }}
+                                >
+                                    <img src={p.image_url || p.image} alt="" className={`diq-result-image${p.isLocked ? ' blurred' : ''}`} />
+                                    <div className={`diq-result-name${p.isLocked ? ' blurred' : ''}`}>{p.product_name || p.name}</div>
+                                    <div className={`diq-result-price${p.isLocked ? ' blurred' : ''}`}>₹{p.price_inr || p.price}</div>
+                                    <div className={`diq-match-reason${p.isLocked ? ' blurred' : ''}`}>{getMatchReason(p)}</div>
+                                    {p.isLocked && (
+                                        <div className="locked-product-overlay">
+                                            <p>Upgrade to unlock this premium pick</p>
+                                        </div>
+                                    )}
+                                    
+                                    <div className="diq-result-actions" onClick={e => e.stopPropagation()}>
+                                        <button className="diq-action-btn diq-cart-btn" onClick={() => addToCart(p)} disabled={p.isLocked}>Add to Cart</button>
+                                        <button className="diq-action-btn diq-bag-btn" onClick={() => addToBag(p)} disabled={p.isLocked}>Add to Bag</button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div style={{ textAlign: 'center', marginTop: '24px' }}>
+                                <button className="diq-nav-button diq-prev-button" onClick={() => { setShowResults(false); setCurrentIndex(questions.length - 1); }}>
+                                    <IconArrowLeft size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Change Preferences
+                                </button>
+                        </div>
+                    </div>
+                )}
+                <InsufficientCreditsModal
+                    open={creditsModalOpen}
+                    onClose={() => setCreditsModalOpen(false)}
+                    required={creditErrorMeta.required}
+                    available={creditErrorMeta.available}
+                />
             </div>
         </div>
     );

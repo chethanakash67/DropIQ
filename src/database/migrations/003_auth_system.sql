@@ -8,6 +8,9 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash VARCHAR(255) NOT NULL,
   full_name VARCHAR(255),
   role VARCHAR(50) DEFAULT 'user', -- 'user', 'admin'
+  plan_type VARCHAR(20) DEFAULT 'free', -- 'free', 'pro', 'premium'
+  credits INTEGER DEFAULT 20,
+  credits_last_refreshed TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   is_active BOOLEAN DEFAULT true,
   email_verified BOOLEAN DEFAULT false,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

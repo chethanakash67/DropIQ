@@ -6,6 +6,7 @@ import Navbar from "@/components/navbar"
 import Hero from "@/components/hero"
 import HowItWorks from "@/components/how-it-works"
 import WhyDifferent from "@/components/why-different"
+import SearchDemo from "@/components/search-demo"
 import SocialProof from "@/components/social-proof"
 import Team from "@/components/team"
 import DemoVideo from "@/components/demo-video"
@@ -37,6 +38,7 @@ export default function Page() {
       <Hero />
       <HowItWorks />
       <WhyDifferent />
+      <SearchDemo />
       <SocialProof />
       <DynamicTeam />
       <DemoVideo />

@@ -25,3 +25,12 @@ image capturing to just put the product invoice and from there, this must fetch 
 
 more data to be added about the stores
 
+add email confirmations each time of login
+
+
+value score in the search page will only work for online stores for now - give that info in the UI.
+
+
+
+pro accc - 523cs0014@iiitk.ac.in - google signin
+normal acc - saividesh29@gmail.com - google signin

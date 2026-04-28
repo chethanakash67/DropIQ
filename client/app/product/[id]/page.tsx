@@ -1,9 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 import {
     IconCart, IconStore, IconPhone, IconArrowLeft,
     IconStar, IconTag, IconExternalLink, IconCheckCircle
@@ -60,7 +63,7 @@ export default function ProductDetailPage() {
     const params = useParams();
     const id = params.id as string;
     const { currentUser, loading: authLoading } = useAuth();
-    const { addToCart } = useCart();
+    const { addToCart, addToBag, totalItems, totalBagItems, setShowCart, setShowBag } = useCart();
 
     const [product, setProduct] = useState<Product | null>(null);
     const [loading, setLoading] = useState(true);
@@ -69,7 +72,8 @@ export default function ProductDetailPage() {
     const [compsLoading, setCompsLoading] = useState(false);
     const [recommendations, setRecommendations] = useState<any[]>([]);
     const [recsLoading, setRecsLoading] = useState(false);
-    const [added, setAdded] = useState(false);
+    const [cartAdded, setCartAdded] = useState(false);
+    const [bagAdded, setBagAdded] = useState(false);
 
     useEffect(() => {
         if (!authLoading && !currentUser) router.replace('/login');
@@ -113,8 +117,15 @@ export default function ProductDetailPage() {
     const handleAddToCart = () => {
         if (!product) return;
         addToCart(product as Record<string, unknown>);
-        setAdded(true);
-        setTimeout(() => setAdded(false), 2000);
+        setCartAdded(true);
+        setTimeout(() => setCartAdded(false), 2000);
+    };
+
+    const handleAddToBag = () => {
+        if (!product) return;
+        addToBag(product as Record<string, unknown>);
+        setBagAdded(true);
+        setTimeout(() => setBagAdded(false), 2000);
     };
 
     if (authLoading || loading) return (
@@ -148,9 +159,21 @@ export default function ProductDetailPage() {
         return `https://${url}`;
     };
 
+    const handleStoreClick = async () => {
+        if (!currentUser) return;
+        try {
+            const res = await authenticatedFetch('/api/auth/me/increment-visits', { method: 'POST' });
+            if (res.ok) {
+                const data = await res.json();
+                setCurrentUser({ ...currentUser, storeVisits: data.visits });
+            }
+        } catch (_) {}
+    };
+
     return (
         <div className="product-detail-page">
-            <div className="product-detail-topbar">
+            <Navbar />
+            <div className="product-detail-topbar" style={{ marginBottom: '24px', display: 'flex', gap: '20px', alignItems: 'center' }}>
                 <button className="back-button" onClick={() => router.back()}>
                     <IconArrowLeft size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
                     Back to Results
@@ -177,27 +200,58 @@ export default function ProductDetailPage() {
                         {inStock ? 'In Stock' : 'Out of Stock'}
                     </div>
 
-                    <button
-                        className={`add-to-cart-btn-lg shiny-shield-btn ${added ? 'added' : ''}`}
-                        onClick={handleAddToCart}
-                        disabled={!inStock}
-                        style={{ marginTop: '20px' }}
-                    >
-                        <IconCart size={16} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-                        {added ? 'Added to Cart!' : 'Add to Cart'}
-                    </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '20px' }}>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <button
+                                className={`add-to-cart-btn-lg shiny-shield-btn ${cartAdded ? 'added' : ''}`}
+                                onClick={handleAddToCart}
+                                disabled={!inStock}
+                                style={{ 
+                                    flex: 1,
+                                    background: 'var(--gradient-vibrant)',
+                                    border: 'none',
+                                    padding: '14px',
+                                    borderRadius: '16px',
+                                    color: 'white',
+                                    fontWeight: 500,
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                {cartAdded ? 'Added to Cart!' : 'Add to Cart'}
+                            </button>
+                            <button
+                                className="add-to-bag-btn-lg"
+                                onClick={handleAddToBag}
+                                style={{ 
+                                    flex: 1, 
+                                    padding: '14px', 
+                                    borderRadius: '16px', 
+                                    border: 'none',
+                                    background: 'var(--gradient-vibrant)',
+                                    fontWeight: 500,
+                                    color: 'white',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.3s',
+                                    opacity: 0.9
+                                }}
+                            >
+                                {bagAdded ? 'Added to Bag!' : 'Add to Bag'}
+                            </button>
+                        </div>
 
-                    {(product.affiliate_url || product.product_url) && (
-                        <a
-                            href={getAbsoluteUrl(product.affiliate_url || product.product_url)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="view-on-store-btn"
-                        >
-                            <IconExternalLink size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
-                            View on {product.retailer_name}
-                        </a>
-                    )}
+                        {(product.affiliate_url || product.product_url) && (
+                            <a
+                                href={getAbsoluteUrl(product.affiliate_url || product.product_url)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="view-on-store-btn"
+                                style={{ width: '100%', textAlign: 'center' }}
+                                onClick={handleStoreClick}
+                            >
+                                View on {product.retailer_name}
+                            </a>
+                        )}
+                    </div>
                 </div>
 
                 <div className="product-detail-right">
@@ -259,6 +313,25 @@ export default function ProductDetailPage() {
                                                     ₹{c.price_inr?.toLocaleString('en-IN') ?? 'N/A'}
                                                 </span>
                                                 <span className="comp-savings" style={{ margin: 0 }}>Save ₹{Math.abs(savings).toLocaleString('en-IN')}</span>
+                                                <a 
+                                                    href={linkUrl} 
+                                                    target="_blank" 
+                                                    rel="noreferrer" 
+                                                    className="comp-visit"
+                                                    onClick={handleStoreClick}
+                                                    style={{ 
+                                                        marginLeft: 'auto',
+                                                        padding: '6px 12px', 
+                                                        background: 'var(--accent)', 
+                                                        color: 'white', 
+                                                        borderRadius: '8px',
+                                                        textDecoration: 'none',
+                                                        fontSize: '12px',
+                                                        fontWeight: 600
+                                                    }}
+                                                >
+                                                    Visit
+                                                </a>
                                             </div>
                                         );
                                     })}
@@ -299,6 +372,7 @@ export default function ProductDetailPage() {
                     )}
                 </div>
             </div>
+            <Footer />
         </div>
     );
 }

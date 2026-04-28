@@ -3,6 +3,8 @@ const router = express.Router();
 const diqQuestions = require('../config/diq-questions');
 const { getQuestionsForCategory } = require('../config/diq-questions');
 const diqScoringService = require('../services/diq-scoring-service');
+const { authenticate } = require('../middleware/auth');
+const { consumeCredits, InsufficientCreditsError } = require('../services/credits-service');
 
 /**
  * GET /api/diq/questions
@@ -67,8 +69,9 @@ router.get('/questions/:category', (req, res) => {
  *   "category": "earbuds"
  * }
  */
-router.post('/recommendations', async (req, res) => {
+router.post('/recommendations', authenticate, async (req, res) => {
   try {
+    const updatedCreditState = await consumeCredits(req.user.id, 7);
     const { answers, limit = 10, searchQuery = '', category = '' } = req.body;
 
     if (!answers || Object.keys(answers).length === 0) {
@@ -86,15 +89,33 @@ router.post('/recommendations', async (req, res) => {
       category
     );
 
+    const shouldLockTopTwo = req.user.planType === 'free';
+    const productsWithLocks = topProducts.map((product, index) => ({
+      ...product,
+      isLocked: shouldLockTopTwo && index < 2,
+    }));
+
     res.json({
       success: true,
-      count: topProducts.length,
-      products: topProducts,
-      message: topProducts.length === 0
+      count: productsWithLocks.length,
+      products: productsWithLocks,
+      credits: updatedCreditState.credits,
+      creditCost: 7,
+      message: productsWithLocks.length === 0
         ? 'No products match your preferences. Try adjusting your filters.'
-        : `Found ${topProducts.length} products matching your preferences`
+        : `Found ${productsWithLocks.length} products matching your preferences`
     });
   } catch (error) {
+    if (error instanceof InsufficientCreditsError) {
+      return res.status(402).json({
+        success: false,
+        error: 'INSUFFICIENT_CREDITS',
+        message: 'Your credits are over. Please upgrade your plan.',
+        requiredCredits: error.required,
+        availableCredits: error.available,
+        redirectTo: '/plans',
+      });
+    }
     console.error('Error getting recommendations:', error);
     res.status(500).json({
       success: false,

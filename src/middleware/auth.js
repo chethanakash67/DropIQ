@@ -1,4 +1,5 @@
 const authService = require('../services/auth-service');
+const creditsService = require('../services/credits-service');
 
 /**
  * Authentication middleware - verifies JWT access token
@@ -38,12 +39,21 @@ const authenticate = async (req, res, next) => {
       });
     }
 
+    const refreshed = await creditsService.maybeRefreshAndGetUser(user.id);
+
     // Attach user to request object
     req.user = {
       id: user.id,
       email: user.email,
       role: user.role,
-      fullName: user.full_name
+      fullName: user.full_name,
+      phone: user.phone,
+      address: user.address,
+      preferences: user.preferences,
+      themePreference: user.theme_preference,
+      planType: refreshed?.plan_type || creditsService.normalizePlanType(user.plan_type),
+      credits: refreshed?.credits ?? user.credits,
+      creditsLastRefreshed: refreshed?.credits_last_refreshed ?? user.credits_last_refreshed
     };
 
     next();
@@ -98,11 +108,19 @@ const optionalAuth = async (req, res, next) => {
     if (decoded) {
       const user = await authService.getUserById(decoded.userId);
       if (user && user.is_active) {
+        const refreshed = await creditsService.maybeRefreshAndGetUser(user.id);
         req.user = {
           id: user.id,
           email: user.email,
           role: user.role,
-          fullName: user.full_name
+          fullName: user.full_name,
+          phone: user.phone,
+          address: user.address,
+          preferences: user.preferences,
+          themePreference: user.theme_preference,
+          planType: refreshed?.plan_type || creditsService.normalizePlanType(user.plan_type),
+          credits: refreshed?.credits ?? user.credits,
+          creditsLastRefreshed: refreshed?.credits_last_refreshed ?? user.credits_last_refreshed
         };
       }
     }

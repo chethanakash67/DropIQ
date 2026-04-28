@@ -139,3 +139,22 @@ CREATE TABLE IF NOT EXISTS search_history (
 -- Create index for faster search history queries
 CREATE INDEX IF NOT EXISTS idx_search_history_query ON search_history(search_query);
 CREATE INDEX IF NOT EXISTS idx_search_history_last_searched ON search_history(last_searched_at DESC);
+
+-- Users table
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  full_name VARCHAR(255),
+  role VARCHAR(50) DEFAULT 'user', -- 'user', 'admin'
+  plan_type VARCHAR(20) DEFAULT 'free', -- 'free', 'pro', 'premium'
+  credits INTEGER DEFAULT 20,
+  credits_last_refreshed TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  is_active BOOLEAN DEFAULT true,
+  email_verified BOOLEAN DEFAULT false,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  last_login TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);

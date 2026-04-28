@@ -29,6 +29,7 @@ interface ProductResult {
     disclaimer?: string;
     store_name?: string;
     owner_phone?: string;
+    isLocked?: boolean;
     [key: string]: unknown;
 }
 
@@ -70,12 +71,10 @@ export default function DIQResultsPage() {
 
     return (
         <div className="diq-results-page">
+            <Navbar />
             <div className="diq-results-header-bar">
                 <button className="back-button" onClick={() => { sessionStorage.removeItem('diq_results'); router.push('/dashboard'); }}>
                     <IconArrowLeft size={15} style={{ marginRight: 4, verticalAlign: 'middle' }} /> Back to Dashboard
-                </button>
-                <button className="cart-button" onClick={() => setShowCart(true)}>
-                    <IconCart size={16} style={{ marginRight: 4, verticalAlign: 'middle' }} /> Cart {totalItems > 0 && <span className="cart-count">{totalItems}</span>}
                 </button>
             </div>
 
@@ -125,28 +124,33 @@ export default function DIQResultsPage() {
                     const isOffline = product.source_type === 'offline' || product.is_offline_product;
 
                     return (
-                        <div key={`${product.id}-${index}`} className={`product-card${isOffline ? ' offline-product' : ''}`} style={{ display: 'flex', flexDirection: 'column' }}>
+                        <div key={`${product.id}-${index}`} className={`product-card${isOffline ? ' offline-product' : ''}${product.isLocked ? ' locked' : ''}`} style={{ display: 'flex', flexDirection: 'column' }}>
                             <span className={`diq-rank-badge${rankClass}`}>
                                 {rank <= 3 ? <><IconTrophy size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} /> #{rank}</> : `#${rank}`}
                             </span>
                             {isOffline && <span className="offline-badge"><IconStore size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} /> Offline Store</span>}
+                            {product.isLocked && (
+                                <div className="locked-product-overlay">
+                                    <p>Upgrade to unlock this premium recommendation</p>
+                                </div>
+                            )}
 
                             {(product.image_url || product.image) && (!isOffline || (product.image_url && product.image_url.trim()))
-                                ? <img src={product.image_url || product.image} alt={product.product_name || product.name} className="diq-product-image" />
+                                ? <img src={product.image_url || product.image} alt={product.product_name || product.name} className={`diq-product-image${product.isLocked ? ' blurred' : ''}`} />
                                 : <div className="no-image-placeholder">No Image</div>
                             }
 
-                            <h3 className="product-name">{product.product_name || product.name}</h3>
-                            <p className="product-price">₹{product.price_inr || product.price}</p>
+                            <h3 className={`product-name${product.isLocked ? ' blurred' : ''}`}>{product.product_name || product.name}</h3>
+                            <p className={`product-price${product.isLocked ? ' blurred' : ''}`}>₹{product.price_inr || product.price}</p>
 
-                            <div className="diq-score-container">
+                            <div className={`diq-score-container${product.isLocked ? ' blurred' : ''}`}>
                                 <div className="diq-score-label">D_IQ Score</div>
                                 <div className={`diq-score-value ${scoreClass}`}>{product.diq_score}</div>
                                 <div className="diq-rating">{product.diq_rating}</div>
                             </div>
 
                             {features.length > 0 && (
-                                <div className="diq-features-list">
+                                <div className={`diq-features-list${product.isLocked ? ' blurred' : ''}`}>
                                     {features.map((f, i) => <span key={i} className="diq-feature-badge">{f}</span>)}
                                 </div>
                             )}
@@ -166,10 +170,11 @@ export default function DIQResultsPage() {
                             )}
 
                             <div className="diq-product-actions">
-                                <button className="add-to-cart-btn" onClick={() => addToCart(product as Record<string, unknown>)}>
+                                <button className="add-to-cart-btn" disabled={product.isLocked} onClick={() => addToCart(product as Record<string, unknown>)}>
                                     <IconCart size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} /> Add to Cart
                                 </button>
                                 <button className="diq-buy-button"
+                                    disabled={product.isLocked}
                                     onClick={() => window.open(String(product.affiliate_url || product.product_url || product.link || '#'), '_blank')}>
                                     {isOffline ? 'Visit Store' : `View on ${product.retailer}`}
                                 </button>

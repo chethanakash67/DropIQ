@@ -13,36 +13,36 @@ export default function Footer() {
               <span className="font-bold text-lg dark:text-white">{"DropiQ"}</span>
             </div>
             <p className="mt-3 text-xl text-gray-600 dark:text-gray-300 max-w-lg pr-4">
-              {"We help students easily compare prices and features across the latest gadgets. Our goal is to ensure you always get the smartest deal without compromising on quality or performance."}
+              {"We compare online and offline stores according to your location to find the most affordable price, so you can buy with confidence."}
             </p>
           </div>
           <div>
             <h4 className="font-semibold dark:text-white">{"Company"}</h4>
             <ul className="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
               <li>
-                <Link className="hover:text-gray-900 dark:hover:text-cyan-300" href="#why-different">
+                <Link className="hover:text-gray-900 dark:hover:text-cyan-300" href="/about">
                   {"About"}
                 </Link>
               </li>
               <li>
-                <Link className="hover:text-gray-900 dark:hover:text-cyan-300" href="#demo-video">
+                <Link className="hover:text-gray-900 dark:hover:text-cyan-300" href="/contact">
                   {"Contact"}
                 </Link>
               </li>
             </ul>
           </div>
           <div>
-            <h4 className="font-semibold dark:text-white">{"Legal(Coming soon)"}</h4>
+            <h4 className="font-semibold dark:text-white">{"Legal"}</h4>
             <ul className="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
               <li>
-                <a className="hover:text-gray-900 dark:hover:text-cyan-300 cursor-not-allowed" href="#" aria-disabled>
+                <Link className="hover:text-gray-900 dark:hover:text-cyan-300" href="/privacy">
                   {"Privacy Policy"}
-                </a>
+                </Link>
               </li>
               <li>
-                <a className="hover:text-gray-900 dark:hover:text-cyan-300 cursor-not-allowed" href="#" aria-disabled>
+                <Link className="hover:text-gray-900 dark:hover:text-cyan-300" href="/terms">
                   {"Terms"}
-                </a>
+                </Link>
               </li>
             </ul>
             <div className="mt-4 flex items-center gap-3">

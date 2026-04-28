@@ -48,7 +48,7 @@ export default function FinalCta() {
             <Link href={`${DASHBOARD_URL}/signup`} target="_blank" rel="noopener noreferrer">
               <Button size="lg" className="w-full sm:w-auto rounded-full px-8 bg-emerald-600 hover:bg-emerald-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 shadow-lg">
                 <UserPlus className="mr-2 h-5 w-5" />
-                {"Sign Up — It's Free"}
+                {"Sign Up, It's Free"}
               </Button>
             </Link>
             <Link href={`${DASHBOARD_URL}/login`} target="_blank" rel="noopener noreferrer">

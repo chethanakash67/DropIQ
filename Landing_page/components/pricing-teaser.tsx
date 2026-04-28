@@ -24,6 +24,7 @@ function Feature({ text }: { text: string }) {
 export default function PricingTeaser() {
   const [freeCardFlipped, setFreeCardFlipped] = useState(false)
   const [proCardFlipped, setProCardFlipped] = useState(false)
+  const [maxCardFlipped, setMaxCardFlipped] = useState(false)
   const [isTouchDevice, setIsTouchDevice] = useState(false)
   
   // Detect if device supports touch (mobile/tablet)
@@ -51,18 +52,20 @@ export default function PricingTeaser() {
     document.querySelector("#final-cta")?.scrollIntoView({ behavior: "smooth" })
   }
 
-  const handleCardClick = (cardType: 'free' | 'pro') => {
+  const handleCardClick = (cardType: 'free' | 'pro' | 'max') => {
     // Only flip on click if it's a touch device
     if (isTouchDevice) {
       if (cardType === 'free') {
         setFreeCardFlipped(!freeCardFlipped)
-      } else {
+      } else if (cardType === 'pro') {
         setProCardFlipped(!proCardFlipped)
+      } else {
+        setMaxCardFlipped(!maxCardFlipped)
       }
     }
   }
 
-  const handleKeyDown = (event: React.KeyboardEvent, cardType: 'free' | 'pro') => {
+  const handleKeyDown = (event: React.KeyboardEvent, cardType: 'free' | 'pro' | 'max') => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
       handleCardClick(cardType)
@@ -78,7 +81,7 @@ export default function PricingTeaser() {
         </p>
       </div>
 
-      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-4xl mx-auto">
+      <div className="mt-8 grid grid-flow-col auto-cols-[minmax(280px,1fr)] md:auto-cols-auto md:grid-cols-3 gap-6 max-w-6xl mx-auto overflow-x-auto pb-2">
         {/* Free Plan Card */}
         <div
           className={`group relative [perspective:1000px] h-[400px] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-cyan-500 rounded-2xl ${
@@ -215,13 +218,77 @@ export default function PricingTeaser() {
             </Card>
           </div>
         </div>
+
+        {/* Max Plan Card */}
+        <div
+          className={`group relative [perspective:1000px] h-[400px] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-cyan-500 rounded-2xl ${
+            isTouchDevice ? 'cursor-pointer' : ''
+          }`}
+          onClick={() => handleCardClick('max')}
+          onKeyDown={(e) => handleKeyDown(e, 'max')}
+          tabIndex={isTouchDevice ? 0 : -1}
+          role={isTouchDevice ? "button" : "presentation"}
+          aria-pressed={isTouchDevice ? maxCardFlipped : undefined}
+          aria-label={isTouchDevice ? "Max plan card, click to flip and see details" : undefined}
+        >
+          <div
+            className={`relative h-full transform-gpu transition-transform duration-700 [transform-style:preserve-3d] ${
+              maxCardFlipped ? "[transform:rotateY(180deg)]" : ""
+            } ${
+              isTouchDevice ? '' : 'group-hover:[transform:rotateY(180deg)]'
+            } motion-reduce:transition-none motion-reduce:[transform:none]`}
+          >
+            {/* Front face */}
+            <Card className="p-6 rounded-2xl relative overflow-hidden transition-all duration-300 dark:bg-slate-900 dark:border-slate-800 [backface-visibility:hidden] h-full flex flex-col bg-gradient-to-br from-white via-emerald-100/30 to-white dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 border-2 border-emerald-300 dark:border-cyan-700 shadow-lg hover:shadow-xl hover:scale-[1.02] group-hover:shadow-2xl">
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/40 via-transparent to-lime-100/40 dark:from-cyan-900/30 dark:via-transparent dark:to-sky-900/30" />
+              <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-gradient-to-br from-emerald-300 to-lime-300 dark:from-cyan-700/40 dark:to-sky-700/40 blur-xl" />
+              
+              <div className="relative flex-1 flex flex-col items-center justify-center text-center">
+                <div className="mb-4 p-3 rounded-full bg-gradient-to-r from-emerald-300 to-lime-300 dark:from-cyan-700/50 dark:to-sky-700/50 shadow-inner">
+                  <Crown className="h-8 w-8 text-emerald-700 dark:text-cyan-300" />
+                </div>
+                <h3 className="text-3xl sm:text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-emerald-700 via-lime-600 to-emerald-700 dark:from-cyan-400 dark:via-sky-400 dark:to-cyan-400 animate-[gradientMove_8s_ease_infinite] bg-[length:200%_200%]">
+                  {"Max Plan"}
+                </h3>
+                <p className="mt-2 text-gray-700 dark:text-gray-200 text-sm font-medium">{"The Ultimate Shopping Power"}</p>
+              </div>
+            </Card>
+
+            {/* Back face */}
+            <Card className="p-6 rounded-2xl relative overflow-hidden dark:bg-slate-900 dark:border-slate-800 absolute inset-0 [transform:rotateY(180deg)] [backface-visibility:hidden] h-full flex flex-col bg-gradient-to-br from-white via-emerald-50 to-white dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 border-2 border-emerald-300 dark:border-cyan-700 shadow-lg">
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/20 via-transparent to-lime-100/20 dark:from-cyan-900/15 dark:via-transparent dark:to-sky-900/15" />
+              
+              <div className="relative flex flex-col h-full">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-semibold dark:text-white">{"Max Plan"}</h3>
+                  <Badge className="bg-gradient-to-r from-emerald-500 to-lime-500 text-white border-none text-xs font-bold shadow-sm">
+                    {"BEST VALUE"}
+                  </Badge>
+                </div>
+                <div className="mt-2">
+                  <span className="text-4xl font-extrabold text-emerald-700 dark:text-cyan-400">{"₹999"}</span>
+                  <span className="text-gray-500 dark:text-gray-400 ml-1">{"/mo"}</span>
+                </div>
+                <ul className="mt-4 space-y-3 text-sm text-gray-700 dark:text-gray-200 flex-1">
+                  <Feature text="Advanced AI Comparison" />
+                  <Feature text="Offline Store Insights" />
+                  <Feature text="Unlimited Preferences" />
+                  <Feature text="Priority 24/7 Support" />
+                </ul>
+                <Button onClick={scrollToFinalCTA} className="mt-6 w-full rounded-xl bg-gradient-to-r from-emerald-600 to-lime-600 hover:from-emerald-700 hover:to-lime-700 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5">
+                  {"Upgrade to Max"}
+                </Button>
+              </div>
+            </Card>
+          </div>
+        </div>
       </div>
 
       <div className="mt-8 max-w-xl mx-auto flex justify-center">
         <Link href={`${DASHBOARD_URL}/signup`} target="_blank" rel="noopener noreferrer">
           <Button size="lg" className="rounded-full px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-lg whitespace-nowrap">
             <UserPlus className="mr-2 h-5 w-5 shrink-0" />
-            {"Sign Up — It's Free"}
+            {"Sign Up, It's Free"}
           </Button>
         </Link>
       </div>

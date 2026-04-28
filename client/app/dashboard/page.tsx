@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import CountdownTimer from '@/components/CountdownTimer';
 import DIQModal from '@/components/DIQModal';
 
 const CategoryItem = ({ cat, router }: { cat: any, router: any }) => {
@@ -40,7 +42,7 @@ const CategoryItem = ({ cat, router }: { cat: any, router: any }) => {
                 </div>
             ))}
             <div className="category-circle" onClick={() => router.push(`/results?q=${cat.q}`)} style={{ 
-                width: '200px', height: '200px', borderRadius: '50%', background: '#fdfbf7', 
+                width: '200px', height: '200px', borderRadius: '50%', background: 'var(--bg-secondary)', 
                 border: '3px solid var(--border-focus)', display: 'flex', flexDirection: 'column', 
                 alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden',
                 position: 'relative', boxShadow: '0 8px 25px rgba(16,185,129,0.15)', transition: 'all 0.4s cubic-bezier(0.25, 1, 0.5, 1)'
@@ -50,10 +52,10 @@ const CategoryItem = ({ cat, router }: { cat: any, router: any }) => {
                     {cat.image ? (
                          <img src={cat.image} alt={cat.name} style={{ width: '80px', height: '80px', objectFit: 'contain', marginBottom: '12px' }} />
                     ) : (
-                        <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: '#d1fae5', marginBottom: '12px' }} />
+                        <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)', marginBottom: '12px' }} />
                     )}
                     <h3 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)', zIndex: 2, marginBottom: '4px' }}>{cat.name}</h3>
-                    <p style={{ color: '#059669', fontWeight: 700, zIndex: 2, fontSize: '14px', background: '#ecfdf5', padding: '2px 8px', borderRadius: '12px' }}>From ₹{cat.price}</p>
+                    <p style={{ color: 'var(--accent)', fontWeight: 700, zIndex: 2, fontSize: '14px', background: 'rgba(16, 185, 129, 0.08)', padding: '2px 8px', borderRadius: '12px' }}>From ₹{cat.price}</p>
                 </div>
             </div>
         </div>
@@ -62,14 +64,44 @@ const CategoryItem = ({ cat, router }: { cat: any, router: any }) => {
 
 export default function DashboardPage() {
     const router = useRouter();
-    const { currentUser, loading } = useAuth();
+    const { currentUser, loading, authenticatedFetch } = useAuth();
     const { cart } = useCart();
     
     const [searchTerm, setSearchTerm] = useState('');
     const [showDIQ, setShowDIQ] = useState(false);
     const [searchHistory, setSearchHistory] = useState<any[]>([]);
-    const [frequentSearches, setFrequentSearches] = useState<any[]>(['iPhone', 'Earbuds', 'Samsung', 'Laptop', 'Watch']);
+    const [frequentSearches, setFrequentSearches] = useState<any[]>(['Earphones', 'Earpods', 'Headphones', 'Neckbands', 'Smartwatch']);
+    const [initialFrequent, setInitialFrequent] = useState<any[]>(['Earphones', 'Earpods', 'Headphones', 'Neckbands', 'Smartwatch']);
     const [isHistoryVisible, setIsHistoryVisible] = useState(false);
+    const [cooldownTime, setCooldownTime] = useState(0);
+    const RECENT_SEARCHES_KEY = 'dropiq_recent_searches';
+
+    useEffect(() => {
+        if (cooldownTime <= 0) return;
+        const timer = setInterval(() => setCooldownTime(prev => Math.max(0, prev - 1)), 1000);
+        return () => clearInterval(timer);
+    }, [cooldownTime]);
+
+    const loadRecentSearches = () => {
+        try {
+            const raw = localStorage.getItem(RECENT_SEARCHES_KEY);
+            if (!raw) return [];
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch {
+            return [];
+        }
+    };
+
+    const pushRecentSearch = (query: string) => {
+        const clean = query.trim();
+        if (!clean) return;
+        const existing = loadRecentSearches();
+        const next = [clean, ...existing.filter((q: string) => q.toLowerCase() !== clean.toLowerCase())].slice(0, 12);
+        localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next));
+        setSearchHistory(next);
+    };
+
     
     const [lootDeals, setLootDeals] = useState<any[]>([]);
     const [festiveCollection, setFestiveCollection] = useState<any[]>([]);
@@ -87,24 +119,58 @@ export default function DashboardPage() {
 
     const [slideshowImages, setSlideshowImages] = useState<any[]>([]);
     const [slideshowIndex, setSlideshowIndex] = useState(0);
+    const [isPageReady, setIsPageReady] = useState(false);
 
     useEffect(() => {
         if (!loading && !currentUser) router.replace('/login');
-    }, [loading, currentUser, router]);
+        
+        // Restore scroll position when user comes back
+        const savedScroll = sessionStorage.getItem('dashboardScroll');
+        if (isPageReady && savedScroll) {
+            setTimeout(() => {
+                window.scrollTo({ top: parseInt(savedScroll), behavior: 'instant' });
+                sessionStorage.removeItem('dashboardScroll');
+            }, 50); // Small buffer to ensure DOM is painted
+        }
+    }, [loading, currentUser, router, isPageReady]);
+
+    // Save scroll position before navigating away
+    useEffect(() => {
+        const handleScroll = () => {
+            if (window.scrollY > 0) {
+                sessionStorage.setItem('dashboardScroll', window.scrollY.toString());
+            }
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    // Fetch data on mount
+    useEffect(() => {
+        // Start the reveal timer IMMEDIATELY to sync with global loader (2s)
+        // This runs only once on mount to ensure a stable reveal even if currentUser flickers
+        const revealTimer = setTimeout(() => setIsPageReady(true), 1900);
+        return () => clearTimeout(revealTimer);
+    }, []);
 
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                const [loot, festive, grab, suggested, gadgets, favs, history, frequent] = await Promise.all([
+                // Hydrate local cache
+                const localRecent = loadRecentSearches();
+                if (localRecent.length > 0) setSearchHistory(localRecent);
+
+                const fetchPromises = [
                     fetch('/api/products/search?limit=8&sortBy=price_desc').then(r => r.json()),
                     fetch('/api/products/search?limit=12&sortBy=rating').then(r => r.json()),
                     fetch('/api/products/search?limit=8&sortBy=price_asc').then(r => r.json()),
                     fetch('/api/products/search?limit=8&sortBy=rating').then(r => r.json()),
                     fetch('/api/products/search?limit=8').then(r => r.json()),
                     fetch('/api/products/search?limit=8').then(r => r.json()),
-                    fetch('/api/products/search-history?limit=5').then(r => r.json()),
                     fetch('/api/products/frequent-searches').then(r => r.json())
-                ]);
+                ];
+
+                const [loot, festive, grab, suggested, gadgets, favs, frequent] = await Promise.all(fetchPromises);
                 
                 if (loot.success) setLootDeals(loot.products);
                 if (festive.success) setFestiveCollection(festive.products);
@@ -112,10 +178,22 @@ export default function DashboardPage() {
                 if (suggested.success) setSuggestedForYou(suggested.products);
                 if (gadgets.success) setBestGadgets([...gadgets.products].reverse());
                 if (favs.success) setFavourites(favs.products);
-                if (history.success) setSearchHistory(history.history);
-                if (frequent.success) setFrequentSearches(frequent.searches);
+                if (frequent.success) {
+                    setFrequentSearches(frequent.searches);
+                    setInitialFrequent(frequent.searches);
+                }
                 
-                // Fetch dynamic images for circular categories
+                if (currentUser) {
+                    const historyRes = await authenticatedFetch('/api/products/search-history?limit=15');
+                    if (historyRes.ok) {
+                        const historyData = await historyRes.json();
+                        const serverHistory = (historyData.history || [])
+                            .map((item: any) => (typeof item === 'string' ? item : (item.search_query || item.query)))
+                            .filter(Boolean);
+                        if (serverHistory.length > 0) setSearchHistory(serverHistory);
+                    }
+                }
+                
                 const catImages = await Promise.all(categoryMeta.map(cat => 
                     fetch(`/api/products/search?limit=1&q=${cat.q}`).then(r => r.json())
                 ));
@@ -125,7 +203,6 @@ export default function DashboardPage() {
                     image: (catImages[i].success && catImages[i].products.length > 0) ? catImages[i].products[0].image_url : null
                 })));
 
-                // Set slideshow images
                 const allProds = [...loot.products, ...festive.products, ...suggested.products].filter(p => p.image_url);
                 if (allProds.length > 0) {
                     const sorted = allProds.sort(() => 0.5 - Math.random());
@@ -136,8 +213,57 @@ export default function DashboardPage() {
                 console.error("Dashboard data load failed", e);
             }
         };
-        fetchInitialData();
-    }, []);
+        if (currentUser) fetchInitialData();
+    }, [currentUser, authenticatedFetch]);
+
+    // Handle dynamic search suggestions as user types
+    useEffect(() => {
+        if (!searchTerm.trim()) {
+            setFrequentSearches(initialFrequent);
+            return;
+        }
+
+        const timer = setTimeout(async () => {
+            try {
+                const res = await fetch(`/api/products/search-suggestions?q=${encodeURIComponent(searchTerm)}&limit=5`);
+                const data = await res.json();
+                if (data.success && data.suggestions.length > 0) {
+                    setFrequentSearches(data.suggestions);
+                    setIsHistoryVisible(true); // Re-open if we found matches
+                } else {
+                    setFrequentSearches([]);
+                    // Auto-close if no matches found after 3 characters
+                    if (searchTerm.trim().length >= 3) {
+                        setIsHistoryVisible(false);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch suggestions:", err);
+            }
+        }, 200);
+
+        return () => clearTimeout(timer);
+    }, [searchTerm, initialFrequent]);
+
+    const handleClearHistory = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!window.confirm('Clear all search history?')) return;
+        
+        try {
+            const res = await authenticatedFetch('/api/products/search-history', {
+                method: 'DELETE'
+            });
+            if (res.ok) {
+                setSearchHistory([]);
+                localStorage.removeItem(RECENT_SEARCHES_KEY);
+            }
+        } catch (err) {
+            console.error('Failed to clear history:', err);
+            // Keep UX consistent even if API fails
+            setSearchHistory([]);
+            localStorage.removeItem(RECENT_SEARCHES_KEY);
+        }
+    };
 
     useEffect(() => {
         if (slideshowImages.length === 0) return;
@@ -230,19 +356,38 @@ export default function DashboardPage() {
             clearTimeout(initTimer);
             cancelAnimationFrame(rafId);
         };
-    }, [lootDeals, festiveCollection, grabOrGone, suggestedForYou, bestGadgets, favourites]); // Rebind after fetch
+    }, [lootDeals, festiveCollection, grabOrGone, suggestedForYou, bestGadgets, favourites]); // Rebind after fetch and ready
 
     const handleSearch = () => {
         const q = searchTerm.trim();
         if (!q) return;
+        pushRecentSearch(q);
+        sessionStorage.setItem('last_search_timestamp', Date.now().toString());
         router.push(`/results?q=${encodeURIComponent(q)}`);
     };
 
+    useEffect(() => {
+        const lastSearch = sessionStorage.getItem('last_search_timestamp');
+        if (lastSearch) {
+            const elapsed = Math.floor((Date.now() - parseInt(lastSearch)) / 1000);
+            if (elapsed < 60) {
+                setCooldownTime(60 - elapsed);
+            }
+        }
+    }, []);
+
     const loadProduct = (id: string, retailer: string) => {
+        sessionStorage.setItem('dashboardScroll', window.scrollY.toString());
         router.push(`/product/${id}?retailer=${encodeURIComponent(retailer)}`);
     };
 
     if (loading || !currentUser) return null;
+
+
+    const planType = currentUser.planType === 'premium' ? 'max' : currentUser.planType || 'free';
+    const maxCredits = planType === 'max' ? 75 : planType === 'pro' ? 50 : 20;
+    const currentCredits = currentUser.credits ?? 0;
+    const usedCredits = Math.max(0, maxCredits - currentCredits);
 
     const renderCard = (p: any, i: number, uniqueKey: string) => {
         const isFestive = uniqueKey === 'festive';
@@ -250,6 +395,7 @@ export default function DashboardPage() {
         const isGrab = uniqueKey === 'grab';
         const isFav = uniqueKey === 'fav';
         const isSuggested = uniqueKey === 'suggested';
+        const isCart = uniqueKey === 'cart';
 
         const displayTitle = (isFestive || isLoot || isGrab || isFav || isSuggested)
             ? (p.product_name?.length > 25 ? p.product_name.substring(0, 25) + '...' : p.product_name)
@@ -282,7 +428,7 @@ export default function DashboardPage() {
         const cardClass = isFestive ? "product-card revolving-border-card" : 
                         (isFav ? "product-card periodic-shine-card" : 
                         (isGrab ? "product-card" : "product-card floating-card"));
-        const widthStyle = isFestive ? { minWidth: '100%', maxWidth: '100%' } : { minWidth: '200px', maxWidth: '200px' };
+        const widthStyle = (isFestive || isFav || isCart) ? { width: '100%' } : { minWidth: '200px', maxWidth: '200px' };
 
         return (
             <div key={`${uniqueKey}-${i}`} className={cardClass} onClick={() => loadProduct(p.id, p.retailer_name)} style={{ cursor: 'pointer', ...widthStyle, border: isFav ? '4px double #10b981' : undefined, background: isFav ? 'transparent' : undefined, boxShadow: isFav ? 'none' : undefined }}>
@@ -304,55 +450,185 @@ export default function DashboardPage() {
 
     return (
         <>
-            <div className="dashboard">
+            <div className="dashboard" style={{ visibility: isPageReady ? 'visible' : 'hidden', opacity: isPageReady ? 1 : 0 }}>
                 <Navbar />
+                <div className="credit-meter-mini">
+                    <span
+                        className="credit-upgrade-link"
+                        onClick={() => router.push('/plans')}
+                        style={{ 
+                            cursor: 'pointer', 
+                            textDecoration: 'underline', 
+                            color: 'var(--accent)', 
+                            fontWeight: 700, 
+                            fontSize: '12px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px'
+                        }}
+                    >
+                        Upgrade
+                    </span>
+                    <div className="credit-meter-track" aria-label="Credit usage">
+                        <div
+                            className="credit-meter-bar"
+                            style={{ width: `${Math.min(100, Math.max(0, (usedCredits / maxCredits) * 100))}%` }}
+                        />
+                    </div>
+                    <div className="credit-meter-info" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+                        <span className="credit-meter-text" style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                            {currentCredits} / {maxCredits} credits
+                        </span>
+                        <CountdownTimer 
+                            lastRefreshed={currentUser?.creditsLastRefreshed} 
+                            style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 500 }}
+                        />
+                    </div>
+                </div>
 
                 <div className="search-container" style={{ marginTop: '20px', marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '30px', paddingLeft: '20px' }}>
                     <div className="search-box" style={{ flex: '0 1 65%', minWidth: 'unset' }}>
                         <input
                             type="text"
                             id="searchInput"
-                            placeholder="Search for products, brands and more..."
+                            placeholder={currentCredits < 3 ? "Insufficient credits to search..." : "Search for products, brands and more..."}
                             autoComplete="off"
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                             onKeyDown={e => { if (e.key === 'Enter') handleSearch(); }}
                             onFocus={() => setIsHistoryVisible(true)}
                             onBlur={() => setTimeout(() => setIsHistoryVisible(false), 200)}
-                            style={{ flex: 1 }}
+                            style={{ 
+                                flex: 1,
+                                opacity: currentCredits < 3 ? 0.6 : 1,
+                                cursor: currentCredits < 3 ? 'not-allowed' : 'text'
+                            }}
+                            disabled={currentCredits < 3}
                         />
-                        <button id="searchButton" onClick={handleSearch}>Search</button>
+                        <button 
+                            id="searchButton" 
+                            onClick={handleSearch}
+                            disabled={currentCredits < 3}
+                            style={{
+                                opacity: currentCredits < 3 ? 0.5 : 1,
+                                cursor: currentCredits < 3 ? 'not-allowed' : 'pointer',
+                                background: currentCredits < 3 ? '#94a3b8' : 'var(--accent)'
+                            }}
+                        >
+                            Search
+                        </button>
+                        {cooldownTime > 0 && currentCredits >= 3 && (
+                            <div style={{
+                                position: 'absolute',
+                                right: '110px',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                color: '#10b981',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                background: 'rgba(16, 185, 129, 0.1)',
+                                padding: '4px 10px',
+                                borderRadius: '20px',
+                                border: '1px solid rgba(16, 185, 129, 0.2)',
+                                pointerEvents: 'none',
+                                animation: 'fadeIn 0.3s ease'
+                            }}>
+                                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
+                                FREE REFRESH: {cooldownTime}s
+                            </div>
+                        )}
+                        {currentCredits < 3 && (
+                            <div style={{ 
+                                position: 'absolute', 
+                                bottom: '-24px', 
+                                left: '20px', 
+                                color: '#ef4444', 
+                                fontSize: '12px', 
+                                fontWeight: 600,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                            }}>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12" y2="16"/></svg>
+                                <span style={{ marginRight: '8px' }}>You have no sufficient credit points.</span>
+                                <CountdownTimer 
+                                    lastRefreshed={currentUser?.creditsLastRefreshed} 
+                                    prefix="Refills in: "
+                                    style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '2px 6px', borderRadius: '4px' }}
+                                />
+                            </div>
+                        )}
 
                         {isHistoryVisible && (searchHistory.length > 0 || frequentSearches.length > 0) && (
                             <div className="search-history-dropdown">
-                                {searchHistory.length > 0 && (
-                                    <>
-                                        <div style={{ padding: '8px 20px', fontSize: '11px', fontWeight: 600, color: 'var(--text-faint)', textTransform: 'uppercase' }}>Recent Searches</div>
-                                        {searchHistory.map((item, idx) => (
-                                            <div key={`hist-${idx}`} className="search-history-item" onClick={() => {
-                                                setSearchTerm(item.query);
-                                                handleSearch();
-                                            }}>
-                                                <span style={{ opacity: 0.5 }}>🕒</span> {item.query}
-                                            </div>
-                                        ))}
-                                    </>
+                                {/* PHASE 1: Empty input -> Show history */}
+                                {!searchTerm.trim() && searchHistory.length > 0 && (
+                                    <div className="search-history-section" style={{ borderBottom: frequentSearches.length > 0 ? '1px solid rgba(16, 185, 129, 0.1)' : 'none' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 20px 8px' }}>
+                                            <div style={{ fontSize: '11px', fontWeight: 800, color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Your Recent History</div>
+                                            <button 
+                                                onClick={handleClearHistory}
+                                                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '10px', cursor: 'pointer', textDecoration: 'underline' }}
+                                            >
+                                                Clear
+                                            </button>
+                                        </div>
+                                        {searchHistory.map((item, idx) => {
+                                            const queryText = typeof item === 'string' ? item : (item.search_query || item.query);
+                                            if (!queryText) return null;
+                                            return (
+                                                <div key={`hist-${idx}`} className="search-history-item" 
+                                                    style={{ display: 'flex', alignItems: 'center', padding: '10px 20px' }}
+                                                    onClick={() => {
+                                                        setSearchTerm(queryText);
+                                                        router.push(`/results?q=${encodeURIComponent(queryText)}`);
+                                                    }}>
+                                                    <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>{queryText}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
                                 )}
                                 
+                                {/* PHASE 2: Handle Trending/Suggestions */}
                                 {frequentSearches.length > 0 && (
-                                    <>
-                                        <div style={{ padding: '12px 20px 8px', fontSize: '11px', fontWeight: 600, color: 'var(--text-faint)', textTransform: 'uppercase' }}>Trending Now</div>
-                                        <div style={{ padding: '0 15px 10px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                                            {frequentSearches.map((keyword, idx) => (
-                                                <div key={`freq-${idx}`} className="frequent-search-item" onClick={() => {
-                                                    setSearchTerm(keyword);
-                                                    router.push(`/results?q=${encodeURIComponent(keyword)}`);
-                                                }} style={{ fontSize: '11px', padding: '4px 12px' }}>
-                                                    {keyword}
-                                                </div>
-                                            ))}
+                                    <div className="search-suggestions-section">
+                                        {/* Show header ONLY if search term is empty */}
+                                        {!searchTerm.trim() && (
+                                            <div style={{ padding: '15px 20px 8px', fontSize: '11px', fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Trending Now</div>
+                                        )}
+                                        
+                                        <div style={{ padding: searchTerm.trim() ? '8px 0' : '0 15px 12px', display: 'flex', flexDirection: searchTerm.trim() ? 'column' : 'row', flexWrap: 'wrap', gap: '8px' }}>
+                                            {frequentSearches.map((keyword, idx) => {
+                                                const displayValue = (keyword.search_query || keyword).replace(/_/g, ' ');
+                                                const actualValue = keyword.search_query || keyword;
+                                                
+                                                if (searchTerm.trim()) {
+                                                    // List style for dynamic suggestions
+                                                    return (
+                                                        <div key={`suggest-${idx}`} className="search-history-item" onClick={() => {
+                                                            setSearchTerm(actualValue);
+                                                            router.push(`/results?q=${encodeURIComponent(actualValue)}`);
+                                                        }}>
+                                                            <span style={{ fontSize: '14px', fontWeight: 500 }}>{displayValue}</span>
+                                                        </div>
+                                                    );
+                                                } else {
+                                                    // Pill style for trending (empty input)
+                                                    return (
+                                                        <div key={`freq-${idx}`} className="frequent-search-item" onClick={() => {
+                                                            setSearchTerm(actualValue);
+                                                            router.push(`/results?q=${encodeURIComponent(actualValue)}`);
+                                                        }} style={{ fontSize: '12px', padding: '6px 14px' }}>
+                                                            {displayValue}
+                                                        </div>
+                                                    );
+                                                }
+                                            })}
                                         </div>
-                                    </>
+                                    </div>
                                 )}
                             </div>
                         )}
@@ -364,6 +640,36 @@ export default function DashboardPage() {
                         Find Perfect Match
                     </button>
                 </div>
+                
+                {/* PRICE DROP ALERT (PRO ONLY) */}
+                {(currentUser.planType === 'pro' || currentUser.planType === 'max' || currentUser.planType === 'premium') && (
+                    <div 
+                        className="price-drop-banner" 
+                        onClick={() => router.push('/price-drops')}
+                        style={{
+                            margin: '0 auto 24px',
+                            background: 'rgba(16, 185, 129, 0.05)',
+                            border: '1px solid rgba(16, 185, 129, 0.2)',
+                            borderRadius: '20px',
+                            padding: '16px 24px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s',
+                            maxWidth: '1200px'
+                        }}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                            <div style={{ fontSize: '24px' }}>📉</div>
+                            <div>
+                                <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>Real-time Price Drop Alerts</h4>
+                                <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)' }}>6 new price drops detected in your categories.</p>
+                            </div>
+                        </div>
+                        <div style={{ color: 'var(--accent)', fontWeight: 700, fontSize: '14px' }}>View All →</div>
+                    </div>
+                )}
                 
                 {/* PROMO SETTINGS */}
                 <div className="promo-banner">
@@ -465,10 +771,14 @@ export default function DashboardPage() {
                 {cart.length > 0 && (
                     <div className="dashboard-section" style={{ marginBottom: '64px' }}>
                         <h2 className="dashboard-section-header" style={{ borderColor: '#f59e0b', color: '#b45309' }}>Your Cart - Ready to Buy Now</h2>
-                        <div className="scroll-focus-wrapper">
-                            <div className="horizontal-scroll-container">
-                                {cart.map((p, i) => renderCard(p, i, 'cart'))}
-                            </div>
+                        <div style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', 
+                            gap: '32px',
+                            justifyContent: 'flex-start',
+                            alignItems: 'stretch'
+                        }}>
+                            {cart.map((p, i) => renderCard(p, i, 'cart'))}
                         </div>
                     </div>
                 )}
@@ -497,7 +807,7 @@ export default function DashboardPage() {
                 
                 <div style={{ textAlign: 'center', margin: '64px 0' }}></div>
             </div>
-
+            <Footer />
             {showDIQ && <DIQModal onClose={() => setShowDIQ(false)} />}
         </>
     );

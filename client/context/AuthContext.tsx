@@ -6,10 +6,19 @@ interface User {
     id: string;
     email: string;
     fullName?: string;
+    phone?: string;
+    address?: string;
+    preferences?: string;
+    themePreference?: string;
+    avatarUrl?: string;
+    planType?: 'free' | 'pro' | 'premium';
+    credits?: number;
+    creditsLastRefreshed?: string;
 }
 
 interface AuthContextType {
     currentUser: User | null;
+    setCurrentUser: (user: User | null) => void;
     accessToken: string | null;
     loading: boolean;
     login: (email: string, password: string) => Promise<void>;
@@ -43,6 +52,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (_) { }
         return null;
     }, []);
+
+    const clearAuth = () => {
+        setCurrentUser(null);
+        setAccessToken(null);
+        setRefreshToken(null);
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+    };
+
+    useEffect(() => {
+        const updateTheme = () => {
+            let theme = 'light';
+            if (currentUser?.themePreference) {
+                theme = currentUser.themePreference;
+            } else {
+                theme = localStorage.getItem('themePreference') || 'light';
+            }
+            document.documentElement.setAttribute('data-theme', theme);
+            document.body.setAttribute('data-theme', theme);
+        };
+        updateTheme();
+        window.addEventListener('storage', updateTheme);
+        return () => window.removeEventListener('storage', updateTheme);
+    }, [currentUser?.themePreference]);
 
     useEffect(() => {
         const init = async () => {
@@ -78,14 +111,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
         init();
     }, [attemptTokenRefresh]);
-
-    const clearAuth = () => {
-        setCurrentUser(null);
-        setAccessToken(null);
-        setRefreshToken(null);
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-    };
 
     const login = async (email: string, password: string) => {
         const res = await fetch('/api/auth/login', {
@@ -132,10 +157,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const authenticatedFetch = useCallback(
         async (url: string, options: RequestInit = {}): Promise<Response> => {
+            const currentAt = localStorage.getItem('accessToken') || accessToken;
             const headers: Record<string, string> = {
                 ...(options.headers as Record<string, string>),
             };
-            if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+            if (currentAt) headers['Authorization'] = `Bearer ${currentAt}`;
 
             let res = await fetch(url, { ...options, headers });
             if (res.status === 401 && refreshToken) {
@@ -151,7 +177,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     return (
-        <AuthContext.Provider value={{ currentUser, accessToken, loading, login, signup, logout, authenticatedFetch }}>
+        <AuthContext.Provider value={{ currentUser, setCurrentUser, accessToken, loading, login, signup, logout, authenticatedFetch }}>
             {children}
         </AuthContext.Provider>
     );

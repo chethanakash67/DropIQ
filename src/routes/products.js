@@ -3,6 +3,8 @@ const ProductRepository = require('../repositories/product-repository');
 const sovrnRecommendations = require('../services/sovrn-recommendations');
 const sovrnPriceComparison = require('../services/sovrn-price-comparison');
 const db = require('../database/db');
+const { consumeCredits, InsufficientCreditsError } = require('../services/credits-service');
+const { optionalAuth, authenticate } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -20,8 +22,31 @@ const router = express.Router();
  * - limit: results per page (default 50)
  * - offset: pagination offset (default 0)
  */
-router.get('/search', async (req, res) => {
+router.get('/search', optionalAuth, async (req, res) => {
   try {
+    let updatedCreditState = null;
+    const shouldChargeCredits = req.query.chargeCredits === 'true';
+    const query = req.query.q || '';
+    
+    if (shouldChargeCredits && query) {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: 'Authentication required',
+          message: 'Please login to continue searching.',
+        });
+      }
+
+      // Check if user already searched for this EXACT query in the last 60 seconds
+      const alreadySearched = await ProductRepository.hasRecentSearch(req.user.id, query, 60);
+      
+      if (!alreadySearched) {
+        updatedCreditState = await consumeCredits(req.user.id, 3);
+      } else {
+        console.log(`♻️ Skipping credit charge for recurring search (60s window): "${query}"`);
+      }
+    }
+
     const filters = {
       searchTerm: req.query.q || '',
       category: req.query.category,
@@ -35,9 +60,9 @@ router.get('/search', async (req, res) => {
 
     const products = await ProductRepository.searchProducts(filters);
 
-    // Save search query to history (non-blocking)
-    if (filters.searchTerm && filters.searchTerm.trim().length > 0) {
-      ProductRepository.saveSearchQuery(filters.searchTerm).catch(err => {
+    // Save search query to history if user is logged in (non-blocking)
+    if (filters.searchTerm && filters.searchTerm.trim().length > 0 && req.user) {
+      ProductRepository.saveSearchQuery(req.user.id, filters.searchTerm).catch(err => {
         console.error('Failed to save search query:', err);
       });
     }
@@ -47,8 +72,20 @@ router.get('/search', async (req, res) => {
       count: products.length,
       filters: filters,
       products: products,
+      credits: updatedCreditState?.credits ?? req.user?.credits,
+      creditCost: shouldChargeCredits ? 3 : 0,
     });
   } catch (error) {
+    if (error instanceof InsufficientCreditsError) {
+      return res.status(402).json({
+        success: false,
+        error: 'INSUFFICIENT_CREDITS',
+        message: 'Your credits are over. Please upgrade your plan.',
+        requiredCredits: error.required,
+        availableCredits: error.available,
+        redirectTo: '/plans',
+      });
+    }
     console.error('Error in /api/products/search:', error);
     res.status(500).json({
       success: false,
@@ -60,12 +97,12 @@ router.get('/search', async (req, res) => {
 
 /**
  * GET /api/products/search-history
- * Get recent search history
+ * Get recent search history (User-specific, requires login)
  */
-router.get('/search-history', async (req, res) => {
+router.get('/search-history', authenticate, async (req, res) => {
   try {
-    const limit = req.query.limit ? parseInt(req.query.limit) : 10;
-    const history = await ProductRepository.getSearchHistory(limit);
+    const limit = req.query.limit ? parseInt(req.query.limit) : 15;
+    const history = await ProductRepository.getSearchHistory(req.user.id, limit);
 
     res.json({
       success: true,
@@ -76,7 +113,34 @@ router.get('/search-history', async (req, res) => {
     console.error('Error in /api/products/search-history:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch search history',
+    });
+  }
+});
+
+/**
+ * DELETE /api/products/search-history
+ * Clear all search history for a user
+ */
+router.delete('/search-history', authenticate, async (req, res) => {
+  try {
+    const success = await ProductRepository.clearSearchHistory(req.user.id);
+
+    if (success) {
+      res.json({
+        success: true,
+        message: 'Search history cleared successfully',
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to clear search history',
+      });
+    }
+  } catch (error) {
+    console.error('Error in DELETE /api/products/search-history:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
       message: error.message,
     });
   }
@@ -151,6 +215,30 @@ router.get('/retailers', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch retailers',
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * GET /api/products/search-suggestions
+ * Get dynamic search suggestions based on global history
+ */
+router.get('/search-suggestions', async (req, res) => {
+  try {
+    const query = req.query.q || '';
+    const limit = req.query.limit ? parseInt(req.query.limit) : 5;
+    const suggestions = await ProductRepository.getDynamicSuggestions(query, limit);
+
+    res.json({
+      success: true,
+      suggestions: suggestions.map(s => s.search_query),
+    });
+  } catch (error) {
+    console.error('Error in /api/products/search-suggestions:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch suggestions',
       message: error.message,
     });
   }

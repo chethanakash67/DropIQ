@@ -26,6 +26,7 @@ export default function DemoVideo() {
             src="/videos/dropiq_demo_vid.mp4"
             poster="/images/founders/dropiq_vid_thumbnail.jpeg"
             controls
+            muted
             className="h-full w-full object-cover"
           />
         </div>
@@ -49,7 +50,7 @@ export default function DemoVideo() {
       <Link href={`${DASHBOARD_URL}/signup`} target="_blank" rel="noopener noreferrer">
         <Button size="lg" className="w-full rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-lg whitespace-nowrap">
           <UserPlus className="mr-2 h-5 w-5 shrink-0" />
-          {"Sign Up — It's Free"}
+          {"Sign Up, It's Free"}
         </Button>
       </Link>
     </div>

@@ -16,18 +16,17 @@ export default function WhyDifferent() {
             <TableRow className="bg-gray-50 dark:bg-slate-900">
               <TableHead className="w-1/3 dark:text-gray-300">{"Feature"}</TableHead>
               <TableHead className="dark:text-gray-300">{"DropIQ"}</TableHead>
-              <TableHead className="dark:text-gray-300">{"Smartprix"}</TableHead>
-              <TableHead className="dark:text-gray-300">{"MySmartPrice"}</TableHead>
+              <TableHead className="dark:text-gray-300">{"Other Stores"}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {[
-              { feature: "Value Score (price + features)", dropiq: true, s: false, m: false, unique: true },
-              { feature: "Real-time price checks", dropiq: true, s: true, m: true, unique: false },
-              { feature: "Feature-weighted comparisons", dropiq: true, s: false, m: false, unique: true },
-              { feature: "Student-focused deals", dropiq: true, s: false, m: false, unique: true },
-              { feature: "Store-agnostic (no ads bias)", dropiq: true, s: false, m: false, unique: true },
-              { feature: "Priority price-drop alerts", dropiq: true, s: true, m: false, unique: false },
+              { feature: "Online and Offline Comparison", dropiq: true, other: false, unique: true },
+              { feature: "Price Drops & Instant Updates", dropiq: true, other: true, unique: false },
+              { feature: "Recommendation Engine (Preferences)", dropiq: true, other: false, unique: true },
+              { feature: "Value Score (Price + Features)", dropiq: true, other: false, unique: true },
+              { feature: "Store-Agnostic (No Ads Bias)", dropiq: true, other: false, unique: true },
+              { feature: "Location-Based Deals", dropiq: true, other: false, unique: true },
             ].map((row, i) => (
               <TableRow key={i} className="dark:hover:bg-slate-800/40">
                 <TableCell className="font-medium dark:text-white">{row.feature}</TableCell>
@@ -46,14 +45,7 @@ export default function WhyDifferent() {
                   </span>
                 </TableCell>
                 <TableCell>
-                  {row.s ? (
-                    <Check className="h-4 w-4 text-gray-700 dark:text-gray-300" aria-hidden="true" />
-                  ) : (
-                    <X className="h-4 w-4 text-gray-300" aria-hidden="true" />
-                  )}
-                </TableCell>
-                <TableCell>
-                  {row.m ? (
+                  {row.other ? (
                     <Check className="h-4 w-4 text-gray-700 dark:text-gray-300" aria-hidden="true" />
                   ) : (
                     <X className="h-4 w-4 text-gray-300" aria-hidden="true" />

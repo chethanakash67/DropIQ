@@ -28,7 +28,7 @@ class GeminiService {
 
     try {
       const response = await this.ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-1.5-flash',
         contents: `You are a spelling correction assistant for an e-commerce product search.
 
 User's search query: "${searchQuery}"

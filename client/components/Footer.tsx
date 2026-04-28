@@ -3,7 +3,11 @@
 import React from 'react';
 import Link from 'next/link';
 
+import { useAuth } from '@/context/AuthContext';
+
 export default function Footer() {
+    const { currentUser } = useAuth() || {};
+
     return (
         <footer style={{
             background: 'linear-gradient(135deg, #064e3b 0%, #065f46 100%)',
@@ -35,8 +39,11 @@ export default function Footer() {
                 }}>
                     {/* Brand & Mission */}
                     <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px', cursor: 'pointer' }} onClick={() => window.location.href = '/'}>
-                            <img src="/dropiq-logo.png" alt="DropIQ" style={{ height: '54px', objectFit: 'contain' }} />
+                        <div 
+                            style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px', cursor: 'pointer' }} 
+                            onClick={() => window.location.href = currentUser ? '/dashboard' : '/'}
+                        >
+                            <img src="/dropiq-logo-black.png" alt="DropIQ" style={{ height: '54px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
                             <span style={{ fontSize: '36px', fontWeight: 800, color: 'white', letterSpacing: '-1px' }}>DropIQ</span>
                         </div>
                         <p style={{ lineHeight: '1.8', maxWidth: '300px', color: 'rgba(255, 255, 255, 0.7)' }}>
@@ -46,7 +53,7 @@ export default function Footer() {
                         
                         <div style={{ marginTop: '24px' }}>
                             <h4 style={{ fontWeight: 700, color: 'white', marginBottom: '8px' }}>Contact Us</h4>
-                            <p style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Email: support@dropiq.shop</p>
+                            <p style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Email: dropiqofficial@gmail.com</p>
                         </div>
                     </div>
 
@@ -54,29 +61,36 @@ export default function Footer() {
                     <div>
                         <h4 style={{ fontWeight: 700, color: 'white', marginBottom: '20px', fontSize: '16px' }}>Company</h4>
                         <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            <li><Link href="#" style={{ textDecoration: 'none', color: 'inherit' }} className="footer-link">About Us</Link></li>
-                            <li><Link href="#" style={{ textDecoration: 'none', color: 'inherit' }} className="footer-link">API for Businesses</Link></li>
-                            <li><Link href="#" style={{ textDecoration: 'none', color: '#10b981', fontWeight: 600 }}>Become a Seller</Link></li>
+                            <li><Link href="/about" style={{ textDecoration: 'none', color: 'inherit' }} className="footer-link">About Us</Link></li>
+                            <li style={{ opacity: 0.5, cursor: 'not-allowed', pointerEvents: 'none' }}>
+                                <span style={{ color: 'inherit' }}>API for Businesses <span style={{ fontSize: '10px', verticalAlign: 'middle' }}>(Soon)</span></span>
+                            </li>
+                            <li style={{ opacity: 0.5, cursor: 'not-allowed', pointerEvents: 'none' }}>
+                                <span style={{ color: '#10b981', fontWeight: 600 }}>Become a Seller <span style={{ fontSize: '10px', verticalAlign: 'middle' }}>(Soon)</span></span>
+                            </li>
+                            <li style={{ opacity: 0.5, cursor: 'not-allowed', pointerEvents: 'none' }}>
+                                <span style={{ color: 'inherit' }}>Careers <span style={{ fontSize: '10px', verticalAlign: 'middle' }}>(Soon)</span></span>
+                            </li>
                         </ul>
                     </div>
 
                     <div>
                         <h4 style={{ fontWeight: 700, color: 'white', marginBottom: '20px', fontSize: '16px' }}>Help & Guide</h4>
                         <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            <li><Link href="#" style={{ textDecoration: 'none', color: 'inherit' }} className="footer-link">Help Center</Link></li>
-                            <li><Link href="#" style={{ textDecoration: 'none', color: 'inherit' }} className="footer-link">How to use this?</Link></li>
-                            <li><Link href="#" style={{ textDecoration: 'none', color: 'inherit' }} className="footer-link">FAQ</Link></li>
-                            <li><Link href="#" style={{ textDecoration: 'none', color: 'inherit' }} className="footer-link">Contact Form</Link></li>
+                            <li><Link href="/help-center" style={{ textDecoration: 'none', color: 'inherit' }} className="footer-link">Help Center</Link></li>
+                            <li><Link href="/how-to" style={{ textDecoration: 'none', color: 'inherit' }} className="footer-link">How to use this?</Link></li>
+                            <li><Link href="/faq" style={{ textDecoration: 'none', color: 'inherit' }} className="footer-link">FAQ</Link></li>
+                            <li><Link href="/contact" style={{ textDecoration: 'none', color: 'inherit' }} className="footer-link">Contact Form</Link></li>
                         </ul>
                     </div>
 
                     <div>
                         <h4 style={{ fontWeight: 700, color: 'white', marginBottom: '20px', fontSize: '16px' }}>Legal & Policy</h4>
                         <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            <li><Link href="#" style={{ textDecoration: 'none', color: 'inherit' }} className="footer-link">Privacy Policy</Link></li>
-                            <li><Link href="#" style={{ textDecoration: 'none', color: 'inherit' }} className="footer-link">Terms of Service</Link></li>
-                            <li><Link href="#" style={{ textDecoration: 'none', color: 'inherit' }} className="footer-link">Consumer Policy</Link></li>
-                            <li><Link href="#" style={{ textDecoration: 'none', color: 'inherit' }} className="footer-link">Disclaimer</Link></li>
+                            <li><Link href="/privacy" style={{ textDecoration: 'none', color: 'inherit' }} className="footer-link">Privacy Policy</Link></li>
+                            <li><Link href="/terms" style={{ textDecoration: 'none', color: 'inherit' }} className="footer-link">Terms of Service</Link></li>
+                            <li><Link href="/consumer-policy" style={{ textDecoration: 'none', color: 'inherit' }} className="footer-link">Consumer Policy</Link></li>
+                            <li><Link href="/disclaimer" style={{ textDecoration: 'none', color: 'inherit' }} className="footer-link">Disclaimer</Link></li>
                         </ul>
                     </div>
                 </div>
@@ -121,3 +135,4 @@ export default function Footer() {
         </footer>
     );
 }
+

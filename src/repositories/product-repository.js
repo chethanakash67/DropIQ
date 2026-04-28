@@ -917,15 +917,15 @@ class ProductRepository {
   /**
    * Save search query to history
    */
-  async saveSearchQuery(searchQuery) {
-    if (!searchQuery || searchQuery.trim().length === 0) {
+  async saveSearchQuery(userId, searchQuery) {
+    if (!searchQuery || searchQuery.trim().length === 0 || !userId) {
       return;
     }
 
     const query = `
-      INSERT INTO search_history (search_query, search_count, last_searched_at)
-      VALUES ($1, 1, NOW())
-      ON CONFLICT (search_query)
+      INSERT INTO search_history (user_id, search_query, search_count, last_searched_at)
+      VALUES ($1, $2, 1, NOW())
+      ON CONFLICT (user_id, search_query)
       DO UPDATE SET
         search_count = search_history.search_count + 1,
         last_searched_at = NOW()
@@ -933,7 +933,23 @@ class ProductRepository {
     `;
 
     try {
-      const result = await db.query(query, [searchQuery.trim().toLowerCase()]);
+      const result = await db.query(query, [userId, searchQuery.trim().toLowerCase()]);
+      
+      // Enforce 15-search limit per user (delete oldest if > 15)
+      const cleanupQuery = `
+        DELETE FROM search_history 
+        WHERE user_id = $1 
+        AND id NOT IN (
+          SELECT id FROM (
+            SELECT id FROM search_history 
+            WHERE user_id = $1 
+            ORDER BY last_searched_at DESC 
+            LIMIT 15
+          ) AS recent_searches
+        )
+      `;
+      await db.query(cleanupQuery, [userId]);
+      
       return result.rows[0];
     } catch (error) {
       console.error('Error saving search query:', error);
@@ -943,22 +959,71 @@ class ProductRepository {
   }
 
   /**
-   * Get recent search history
+   * Get dynamic search suggestions based on global history
    */
-  async getSearchHistory(limit = 10) {
+  async getDynamicSuggestions(partialQuery, limit = 5) {
+    if (!partialQuery || partialQuery.trim().length === 0) {
+      return [];
+    }
+
     const query = `
-      SELECT search_query, search_count, last_searched_at
+      SELECT search_query, SUM(search_count) as total_count
       FROM search_history
-      ORDER BY last_searched_at DESC
-      LIMIT $1
+      WHERE search_query ILIKE $1 AND is_global = TRUE
+      GROUP BY search_query
+      ORDER BY total_count DESC, MAX(last_searched_at) DESC
+      LIMIT $2
     `;
 
     try {
-      const result = await db.query(query, [limit]);
+      const result = await db.query(query, [`${partialQuery.trim().toLowerCase()}%`, limit]);
+      return result.rows;
+    } catch (error) {
+      console.error('Error fetching search suggestions:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get recent search history for a user
+   */
+  async getSearchHistory(userId, limit = 15) {
+    if (!userId) return [];
+
+    const query = `
+      SELECT search_query, search_count, last_searched_at
+      FROM search_history
+      WHERE user_id = $1
+      ORDER BY last_searched_at DESC
+      LIMIT $2
+    `;
+
+    try {
+      const result = await db.query(query, [userId, limit]);
       return result.rows;
     } catch (error) {
       console.error('Error fetching search history:', error);
       return [];
+    }
+  }
+
+  /**
+   * Clear all search history for a user
+   */
+  async clearSearchHistory(userId) {
+    if (!userId) return false;
+
+    const query = `
+      DELETE FROM search_history
+      WHERE user_id = $1
+    `;
+
+    try {
+      await db.query(query, [userId]);
+      return true;
+    } catch (error) {
+      console.error('Error clearing search history:', error);
+      return false;
     }
   }
 
@@ -994,6 +1059,31 @@ class ProductRepository {
     } catch (error) {
       console.error('Error clearing search history:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Check if a user has searched for a query recently
+   */
+  async hasRecentSearch(userId, searchQuery, intervalMinutes = 15) {
+    if (!userId || !searchQuery) return false;
+    const normalized = searchQuery.trim().toLowerCase();
+
+    const query = `
+      SELECT id 
+      FROM search_history 
+      WHERE user_id = $1 
+        AND search_query = $2 
+        AND last_searched_at >= NOW() - INTERVAL '$3 seconds'
+      LIMIT 1
+    `;
+
+    try {
+      const result = await db.query(query.replace('$3', intervalMinutes), [userId, normalized]);
+      return result.rows.length > 0;
+    } catch (error) {
+      console.error('Error checking recent search:', error);
+      return false;
     }
   }
 }
