@@ -46,7 +46,7 @@ const CategoryItem = ({ cat, router }: { cat: any, router: any }) => {
                     </div>
                 </div>
             ))}
-            <div className="category-circle" onClick={() => router.push(`/results?q=${cat.q}`)} style={{ 
+            <div className="category-circle" onClick={() => router.push(`/results?q=${cat.q}&chargeCredits=true`)} style={{ 
                 width: '200px', height: '200px', borderRadius: '50%', background: 'var(--bg-secondary)', 
                 border: '3px solid var(--border-focus)', display: 'flex', flexDirection: 'column', 
                 alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden',
@@ -428,6 +428,17 @@ export default function DashboardPage() {
     const currentCredits = currentUser.credits ?? 0;
     const usedCredits = Math.max(0, maxCredits - currentCredits);
 
+    // Get freshness label for product
+    const getFreshnessLabel = (lastUpdated: string | undefined): string => {
+        if (!lastUpdated) return 'Updated recently';
+        const updatedDate = new Date(lastUpdated);
+        const now = new Date();
+        const diffDays = Math.floor((now.getTime() - updatedDate.getTime()) / (1000 * 60 * 60 * 24));
+        if (diffDays < 20) return 'Updated a day ago';
+        else if (diffDays >= 20 && diffDays < 35) return 'Updated 4 days ago';
+        else return 'Updated 6 days ago';
+    };
+
     const renderCard = (p: any, i: number, uniqueKey: string) => {
         const isFestive = uniqueKey === 'festive';
         const isLoot = uniqueKey === 'loot';
@@ -435,6 +446,7 @@ export default function DashboardPage() {
         const isFav = uniqueKey === 'fav';
         const isSuggested = uniqueKey === 'suggested';
         const isCart = uniqueKey === 'cart';
+        const freshnessLabel = getFreshnessLabel(p.last_updated);
 
         const displayTitle = (isFestive || isLoot || isGrab || isFav || isSuggested)
             ? (p.product_name?.length > 25 ? p.product_name.substring(0, 25) + '...' : p.product_name)
@@ -457,7 +469,11 @@ export default function DashboardPage() {
                             <div className="product-title" style={{ fontSize: '14px', fontWeight: 600, marginTop: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                 {displayTitle}
                             </div>
-                            <div className="product-price" style={{ fontSize: '18px', fontWeight: 800, color: '#059669', marginTop: '6px' }}>₹{p.price_inr}</div>
+                            <div style={{ fontSize: '9px', color: '#059669', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '3px', marginTop: '4px', padding: '1px 6px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '8px', width: 'fit-content' }}>
+                                <span style={{ width: '4px', height: '4px', background: '#10b981', borderRadius: '50%', display: 'inline-block' }}></span>
+                                {freshnessLabel}
+                            </div>
+                            <div className="product-price" style={{ fontSize: '18px', fontWeight: 800, color: '#059669', marginTop: '4px' }}>₹{p.price_inr}</div>
                         </div>
                     </div>
                 </div>
@@ -479,6 +495,10 @@ export default function DashboardPage() {
                     <div className="product-brand" style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>{p.brand || 'DROP IQ'}</div>
                     <div className="product-title" style={{ fontSize: isFestive ? '13px' : '14px', fontWeight: 600, marginTop: '4px', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: isFestive ? 1 : 2, WebkitBoxOrient: 'vertical' }}>
                         {displayTitle}
+                    </div>
+                    <div style={{ fontSize: '9px', color: '#059669', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '3px', marginTop: '4px', padding: '1px 6px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '8px', width: 'fit-content' }}>
+                        <span style={{ width: '4px', height: '4px', background: '#10b981', borderRadius: '50%', display: 'inline-block' }}></span>
+                        {freshnessLabel}
                     </div>
                     <div className="product-price" style={{ fontSize: isFestive ? '18px' : '20px', fontWeight: 800, color: '#059669', marginTop: 'auto' }}>₹{p.price_inr}</div>
                 </div>
@@ -600,7 +620,7 @@ export default function DashboardPage() {
                                                     style={{ display: 'flex', alignItems: 'center', padding: '10px 20px' }}
                                                     onClick={() => {
                                                         setSearchTerm(queryText);
-                                                        router.push(`/results?q=${encodeURIComponent(queryText)}`);
+                                                        router.push(`/results?q=${encodeURIComponent(queryText)}&chargeCredits=true`);
                                                     }}>
                                                     <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>{queryText}</span>
                                                 </div>
@@ -627,7 +647,7 @@ export default function DashboardPage() {
                                                     return (
                                                         <div key={`suggest-${idx}`} className="search-history-item" onClick={() => {
                                                             setSearchTerm(actualValue);
-                                                            router.push(`/results?q=${encodeURIComponent(actualValue)}`);
+                                                            router.push(`/results?q=${encodeURIComponent(actualValue)}&chargeCredits=true`);
                                                         }}>
                                                             <span style={{ fontSize: '14px', fontWeight: 500 }}>{displayValue}</span>
                                                         </div>
@@ -637,7 +657,7 @@ export default function DashboardPage() {
                                                     return (
                                                         <div key={`freq-${idx}`} className="frequent-search-item" onClick={() => {
                                                             setSearchTerm(actualValue);
-                                                            router.push(`/results?q=${encodeURIComponent(actualValue)}`);
+                                                            router.push(`/results?q=${encodeURIComponent(actualValue)}&chargeCredits=true`);
                                                         }} style={{ fontSize: '12px', padding: '6px 14px' }}>
                                                             {displayValue}
                                                         </div>
@@ -651,42 +671,74 @@ export default function DashboardPage() {
                         )}
                     </div>
 
-                    <button className="diq-button shiny-shield-btn shake-periodically" 
-                            onClick={() => setShowDIQ(true)} 
-                            style={{ width: 'auto', padding: '14px 28px', whiteSpace: 'nowrap', borderRadius: '30px' }}>
+                    <button className="diq-button shiny-shield-btn" 
+                            disabled 
+                            style={{ 
+                                width: 'auto', 
+                                padding: '14px 28px', 
+                                whiteSpace: 'nowrap', 
+                                borderRadius: '30px',
+                                opacity: 0.6,
+                                cursor: 'not-allowed',
+                                position: 'relative'
+                            }}>
                         Find Perfect Match
+                        <span style={{
+                            position: 'absolute',
+                            top: '-10px',
+                            right: '-10px',
+                            background: 'linear-gradient(135deg, #10b981, #059669)',
+                            color: 'white',
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            padding: '4px 10px',
+                            borderRadius: '12px',
+                            boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px'
+                        }}>
+                            Coming Soon
+                        </span>
                     </button>
                 </div>
                 
-                {/* PRICE DROP ALERT (PRO ONLY) */}
-                {(currentUser.planType === 'pro' || currentUser.planType === 'max' || currentUser.planType === 'premium') && (
-                    <div 
-                        className="price-drop-banner" 
-                        onClick={() => router.push('/price-drops')}
-                        style={{
-                            margin: '0 auto 24px',
-                            background: 'rgba(16, 185, 129, 0.05)',
-                            border: '1px solid rgba(16, 185, 129, 0.2)',
-                            borderRadius: '20px',
-                            padding: '16px 24px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s',
-                            maxWidth: '1200px'
-                        }}
-                    >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            <div style={{ fontSize: '24px' }}>📉</div>
-                            <div>
-                                <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>Real-time Price Drop Alerts</h4>
-                                <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)' }}>6 new price drops detected in your categories.</p>
-                            </div>
+                {/* PRICE DROP ALERT - COMING SOON (Disabled for all users) */}
+                <div 
+                    className="price-drop-banner" 
+                    style={{
+                        margin: '0 auto 24px',
+                        background: 'rgba(148, 163, 184, 0.05)',
+                        border: '1px solid rgba(148, 163, 184, 0.2)',
+                        borderRadius: '20px',
+                        padding: '16px 24px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        maxWidth: '1200px',
+                        opacity: 0.7,
+                        position: 'relative'
+                    }}
+                >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ fontSize: '24px', opacity: 0.5 }}>📉</div>
+                        <div>
+                            <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--text-muted)' }}>Real-time Price Drop Alerts</h4>
+                            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-faint)' }}>Get notified when prices drop on your favorite products</p>
                         </div>
-                        <div style={{ color: 'var(--accent)', fontWeight: 700, fontSize: '14px' }}>View All →</div>
                     </div>
-                )}
+                    <div style={{ 
+                        background: 'linear-gradient(135deg, #94a3b8, #64748b)',
+                        color: 'white',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        padding: '6px 14px',
+                        borderRadius: '20px',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px'
+                    }}>
+                        Coming Soon
+                    </div>
+                </div>
                 
                 {/* PROMO SETTINGS */}
                 <div className="promo-banner">

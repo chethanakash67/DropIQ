@@ -25,19 +25,22 @@ export default function ProductCard({ product }: { product: Product }) {
     const isOfflineStore = product.store_id !== undefined;
     const hasImage = product.image_url && product.image_url.trim() !== '';
 
-    // Data freshness label logic
+    // Data freshness label logic - matches footer logic
     let freshnessLabel = '';
     if (product.last_updated) {
         const updatedDate = new Date(product.last_updated);
         const now = new Date();
         const diffDays = Math.floor((now.getTime() - updatedDate.getTime()) / (1000 * 60 * 60 * 24));
-        if (diffDays <= 20) {
-            freshnessLabel = 'updated a day ago';
-        } else if (diffDays > 20 && diffDays <= 30) {
-            freshnessLabel = 'updated 3 days ago';
+        if (diffDays < 20) {
+            freshnessLabel = 'Updated a day ago';
+        } else if (diffDays >= 20 && diffDays < 35) {
+            freshnessLabel = 'Updated 4 days ago';
         } else {
-            freshnessLabel = '';
+            freshnessLabel = 'Updated 6 days ago';
         }
+    } else {
+        // Default label when no last_updated data
+        freshnessLabel = 'Updated recently';
     }
 
     const viewProduct = () => {
@@ -90,7 +93,26 @@ export default function ProductCard({ product }: { product: Product }) {
                 </div>
                 {/* Data freshness label */}
                 {freshnessLabel && (
-                    <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
+                    <div style={{ 
+                        fontSize: '10px', 
+                        color: '#059669', 
+                        marginBottom: '4px', 
+                        fontWeight: 600,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        padding: '2px 8px',
+                        background: 'rgba(16, 185, 129, 0.1)',
+                        borderRadius: '12px',
+                        width: 'fit-content'
+                    }}>
+                        <span style={{
+                            width: '6px',
+                            height: '6px',
+                            background: '#10b981',
+                            borderRadius: '50%',
+                            display: 'inline-block'
+                        }}></span>
                         {freshnessLabel}
                     </div>
                 )}

@@ -383,7 +383,12 @@ function ResultsContent() {
                                     setSearchTerm(name);
                                     setShowInlineDrop(false);
                                     setCurrentQ(name);
-                                    router.push(`/results?q=${encodeURIComponent(name)}`);
+                                    // Charge credits when clicking on suggestion
+                                    const p = new URLSearchParams(window.location.search);
+                                    p.set('q', name);
+                                    p.set('chargeCredits', 'true');
+                                    router.push(`/results?${p.toString()}`);
+                                    performSearch(name, sortBy, minPrice, maxPrice, retailer, true);
                                 }}
                                 onMouseEnter={e => (e.currentTarget.style.background = 'rgba(16,185,129,0.07)')}
                                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}

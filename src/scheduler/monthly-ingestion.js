@@ -1,5 +1,6 @@
 const cron = require('node-cron');
 const ingestApifyData = require('../jobs/ingest-apify-data');
+const ingestMyntraApify = require('../jobs/ingest-myntra-apify');
 const ingestAllStores = require('../jobs/ingest-all-stores');
 
 /**
@@ -38,8 +39,17 @@ async function runMonthlyIngestion() {
   }
 
   try {
-    // Step 2: Browse.ai stores (Vijay Sales, Croma, TataCliq, Brands, Myntra, Headphones Zone)
-    console.log('\nStep 2: Browse.ai store ingestion...');
+    // Step 2: Myntra (Apify)
+    console.log('\nStep 2: Myntra Apify ingestion...');
+    await ingestMyntraApify();
+    console.log('✓ Myntra Apify ingestion completed');
+  } catch (err) {
+    console.error('✗ Myntra Apify ingestion failed:', err.message);
+  }
+
+  try {
+    // Step 3: Browse.ai stores (Vijay Sales, Croma, TataCliq, Brands)
+    console.log('\nStep 3: Browse.ai store ingestion...');
     await ingestAllStores();
     console.log('✓ Browse.ai store ingestion completed');
   } catch (err) {

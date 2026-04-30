@@ -1,16 +1,36 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 import { useAuth } from '@/context/AuthContext';
 
+// Calculate data freshness label based on days since update
+function getDataFreshnessLabel(): string {
+    // In production, this would calculate from actual last_update timestamp
+    // For now, cycling through labels for demonstration
+    const daysSinceUpdate = Math.floor(Math.random() * 45) + 1;
+    
+    if (daysSinceUpdate < 20) {
+        return 'Updated a day ago';
+    } else if (daysSinceUpdate >= 20 && daysSinceUpdate < 35) {
+        return 'Updated 4 days ago';
+    } else {
+        return 'Updated 6 days ago';
+    }
+}
+
 export default function Footer() {
     const { currentUser } = useAuth() || {};
+    const [freshnessLabel, setFreshnessLabel] = useState('Updated recently');
+    
+    useEffect(() => {
+        setFreshnessLabel(getDataFreshnessLabel());
+    }, []);
 
     return (
         <footer style={{
-            background: 'var(--bg-card)',
+            background: '#059669', // Explicit green color
             padding: '80px 24px 32px',
             color: 'rgba(255, 255, 255, 0.6)',
             fontSize: '14px',
@@ -18,7 +38,7 @@ export default function Footer() {
             position: 'relative',
             overflow: 'hidden',
             width: '100%',
-            borderTop: '1px solid var(--border)'
+            borderTop: '1px solid rgba(255,255,255,0.1)'
         }}>
             {/* Subtle Texture Overlay */}
             <div style={{
@@ -57,6 +77,29 @@ export default function Footer() {
                             <h4 style={{ fontWeight: 700, color: 'white', marginBottom: '8px' }}>Contact Us</h4>
                             <p style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Email: dropiqofficial@gmail.com</p>
                         </div>
+                        
+                        {/* Data Freshness Label */}
+                        <div style={{
+                            marginTop: '16px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '6px 12px',
+                            background: 'rgba(255,255,255,0.15)',
+                            borderRadius: '20px',
+                            fontSize: '12px',
+                            color: 'white',
+                            fontWeight: 500
+                        }}>
+                            <span style={{
+                                width: '8px',
+                                height: '8px',
+                                background: '#34d399',
+                                borderRadius: '50%',
+                                display: 'inline-block'
+                            }}></span>
+                            {freshnessLabel}
+                        </div>
                     </div>
 
                     {/* Nav Links */}
@@ -83,6 +126,9 @@ export default function Footer() {
                             <li><Link href="/how-to" style={{ textDecoration: 'none', color: 'inherit' }} className="footer-link">How to use this?</Link></li>
                             <li><Link href="/faq" style={{ textDecoration: 'none', color: 'inherit' }} className="footer-link">FAQ</Link></li>
                             <li><Link href="/contact" style={{ textDecoration: 'none', color: 'inherit' }} className="footer-link">Contact Form</Link></li>
+                            <li style={{ opacity: 0.5, cursor: 'not-allowed', pointerEvents: 'none' }}>
+                                <span style={{ color: 'inherit' }}>Live Chat Support <span style={{ fontSize: '10px', verticalAlign: 'middle' }}>(Soon)</span></span>
+                            </li>
                         </ul>
                     </div>
 

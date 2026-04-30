@@ -3,8 +3,6 @@ const ingestVijaySalesData = require('./ingest-vijay-sales-full');
 const ingestCromaData = require('./ingest-croma-full');
 const ingestTataCliqData = require('./ingest-tatacliq-full');
 const ingestBrandStores = require('./ingest-brand-stores');
-const ingestMyntraData = require('./ingest-myntra-full');
-const ingestHeadphonesZoneData = require('./ingest-headphones-zone');
 
 async function ingestAll(stores = []) {
     console.log('========================================');
@@ -15,9 +13,7 @@ async function ingestAll(stores = []) {
         'vijay-sales': ingestVijaySalesData,
         'croma': ingestCromaData,
         'tatacliq': ingestTataCliqData,
-        'brands': ingestBrandStores, // Handles Samsung and Sony
-        'myntra': ingestMyntraData,
-        'headphones-zone': ingestHeadphonesZoneData
+        'brands': ingestBrandStores // Handles Samsung and Sony
     };
 
     const targetStores = stores.length > 0 ? stores : Object.keys(allStores);
@@ -43,5 +39,10 @@ async function ingestAll(stores = []) {
     process.exit(0);
 }
 
-const args = process.argv.slice(2);
-ingestAll(args);
+// Only run if called directly (not when required as a module)
+if (require.main === module) {
+    const args = process.argv.slice(2);
+    ingestAll(args);
+}
+
+module.exports = ingestAll;

@@ -300,7 +300,7 @@ class ProductRepository {
 
     const params = [];
     let paramIndex = 1;
-    let whereConditions = `WHERE p.is_deleted = FALSE AND p.availability_status = 'in_stock'`;
+    let whereConditions = `WHERE p.is_deleted = FALSE AND p.availability_status = 'in_stock' AND p.price_inr >= 1`;
 
     // Variables to track detected keywords for intelligent sorting
     let detectedBrands = [];

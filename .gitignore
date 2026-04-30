@@ -1,5 +1,6 @@
 node_modules/
 .env
+*.lottie
 *.log
 .DS_Store
 dist/
@@ -9,5 +10,23 @@ coverage/
 *.swp
 *.swo
 test-files/
+nodemon
+scratch/
 gen-lang-client-0169377687-30900ec04eb4.json
 client_secret_544129425396-nhr9cbgtmakj1024g0kueufr64dmgie2.apps.googleusercontent.com.json
+
+# Large media and data files (high memory)
+loader_preview/
+*.mp4
+*.zip
+*.xlsx
+*.xls
+LICENSE
+
+# High memory / binary files
+*.traineddata
+*.weights
+*.h5
+*.pkl
+*.model
+

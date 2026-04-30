@@ -207,8 +207,7 @@ router.get('/retailers', async (req, res) => {
       { id: 'Croma', name: 'Croma' },
       { id: 'VijaySales', name: 'Vijay Sales' },
       { id: 'TataCliq', name: 'TataCliq' },
-      { id: 'Myntra', name: 'Myntra' },
-      { id: 'HeadphonesZone', name: 'Headphones Zone' }
+      { id: 'Myntra', name: 'Myntra' }
     ];
 
     res.json({
@@ -244,8 +243,18 @@ router.get('/search-index', async (req, res) => {
 
     const allProducts = [];
 
+    // Tables to exclude from search index
+    const excludedTables = ['headphones_zone_products'];
+
     for (const row of tablesResult.rows) {
       const table = row.table_name;
+
+      // Skip excluded tables
+      if (excludedTables.includes(table)) {
+        console.log(`Skipping excluded table: ${table}`);
+        continue;
+      }
+
       // Derive a human-readable store name from table name
       // e.g. amazon_products → Amazon, vijay_sales_products → Vijay Sales
       const storeName = table
@@ -267,6 +276,7 @@ router.get('/search-index', async (req, res) => {
           FROM ${table}
           WHERE is_deleted = FALSE
             AND product_name IS NOT NULL
+            AND price_inr >= 1
         `);
         result.rows.forEach(p => {
           allProducts.push({ ...p, retailer_name: storeName });
@@ -366,9 +376,7 @@ router.get('/:id', async (req, res) => {
         'Vijay Sales': 'vijay_sales_products',
         'VijaySales': 'vijay_sales_products',
         'TataCliq': 'tatacliq_products',
-        'Myntra': 'myntra_products',
-        'HeadphonesZone': 'headphones_zone_products',
-        'Headphones Zone': 'headphones_zone_products'
+        'Myntra': 'myntra_products'
       };
 
       const tableName = tableMap[retailer];
@@ -393,8 +401,7 @@ router.get('/:id', async (req, res) => {
         { name: 'croma_products', label: 'Croma' },
         { name: 'vijay_sales_products', label: 'Vijay Sales' },
         { name: 'tatacliq_products', label: 'TataCliq' },
-        { name: 'myntra_products', label: 'Myntra' },
-        { name: 'headphones_zone_products', label: 'Headphones Zone' }
+        { name: 'myntra_products', label: 'Myntra' }
       ];
 
       for (const t of tables) {
