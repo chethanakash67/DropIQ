@@ -2,8 +2,7 @@ import Logo from "./logo"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { LogIn, UserPlus } from "lucide-react"
-
-const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || "http://localhost:3001"
+import { dashboardPath } from "@/lib/dashboard-url"
 
 export default function FinalCta() {
   return (
@@ -45,13 +44,13 @@ export default function FinalCta() {
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href={`${DASHBOARD_URL}/signup`} target="_blank" rel="noopener noreferrer">
+            <Link href={dashboardPath("/signup")} target="_blank" rel="noopener noreferrer">
               <Button size="lg" className="w-full sm:w-auto rounded-full px-8 bg-emerald-600 hover:bg-emerald-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600 shadow-lg">
                 <UserPlus className="mr-2 h-5 w-5" />
                 {"Sign Up, It's Free"}
               </Button>
             </Link>
-            <Link href={`${DASHBOARD_URL}/login`} target="_blank" rel="noopener noreferrer">
+            <Link href={dashboardPath("/login")} target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="lg" className="w-full sm:w-auto rounded-full px-8 border-emerald-600/50 text-emerald-700 hover:bg-emerald-50 dark:border-cyan-400/50 dark:text-cyan-300 dark:hover:bg-cyan-900/20">
                 <LogIn className="mr-2 h-5 w-5" />
                 {"Already have an account? Log In"}

@@ -4,6 +4,7 @@ const axios = require('axios');
 class ApifyClient {
   constructor() {
     this.apiToken = process.env.APIFY_API_TOKEN;
+    this.lastFetchFailures = [];
 
     if (!this.apiToken) {
       throw new Error('APIFY_API_TOKEN is required in .env');
@@ -80,7 +81,15 @@ class ApifyClient {
         timeout: 120000,
       });
 
-      const products = response.data || [];
+      let products = [];
+      if (Array.isArray(response.data)) {
+        products = response.data;
+      } else if (Array.isArray(response.data?.items)) {
+        products = response.data.items;
+      } else {
+        throw new Error(`Unexpected response shape from ${source.name}`);
+      }
+
       console.log(`  ✓ Fetched ${products.length} products from ${source.name}`);
 
       return products.map(product => ({
@@ -90,6 +99,11 @@ class ApifyClient {
       }));
 
     } catch (error) {
+      this.lastFetchFailures.push({
+        source: source.name,
+        message: error.message,
+      });
+
       if (error.response) {
         console.error(`  ✗ API Error from ${source.name}:`, error.response.status, error.response.statusText);
       } else if (error.request) {
@@ -117,6 +131,12 @@ class ApifyClient {
     }
 
     console.log(`\n✓ Total products fetched: ${allProducts.length}`);
+
+    if (allProducts.length === 0 && this.lastFetchFailures.length === this.sources.length) {
+      const failures = this.lastFetchFailures.map(failure => `${failure.source}: ${failure.message}`).join('; ');
+      throw new Error(`Failed to fetch products from all Apify sources. ${failures}`);
+    }
+
     return allProducts;
   }
 }

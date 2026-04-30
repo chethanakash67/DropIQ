@@ -61,7 +61,7 @@ export default function ProductDetailPage() {
     const router = useRouter();
     const params = useParams();
     const id = params.id as string;
-    const { currentUser, loading: authLoading } = useAuth();
+    const { currentUser, loading: authLoading, authenticatedFetch, setCurrentUser } = useAuth();
     const { addToCart, addToBag, totalItems, totalBagItems, setShowCart, setShowBag } = useCart();
 
     const [product, setProduct] = useState<Product | null>(null);

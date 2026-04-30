@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "dev:landing": "cd Landing_page && npm run dev",
-    "dev:client": "cd client && npm run dev",
+    "dev:landing": "cd Landing_page && npm run dev -- -p 3000",
+    "dev:client": "cd client && npm run dev -- -p 3002",
     "dev:all": "concurrently \"npm run dev\" \"npm run dev:landing\" \"npm run dev:client\"",
     "scheduler": "node src/scheduler/monthly-ingestion.js",
     "scheduler:samsung": "node src/scheduler/samsung-ingestion.js",
@@ -48,6 +48,7 @@
     "jsonwebtoken": "^9.0.2",
     "next-auth": "^4.24.14",
     "node-cron": "^3.0.3",
+    "nodemailer": "^7.0.13",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "pg": "^8.11.3",

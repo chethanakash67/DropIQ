@@ -11,9 +11,10 @@ interface User {
     preferences?: string;
     themePreference?: string;
     avatarUrl?: string;
-    planType?: 'free' | 'pro' | 'premium';
+    planType?: 'free' | 'pro' | 'max' | 'premium';
     credits?: number;
     creditsLastRefreshed?: string;
+    storeVisits?: number;
 }
 
 interface AuthContextType {

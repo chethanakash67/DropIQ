@@ -8,6 +8,7 @@ const productsRouter = require('./routes/products');
 const diqRouter = require('./routes/diq');
 const authRouter = require('./routes/auth');
 const webhooksRouter = require('./routes/webhooks');
+const contactRouter = require('./routes/contact');
 
 // ── Background Schedulers ────────────────────────────────────────────────────
 require('./scheduler/monthly-ingestion');
@@ -74,6 +75,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/products', productsRouter);
 app.use('/api/diq', diqRouter);
 app.use('/api/webhooks', webhooksRouter);
+app.use('/api/contact', contactRouter);
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {

@@ -9,8 +9,7 @@ import { PlayCircle, Star, LogIn, UserPlus } from "lucide-react"
 import Logo from "./logo"
 import Link from "next/link"
 import dynamic from "next/dynamic"
-
-const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || "http://localhost:3001"
+import { dashboardPath } from "@/lib/dashboard-url"
 
 // Lazy load the heavy AnimatedCounter component
 const AnimatedCounter = dynamic(() => import("./animated-counter"), {
@@ -92,13 +91,13 @@ export default function Hero() {
 
             {/* CTAs */}
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Link href={`${DASHBOARD_URL}/signup`} target="_blank" rel="noopener noreferrer">
+              <Link href={dashboardPath("/signup")} target="_blank" rel="noopener noreferrer">
                 <GlowButton size="lg" className="w-full sm:w-auto whitespace-nowrap">
                   <UserPlus className="mr-2 h-5 w-5 shrink-0" aria-hidden="true" />
                   {"Sign Up"}
                 </GlowButton>
               </Link>
-              <Link href={`${DASHBOARD_URL}/login`} target="_blank" rel="noopener noreferrer">
+              <Link href={dashboardPath("/login")} target="_blank" rel="noopener noreferrer">
                 <GlowButton variant="outline" size="lg" className="w-full sm:w-auto rounded-full whitespace-nowrap">
                   <LogIn className="mr-2 h-5 w-5 shrink-0" aria-hidden="true" />
                   {"Log In"}

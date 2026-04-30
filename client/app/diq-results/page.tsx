@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
+import Navbar from '@/components/Navbar';
 import { IconCart, IconTrophy, IconStore, IconClipboard, IconInfo, IconMapPin, IconPhone, IconArrowLeft } from '@/components/Icons';
 
 interface ProductResult {
