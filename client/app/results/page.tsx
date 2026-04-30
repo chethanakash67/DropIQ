@@ -501,7 +501,7 @@ function ResultsContent() {
                                     display: 'flex',
                                     flexDirection: 'column',
                                     gap: '12px',
-                                    animation: 'pulse 1.5s infinite ease-in-out'
+                                    /* Removed pulse animation to prevent resize perception */
                                 }}>
                                     <div style={{ width: '100%', height: '120px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)' }} />
                                     <div style={{ width: '80%', height: '14px', background: 'var(--bg-secondary)', borderRadius: '4px' }} />
@@ -581,7 +581,6 @@ function ResultsContent() {
                                 <div className="products-grid" style={{
                                     opacity: resultsLoading ? 0.4 : 1,
                                     pointerEvents: resultsLoading ? 'none' : 'auto',
-                                    transition: 'opacity 0.2s ease',
                                 }}>
                                     {products.map((p, i) => <ProductCard key={`${p.id}-${i}`} product={p} />)}
                                 </div>

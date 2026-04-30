@@ -603,7 +603,7 @@ body {
 .search-box:focus-within {
   border-color: var(--accent);
   box-shadow: var(--shadow-md);
-  transform: scale(1.01);
+  /* Removed transform: scale to prevent resize */
 }
 
 #searchInput {
@@ -632,6 +632,7 @@ body {
 .search-box:focus-within {
   border-color: #10b981 !important;
   box-shadow: 0 6px 25px rgba(16, 185, 129, 0.15) !important;
+  /* Removed transform: scale to prevent resize */
 }
 
 #searchInput {
@@ -660,7 +661,7 @@ body {
 
 #searchButton:hover {
   background: #059669 !important;
-  transform: scale(1.05) !important;
+  /* Removed transform: scale to prevent resize */
 }
 
 
@@ -834,9 +835,12 @@ body {
   display: flex;
   gap: 0;
   margin-bottom: 24px;
+  max-width: 900px; /* Match search-container max-width */
+  margin-left: auto;
+  margin-right: auto;
   background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
 }
@@ -844,6 +848,7 @@ body {
 .results-search-container:focus-within {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+  /* Removed any transform to prevent resize */
 }
 
 .results-search-container input {
@@ -943,25 +948,30 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 24px;
+  contain: layout style paint; /* Prevent layout shift during render */
 }
 
 /* ── Product Card ──────────────────────────────────────────────────────────── */
 .product-card {
-  background: rgba(255, 255, 255, 0.95);
-  border: 2px solid var(--border-focus);
+  background: var(--bg-card);
+  border: 2px solid #d1fae5 !important;
   border-radius: var(--radius-md);
-  padding: 24px;
-  position: relative;
-  transition: var(--transition);
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  min-height: 320px; /* Fixed minimum height to prevent resize */
+  z-index: 1;
 }
 
+/* Only apply transitions on hover, not on initial load */
 .product-card:hover {
-  border-color: var(--accent);
-  background: var(--bg-card);
-  box-shadow: 0 10px 40px rgba(16, 185, 129, 0.2);
+  border-color: #10b981 !important;
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.15) !important;
+  z-index: 10;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 @keyframes floating {
@@ -971,20 +981,6 @@ body {
 
 .floating-card {
   animation: floating 4s ease-in-out infinite;
-}
-
-.product-card {
-  background: var(--bg-card);
-  border: 2px solid #d1fae5 !important;
-  border-radius: var(--radius-md);
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  transition: all 0.4s ease-in-out;
-  position: relative;
-  overflow: hidden;
-  height: 100%;
-  z-index: 1;
 }
 
 /* Special card variants — must override the base product-card overflow */

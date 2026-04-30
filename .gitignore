@@ -21,6 +21,7 @@ loader_preview/
 *.zip
 *.xlsx
 *.xls
+*.exe
 LICENSE
 
 # High memory / binary files
