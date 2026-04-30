@@ -5,12 +5,12 @@ const path = require('path');
 /**
  * Monthly Data Ingestion Scheduler
  * 
- * Schedule: Runs on the 28th of every month at 11:00 PM (23:00)
+ * Schedule: Runs on the 30th of every month at 4:00 AM (04:00)
  * 
- * Cron Expression: '0 23 28 * *'
+ * Cron Expression: '0 4 30 * *'
  * - Minute: 0 (at the start of the hour)
- * - Hour: 23 (11 PM)
- * - Day of Month: 28 (28th day)
+ * - Hour: 4 (4 AM)
+ * - Day of Month: 30 (30th day)
  * - Month: * (every month)
  * - Day of Week: * (any day of the week)
  */
@@ -18,19 +18,19 @@ const path = require('path');
 console.log('========================================');
 console.log('Monthly Ingestion Scheduler Started');
 console.log('========================================');
-console.log('Schedule: 28th of every month at 11:00 PM');
+console.log('Schedule: 30th of every month at 4:00 AM');
 console.log('Current time:', new Date().toLocaleString());
 console.log('========================================\n');
 
-// Schedule the ingestion job to run monthly on the 28th at 11:00 PM
-const monthlyJob = cron.schedule('0 23 28 * *', () => {
+// Schedule the ingestion job to run monthly on the 30th at 4:00 AM
+const monthlyJob = cron.schedule('0 4 30 * *', () => {
   console.log('\n========================================');
   console.log('Scheduled Monthly Ingestion Triggered');
   console.log('Time:', new Date().toLocaleString());
   console.log('========================================\n');
 
-  // Execute the ingestion script
-  const ingestionScript = path.join(__dirname, '..', 'jobs', 'ingest-apify-data.js');
+  // Execute the global ingestion script which includes Vijay Sales, Croma, and Brands
+  const ingestionScript = path.join(__dirname, '..', 'jobs', 'ingest-all-stores.js');
 
   exec(`node "${ingestionScript}"`, (error, stdout, stderr) => {
     if (error) {

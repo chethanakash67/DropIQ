@@ -3,6 +3,8 @@ const router = express.Router();
 const passport = require('passport');
 const authService = require('../services/auth-service');
 const { authenticate } = require('../middleware/auth');
+const { normalizePlanType } = require('../services/credits-service');
+const db = require('../database/db');
 
 
 // Simple in-memory rate limiter (use Redis in production for distributed systems)
@@ -133,7 +135,9 @@ router.post('/signup', rateLimiter, async (req, res) => {
         id: user.id,
         email: user.email,
         fullName: user.full_name,
-        role: user.role
+        role: user.role,
+        planType: normalizePlanType(user.plan_type),
+        credits: user.credits
       },
       accessToken,
       refreshToken
@@ -336,7 +340,14 @@ router.get('/me', authenticate, async (req, res) => {
         id: user.id,
         email: user.email,
         fullName: user.full_name,
+        phone: user.phone,
+        address: user.address,
+        preferences: user.preferences,
+        themePreference: user.theme_preference,
         role: user.role,
+        planType: req.user.planType || normalizePlanType(user.plan_type),
+        credits: req.user.credits ?? user.credits,
+        creditsLastRefreshed: user.credits_last_refreshed,
         emailVerified: user.email_verified,
         createdAt: user.created_at,
         lastLogin: user.last_login
@@ -379,5 +390,225 @@ router.get('/google/callback',
     }
   }
 );
+
+/**
+ * PATCH /api/auth/me
+ * Update user profile
+ */
+router.patch('/me', authenticate, async (req, res) => {
+  try {
+    const user = await authService.updateUserProfile(req.user.id, req.body);
+    res.json({ 
+      success: true, 
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.full_name,
+        phone: user.phone,
+        address: user.address,
+        preferences: user.preferences,
+        themePreference: user.theme_preference
+      } 
+    });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ success: false, error: 'Failed to update profile' });
+  }
+});
+
+/**
+ * DELETE /api/auth/me
+ * Permanently delete current user account
+ */
+router.delete('/me', authenticate, async (req, res) => {
+  try {
+    const result = await authService.deleteUser(req.user.id);
+    if (result.success) {
+      res.json({ success: true, message: 'Account deleted successfully' });
+    } else {
+      res.status(404).json({ success: false, error: 'User not found' });
+    }
+  } catch (error) {
+    console.error('Delete account error:', error);
+    res.status(500).json({ success: false, error: 'Failed to delete account' });
+  }
+});
+
+/**
+ * DELETE /api/auth/me/data
+ * Clear all user shopping data (cart and bag)
+ */
+router.delete('/me/data', authenticate, async (req, res) => {
+  try {
+    await itemsService.clearUserItems(req.user.id);
+    res.json({ success: true, message: 'Shopping data cleared successfully' });
+  } catch (error) {
+    console.error('Clear data error:', error);
+    res.status(500).json({ success: false, error: 'Failed to clear data' });
+  }
+});
+
+
+/**
+ * PATCH /api/auth/me/password
+ * Change user password
+ */
+router.patch('/me/password', authenticate, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, error: 'Current and new passwords are required' });
+    }
+    const result = await authService.updateUserPassword(req.user.id, currentPassword, newPassword);
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+    res.json({ success: true, message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Update password error:', error);
+    res.status(500).json({ success: false, error: 'Failed to update password' });
+  }
+});
+
+/**
+ * PATCH /api/auth/me/preferences
+ * Update user shopping preferences
+ */
+router.patch('/me/preferences', authenticate, async (req, res) => {
+  try {
+    const { preferences } = req.body;
+    await authService.updateUserPreferences(req.user.id, preferences);
+    res.json({ success: true, message: 'Preferences updated' });
+  } catch (error) {
+    console.error('Update preferences error:', error);
+    res.status(500).json({ success: false, error: 'Failed' });
+  }
+});
+
+/**
+ * POST /api/auth/me/increment-visits
+ * Increment the user's store visits count
+ */
+/**
+ * POST /api/auth/me/increment-visits
+ * Increment the user's store visits count
+ */
+router.post('/me/increment-visits', authenticate, async (req, res) => {
+  try {
+    const visits = await authService.incrementStoreVisits(req.user.id);
+    res.json({ success: true, visits });
+  } catch (error) {
+    console.error('Increment visits error:', error);
+    res.status(500).json({ success: false, error: 'Failed to increment visits' });
+  }
+});
+
+/**
+ * POST /api/auth/upgrade-plan
+ * Upgrade user's plan and set credits accordingly
+ */
+router.post('/upgrade-plan', authenticate, async (req, res) => {
+  try {
+    const { planType } = req.body;
+    if (!['pro', 'max', 'premium'].includes(planType)) {
+      return res.status(400).json({ success: false, error: 'Invalid plan type' });
+    }
+
+    const credits = planType === 'pro' ? 50 : 75;
+    
+    const query = `
+      UPDATE users 
+      SET plan_type = $1, 
+          credits = credits + $2, 
+          credits_last_refreshed = NOW(),
+          updated_at = NOW() 
+      WHERE id = $3 
+      RETURNING id, email, full_name, plan_type, credits, credits_last_refreshed, store_visits
+    `;
+    
+    const result = await db.query(query, [planType, credits, req.user.id]);
+    const user = result.rows[0];
+
+    res.json({ 
+      success: true, 
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.full_name,
+        planType: normalizePlanType(user.plan_type),
+        credits: user.credits,
+        creditsLastRefreshed: user.credits_last_refreshed,
+        storeVisits: user.store_visits || 0
+      } 
+    });
+  } catch (error) {
+    console.error('Upgrade plan error:', error);
+    res.status(500).json({ success: false, error: 'Failed to upgrade plan' });
+  }
+});
+
+// Import items service
+const itemsService = require('../services/user-items-service');
+
+/**
+ * Bag (Wishlist) Endpoints
+ */
+router.get('/me/bag', authenticate, async (req, res) => {
+  try {
+    const items = await itemsService.getBag(req.user.id);
+    res.json({ success: true, items });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Failed to fetch bag' });
+  }
+});
+
+router.post('/me/bag', authenticate, async (req, res) => {
+  try {
+    const item = await itemsService.addToBag(req.user.id, req.body.product);
+    res.json({ success: true, item });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Failed to add to bag' });
+  }
+});
+
+router.delete('/me/bag/:productId', authenticate, async (req, res) => {
+  try {
+    const { retailer } = req.query;
+    await itemsService.removeFromBag(req.user.id, req.params.productId, retailer);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Failed to remove from bag' });
+  }
+});
+
+router.post('/me/bag/sync', authenticate, async (req, res) => {
+  try {
+    await itemsService.syncBag(req.user.id, req.body.items);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Failed to sync bag' });
+  }
+});
+
+/**
+ * Cart Sync Endpoints
+ */
+router.get('/me/cart', authenticate, async (req, res) => {
+  try {
+    const items = await itemsService.getCart(req.user.id);
+    res.json({ success: true, items });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Failed to fetch cart' });
+  }
+});
+
+router.post('/me/cart/sync', authenticate, async (req, res) => {
+  try {
+    await itemsService.syncCart(req.user.id, req.body.items);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Failed to sync cart' });
+  }
+});
 
 module.exports = router;

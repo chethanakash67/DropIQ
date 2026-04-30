@@ -4,12 +4,12 @@ import type React from "react"
 
 import GlowButton from "./glow-button"
 import { Badge } from "@/components/ui/badge"
-import WaitlistForm from "./waitlist-form"
 import SmoothScrollLink from "./smooth-scroll-link"
 import { PlayCircle, Star, LogIn, UserPlus } from "lucide-react"
 import Logo from "./logo"
-import dynamic from "next/dynamic"
 import Link from "next/link"
+import dynamic from "next/dynamic"
+import { dashboardPath } from "@/lib/dashboard-url"
 
 // Lazy load the heavy AnimatedCounter component
 const AnimatedCounter = dynamic(() => import("./animated-counter"), {
@@ -18,15 +18,14 @@ const AnimatedCounter = dynamic(() => import("./animated-counter"), {
 })
 
 export default function Hero() {
-  const fullLine =
-    "We provide 'The Best' products across online and offline markets, with high 'Price vs Features' score"
+  const fullLine = "Discover the 'most reasonable price' for every 'particular product'"
 
   const HIGHLIGHT_CLASS =
     "bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 via-lime-600 to-emerald-600 dark:from-cyan-400 dark:via-sky-400 dark:to-cyan-400"
 
   function highlightQuoted(text: string) {
     const parts: React.ReactNode[] = []
-    const regex = /'The Best'|'Price vs Features'/g
+    const regex = /'most reasonable price'|'particular product'/g
     let lastIndex = 0
     let m: RegExpExecArray | null
     while ((m = regex.exec(text)) !== null) {
@@ -34,15 +33,11 @@ export default function Hero() {
       if (idx > lastIndex) parts.push(text.slice(lastIndex, idx))
       const phrase = m[0]
       const inner = phrase.slice(1, -1) // remove surrounding quotes
-      const startQuote = phrase[0]
-      const endQuote = phrase[phrase.length - 1]
-      parts.push(startQuote)
       parts.push(
         <span key={`hl-${idx}`} className={HIGHLIGHT_CLASS}>
           {inner}
         </span>,
       )
-      parts.push(endQuote)
       lastIndex = idx + phrase.length
     }
     if (lastIndex < text.length) parts.push(text.slice(lastIndex))
@@ -91,51 +86,29 @@ export default function Hero() {
 
             {/* Tagline line with subtle highlight */}
             <p className="mt-4 text-base sm:text-lg leading-relaxed text-gray-700 dark:text-gray-300">
-              {"Compare "}
-              <span className="inline-block rounded-md px-2 py-1 font-semibold bg-gradient-to-r from-emerald-500/15 to-lime-500/15 ring-1 ring-emerald-300/30 dark:from-cyan-500/15 dark:to-sky-500/15 dark:ring-cyan-400/30">
-                {"Prices"}
-              </span>
-              {" across top stores — get the "}
-              <span className="inline-block rounded-md px-2 py-1 bg-gradient-to-r from-emerald-500/15 to-lime-500/15 ring-1 ring-emerald-300/30 dark:from-cyan-500/15 dark:to-sky-500/15 dark:ring-cyan-400/30">
-                {"best value"}
-              </span>
-              {" instantly."}
+              {"We compare online and offline stores (coming soon) tailored to your location. Every product has a true value, pay exactly that, nothing more, nothing less."}
             </p>
 
-            {/* Email form */}
-            <div className="mt-6 space-y-4">
-              <WaitlistForm size="md" className="w-full sm:max-w-xl" />
-              <div className="text-xs text-gray-500 dark:text-gray-300">{"No spam. Unsubscribe anytime."}</div>
-
-              {/* CTAs remain below */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                <SmoothScrollLink href="#demo-video">
-                  <GlowButton size="lg" className="w-full sm:w-auto">
-                    <PlayCircle className="mr-2 h-5 w-5" aria-hidden="true" />
-                    {"See DropiQ in Action"}
-                  </GlowButton>
-                </SmoothScrollLink>
-                <SmoothScrollLink href="#final-cta">
-                  <GlowButton variant="outline" size="lg" className="w-full sm:w-auto rounded-full">
-                    {"Waitlist"}
-                  </GlowButton>
-                </SmoothScrollLink>
-              </div>
-              {/* Auth CTAs */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-1">
-                <Link href="http://localhost:3002/signup" className="w-full sm:w-auto">
-                  <GlowButton size="lg" className="w-full sm:w-auto">
-                    <UserPlus className="mr-2 h-5 w-5" aria-hidden="true" />
-                    {"Get Started — Sign Up"}
-                  </GlowButton>
-                </Link>
-                <Link href="http://localhost:3002/login" className="w-full sm:w-auto">
-                  <GlowButton variant="outline" size="lg" className="w-full sm:w-auto rounded-full">
-                    <LogIn className="mr-2 h-5 w-5" aria-hidden="true" />
-                    {"Login"}
-                  </GlowButton>
-                </Link>
-              </div>
+            {/* CTAs */}
+            <div className="mt-6 flex flex-col sm:flex-row gap-3">
+              <Link href={dashboardPath("/signup")} target="_blank" rel="noopener noreferrer">
+                <GlowButton size="lg" className="w-full sm:w-auto whitespace-nowrap">
+                  <UserPlus className="mr-2 h-5 w-5 shrink-0" aria-hidden="true" />
+                  {"Sign Up"}
+                </GlowButton>
+              </Link>
+              <Link href={dashboardPath("/login")} target="_blank" rel="noopener noreferrer">
+                <GlowButton variant="outline" size="lg" className="w-full sm:w-auto rounded-full whitespace-nowrap">
+                  <LogIn className="mr-2 h-5 w-5 shrink-0" aria-hidden="true" />
+                  {"Log In"}
+                </GlowButton>
+              </Link>
+              <SmoothScrollLink href="#demo-video">
+                <GlowButton variant="outline" size="lg" className="w-full sm:w-auto rounded-full whitespace-nowrap">
+                  <PlayCircle className="mr-2 h-5 w-5 shrink-0" aria-hidden="true" />
+                  {"See DropiQ in Action"}
+                </GlowButton>
+              </SmoothScrollLink>
             </div>
           </div>
 
@@ -158,23 +131,44 @@ export default function Hero() {
 
                       {/* Rows */}
                       <div className="mt-3 space-y-2">
-                        <div className="flex items-center justify-between rounded-lg bg-gray-100 px-3 py-2 text-sm dark:bg-slate-900 dark:text-gray-200">
+                        <div className="flex items-center justify-between rounded-lg bg-gray-100 px-3 py-2 text-xs dark:bg-slate-900 dark:text-gray-200">
                           <span>{"Amazon"}</span>
                           <span className="font-bold text-slate-900 dark:text-gray-100">{"₹82,917"}</span>
                         </div>
 
-                        <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800 ring-1 ring-emerald-200 dark:bg-cyan-900/20 dark:text-cyan-300 dark:ring-cyan-700">
+                        <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800 ring-1 ring-emerald-200 dark:bg-cyan-900/20 dark:text-cyan-300 dark:ring-cyan-700">
                           <span>{"Best Buy"}</span>
                           <span className="font-extrabold">{"₹78,767"}</span>
                         </div>
 
-                        <div className="flex items-center justify-between rounded-lg bg-gray-100 px-3 py-2 text-sm dark:bg-slate-900 dark:text-gray-200">
+                        <div className="flex items-center justify-between rounded-lg bg-gray-100 px-3 py-2 text-xs dark:bg-slate-900 dark:text-gray-200">
                           <span>{"Apple"}</span>
                           <span className="font-bold text-slate-900 dark:text-gray-100">{"₹82,917"}</span>
                         </div>
 
-                        <div className="rounded-lg bg-emerald-100 px-3 py-2 text-center text-sm font-semibold text-emerald-800 dark:bg-cyan-900/30 dark:text-cyan-300">
-                          {"Save ₹4,150"}
+                        <div className="flex flex-col rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800 ring-1 ring-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:ring-emerald-700">
+                          <div className="flex items-center justify-between">
+                            <span className="font-semibold">{"Digital Plaza (Offline)"}</span>
+                            <span className="font-bold">{"₹77,500"}</span>
+                          </div>
+                          <span className="text-[10px] opacity-70">{"MG Road, Bangalore"}</span>
+                        </div>
+
+                        <div className="flex flex-col rounded-lg bg-lime-50 px-3 py-2 text-xs text-lime-800 ring-1 ring-lime-200 dark:bg-lime-900/20 dark:text-lime-300 dark:ring-lime-700">
+                          <div className="flex items-center justify-between">
+                            <span className="font-semibold">{"Smart Electronics"}</span>
+                            <span className="font-bold">{"₹77,900"}</span>
+                          </div>
+                          <span className="text-[10px] opacity-70">{"Indiranagar, Bangalore"}</span>
+                        </div>
+
+                        <div className="flex items-center justify-between rounded-lg bg-emerald-600 px-3 py-2 text-xs text-white shadow-md transform scale-105">
+                          <span className="font-bold">{"Least Price Ever!"}</span>
+                          <span className="font-extrabold">{"₹77,500"}</span>
+                        </div>
+
+                        <div className="rounded-lg bg-emerald-100 px-3 py-1 text-center text-[11px] font-semibold text-emerald-800 dark:bg-cyan-900/30 dark:text-cyan-300">
+                          {"Save up to ₹5,417"}
                         </div>
                       </div>
                     </div>

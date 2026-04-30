@@ -2,6 +2,12 @@ require('dotenv').config();
 const googleSheetsService = require('../services/google-sheets-service');
 const offlineStoreRepository = require('../repositories/offline-store-repository');
 
+let activeSyncPromise = null;
+let lastSyncStartedAt = null;
+let lastSyncCompletedAt = null;
+let lastSyncError = null;
+let lastSyncSource = null;
+
 /**
  * Parse products string from the Google Sheet
  * Format: "Product Name - Rs. Price\nProduct Name - Rs Price"
@@ -130,43 +136,95 @@ async function processStoreRow(row) {
 /**
  * Main sync function - fetches data from Google Sheets and syncs to database
  */
-async function syncOfflineStores() {
-  try {
-    console.log('\n========================================');
-    console.log('Starting Offline Stores Sync');
-    console.log('========================================\n');
+async function syncOfflineStores(options = {}) {
+  const source = options.source || 'manual';
 
-    // Get spreadsheet ID from environment variable
-    const spreadsheetId = process.env.GOOGLE_SHEETS_STORE_REGISTRATION_ID;
-    
-    if (!spreadsheetId) {
-      throw new Error('GOOGLE_SHEETS_STORE_REGISTRATION_ID not found in environment variables');
-    }
-
-    console.log('Fetching data from Google Sheets...');
-    
-    // Fetch data from the sheet
-    const sheetData = await googleSheetsService.fetchSheetData(spreadsheetId, 'Form responses 1');
-    
-    console.log(`✓ Fetched ${sheetData.length} rows from Google Sheets\n`);
-
-    // Process each row
-    for (let i = 0; i < sheetData.length; i++) {
-      console.log(`\nProcessing row ${i + 1}/${sheetData.length}:`);
-      await processStoreRow(sheetData[i]);
-    }
-
-    console.log('\n========================================');
-    console.log('✓ Offline Stores Sync Completed Successfully');
-    console.log('========================================\n');
-
-  } catch (error) {
-    console.error('\n========================================');
-    console.error('✗ Offline Stores Sync Failed');
-    console.error('========================================');
-    console.error('Error:', error);
-    throw error;
+  if (activeSyncPromise) {
+    console.log(`⚠ Offline Stores Sync already running. Reusing active run (requested by: ${source})`);
+    return activeSyncPromise;
   }
+
+  lastSyncStartedAt = new Date().toISOString();
+  lastSyncSource = source;
+  lastSyncError = null;
+
+  activeSyncPromise = (async () => {
+    try {
+      console.log('\n========================================');
+      console.log(`Starting Offline Stores Sync (source: ${source})`);
+      console.log('========================================\n');
+
+      // Get spreadsheet ID from environment variable
+      const spreadsheetId = process.env.GOOGLE_SHEETS_STORE_REGISTRATION_ID;
+
+      if (!spreadsheetId) {
+        throw new Error('GOOGLE_SHEETS_STORE_REGISTRATION_ID not found in environment variables');
+      }
+
+      console.log('Fetching data from Google Sheets...');
+
+      // Fetch data from the sheet
+      const sheetData = await googleSheetsService.fetchSheetData(spreadsheetId, 'Form responses 1');
+
+      console.log(`✓ Fetched ${sheetData.length} rows from Google Sheets\n`);
+
+      // Process each row
+      for (let i = 0; i < sheetData.length; i++) {
+        console.log(`\nProcessing row ${i + 1}/${sheetData.length}:`);
+        await processStoreRow(sheetData[i]);
+      }
+
+      console.log('\n========================================');
+      console.log('✓ Offline Stores Sync Completed Successfully');
+      console.log('========================================\n');
+      lastSyncCompletedAt = new Date().toISOString();
+    } catch (error) {
+      lastSyncError = error.message;
+      console.error('\n========================================');
+      console.error('✗ Offline Stores Sync Failed');
+      console.error('========================================');
+      console.error('Error:', error);
+      throw error;
+    } finally {
+      activeSyncPromise = null;
+    }
+  })();
+
+  return activeSyncPromise;
+}
+
+async function triggerStoreSync(options = {}) {
+  const source = options.source || 'webhook';
+  if (activeSyncPromise) {
+    return {
+      accepted: false,
+      inProgress: true,
+      source,
+      message: 'Sync already in progress'
+    };
+  }
+
+  // Fire and forget so webhooks can return fast.
+  syncOfflineStores({ source }).catch((error) => {
+    console.error(`Background sync failed (source: ${source})`, error.message);
+  });
+
+  return {
+    accepted: true,
+    inProgress: true,
+    source,
+    message: 'Sync started'
+  };
+}
+
+function getStoreSyncStatus() {
+  return {
+    inProgress: !!activeSyncPromise,
+    lastSyncStartedAt,
+    lastSyncCompletedAt,
+    lastSyncError,
+    lastSyncSource
+  };
 }
 
 // Run sync if called directly
@@ -182,4 +240,9 @@ if (require.main === module) {
     });
 }
 
-module.exports = { syncOfflineStores, parseProducts };
+module.exports = {
+  syncOfflineStores,
+  triggerStoreSync,
+  getStoreSyncStatus,
+  parseProducts
+};

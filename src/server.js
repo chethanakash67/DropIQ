@@ -7,9 +7,22 @@ const { Strategy: GoogleStrategy } = require('passport-google-oauth20');
 const productsRouter = require('./routes/products');
 const diqRouter = require('./routes/diq');
 const authRouter = require('./routes/auth');
+const webhooksRouter = require('./routes/webhooks');
+const contactRouter = require('./routes/contact');
+
+// ── Background Schedulers ────────────────────────────────────────────────────
+require('./scheduler/monthly-ingestion');
+require('./scheduler/samsung-ingestion');
+require('./scheduler/offline-store-sync');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// ── Simple Logger ────────────────────────────────────────────────────────────
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
 
 // ── Passport / Google OAuth ──────────────────────────────────────────────────
 passport.use(new GoogleStrategy(
@@ -38,6 +51,14 @@ app.use(cors({
   origin: [
     'http://localhost:3000',
     'http://localhost:3001',
+    'http://localhost:3002',
+    'http://localhost:3003',
+    'http://localhost:3004',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:3001',
+    'http://127.0.0.1:3002',
+    'http://127.0.0.1:3003',
+    'http://127.0.0.1:3004',
     process.env.FRONTEND_URL,
   ].filter(Boolean),
   credentials: true,
@@ -53,6 +74,8 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use('/api/auth', authRouter);
 app.use('/api/products', productsRouter);
 app.use('/api/diq', diqRouter);
+app.use('/api/webhooks', webhooksRouter);
+app.use('/api/contact', contactRouter);
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {

@@ -1,11 +1,11 @@
 "use client"
 
 import SmoothScrollLink from "./smooth-scroll-link"
-import ThemeToggle from "./theme-toggle"
 import GlowButton from "./glow-button"
 import Logo from "./logo"
 import { Button } from "./ui/button"
 import Link from "next/link"
+import { dashboardPath } from "@/lib/dashboard-url"
 
 const links = [
   { href: "#how-it-works", label: "How it Works" },
@@ -45,14 +45,13 @@ export default function Navbar() {
 
         {/* Right: Actions - professionally aligned */}
         <div className="flex items-center justify-end gap-4">
-          <ThemeToggle />
-          <Link href="http://localhost:3002/login">
+          <Link href={dashboardPath("/login")} target="_blank" rel="noopener noreferrer">
             <Button variant="outline" size="lg" className="rounded-full">
-              Login
+              Log In
             </Button>
           </Link>
-          <Link href="http://localhost:3002/signup">
-            <Button size="lg" className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600">
+          <Link href={dashboardPath("/signup")} target="_blank" rel="noopener noreferrer">
+            <Button size="lg" className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white">
               Sign Up
             </Button>
           </Link>
@@ -68,14 +67,13 @@ export default function Navbar() {
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <Link href="http://localhost:3002/login">
+          <Link href={dashboardPath("/login")} target="_blank" rel="noopener noreferrer">
             <Button variant="outline" size="sm" className="rounded-full">
-              Login
+              Log In
             </Button>
           </Link>
-          <Link href="http://localhost:3002/signup">
-            <Button size="sm" className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white dark:bg-cyan-500 dark:hover:bg-cyan-600">
+          <Link href={dashboardPath("/signup")} target="_blank" rel="noopener noreferrer">
+            <Button size="sm" className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white">
               Sign Up
             </Button>
           </Link>
