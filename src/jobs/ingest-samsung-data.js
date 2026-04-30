@@ -144,46 +144,47 @@ function parseSamsungProducts(capturedText) {
 
 // Helper: Normalize Samsung product from parsed data
 function normalizeSamsungProduct(parsedProduct) {
-  const category = determineCategory(parsedProduct.name);
+  // Map Browse.ai keys to our internal format
+  const name = parsedProduct.name || parsedProduct['Product Name'] || '';
+  const price = parsedProduct.price || parsedProduct['Current Price'] || parsedProduct['Price'] || null;
+  const rating = parsedProduct.rating || parsedProduct['Product Rating'] || null;
+  const reviewsCount = parsedProduct.reviewsCount || parsedProduct['Number of Ratings'] || null;
+  const productUrl = parsedProduct.productUrl || parsedProduct['Product Link'] || '';
+  const imageUrl = parsedProduct.imageUrl || parsedProduct['Main Image'] || null;
+  const colors = parsedProduct.colors || parsedProduct['Color'] || null;
+
+  const category = determineCategory(name);
   const productId = generateSamsungProductId(category);
 
-  // Generate product URL based on Samsung's pattern
-  // Pattern: /in/audio-sound/<category>/<product-slug>/
-  let urlCategory = 'others';
-  if (parsedProduct.name.toLowerCase().includes('galaxy buds')) {
-    urlCategory = 'galaxy-buds';
-  } else if (parsedProduct.name.toLowerCase().includes('level')) {
-    urlCategory = 'others';
-  } else if (parsedProduct.name.toLowerCase().includes('ehs')) {
-    urlCategory = 'others';
+  // Generate product URL based on Samsung's pattern if not provided
+  let finalProductUrl = productUrl;
+  if (!finalProductUrl && name) {
+    let urlCategory = 'others';
+    if (name.toLowerCase().includes('galaxy buds')) {
+      urlCategory = 'galaxy-buds';
+    }
+    const productSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    finalProductUrl = `https://www.samsung.com/in/audio-sound/${urlCategory}/${productSlug}/`;
   }
 
-  // Generate slug from product name
-  const productSlug = parsedProduct.name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-
-  const productUrl = `https://www.samsung.com/in/audio-sound/${urlCategory}/${productSlug}/`;
-
   return {
-    productName: parsedProduct.name,
+    productName: name,
     brand: parsedProduct.brand || 'Samsung',
     productId: productId,
     category,
-    priceInr: parsedProduct.price, // Will be NULL if not available
-    rating: parsedProduct.rating || null,
-    reviewsCount: parsedProduct.reviewsCount || null,
-    description: parsedProduct.colors ? `Available in: ${parsedProduct.colors}` : null,
-    features: parsedProduct.colors ? { colors: parsedProduct.colors } : null,
+    priceInr: price ? parseFloat(String(price).replace(/[^0-9.]/g, '')) : null,
+    rating: rating ? parseFloat(String(rating)) : null,
+    reviewsCount: reviewsCount ? parseInt(String(reviewsCount).replace(/[^0-9]/g, '')) : null,
+    description: colors ? `Available in: ${colors}` : null,
+    features: colors ? { colors: colors } : null,
     specifications: null,
-    imageUrl: null, // Not available in text data
-    productUrl: productUrl,
+    imageUrl: imageUrl,
+    productUrl: finalProductUrl,
     availabilityStatus: parsedProduct.availability || 'in_stock'
   };
 }
 
-async function ingestSamsungData() {
+async function ingestSamsungData(customTaskId = null) {
   console.log('\n========================================');
   console.log('Samsung Data Ingestion (Browse.ai)');
   console.log('========================================\n');
@@ -200,7 +201,7 @@ async function ingestSamsungData() {
 
   try {
     // Initialize Browse.ai client
-    const browseAiClient = new BrowseAiClient();
+    const browseAiClient = new BrowseAiClient(null, null, customTaskId);
 
     // Fetch data from Browse.ai
     const rawData = await browseAiClient.fetchTaskData();

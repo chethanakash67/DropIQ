@@ -20,7 +20,8 @@ function OAuthCallbackContent() {
         if (token && refresh) {
             localStorage.setItem('accessToken', token);
             localStorage.setItem('refreshToken', refresh);
-            router.replace('/dashboard');
+            // Use hard redirect to ensure AuthContext re-initializes with new tokens
+            window.location.href = '/dashboard';
         } else {
             router.replace('/login?error=missing_tokens');
         }

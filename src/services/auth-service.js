@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const db = require('../database/db');
+const { normalizePlanType } = require('./credits-service');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-change-in-production';
@@ -15,6 +16,13 @@ async function ensureGoogleColumns() {
     await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE`);
     await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT`);
     await db.query(`ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL`);
+    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_type VARCHAR(20) DEFAULT 'free'`);
+    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS credits INTEGER DEFAULT 20`);
+    await db.query(`ALTER TABLE users ALTER COLUMN credits SET DEFAULT 20`);
+    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS credits_last_refreshed TIMESTAMP DEFAULT CURRENT_TIMESTAMP`);
+    await db.query(`UPDATE users SET plan_type = 'free' WHERE plan_type IS NULL`);
+    await db.query(`UPDATE users SET credits = 20 WHERE credits IS NULL`);
+    await db.query(`UPDATE users SET credits_last_refreshed = CURRENT_TIMESTAMP WHERE credits_last_refreshed IS NULL`);
   } catch (_) { }
 }
 ensureGoogleColumns();
@@ -153,18 +161,24 @@ class AuthService {
   /**
    * Register new user
    */
-  async registerUser(email, password, fullName = null) {
+  async registerUser(email, password, fullName = null, planType = 'free') {
     // Hash password
     const passwordHash = await this.hashPassword(password);
 
+    // Set initial credits based on plan
+    const normalizedPlanType = normalizePlanType(planType);
+    let credits = 20;
+    if (normalizedPlanType === 'pro') credits = 50;
+    if (normalizedPlanType === 'max') credits = 75;
+
     // Insert user
     const query = `
-      INSERT INTO users (email, password_hash, full_name)
-      VALUES ($1, $2, $3)
-      RETURNING id, email, full_name, role, created_at
+      INSERT INTO users (email, password_hash, full_name, plan_type, credits)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING id, email, full_name, role, plan_type, credits, created_at
     `;
 
-    const result = await db.query(query, [email, passwordHash, fullName]);
+    const result = await db.query(query, [email, passwordHash, fullName, normalizedPlanType, credits]);
     return result.rows[0];
   }
 
@@ -236,7 +250,10 @@ class AuthService {
           id: user.id,
           email: user.email,
           fullName: user.full_name,
-          role: user.role
+          role: user.role,
+          planType: normalizePlanType(user.plan_type),
+          credits: user.credits,
+          storeVisits: user.store_visits || 0
         },
         accessToken,
         refreshToken
@@ -320,7 +337,7 @@ class AuthService {
    */
   async getUserById(userId) {
     const query = `
-      SELECT id, email, full_name, role, is_active, email_verified, created_at, last_login
+      SELECT id, email, full_name, phone, address, preferences, theme_preference, role, plan_type, credits, credits_last_refreshed, store_visits, is_active, email_verified, created_at, last_login
       FROM users
       WHERE id = $1
     `;
@@ -378,10 +395,100 @@ class AuthService {
 
     return {
       success: true,
-      user: { id: user.id, email: user.email, fullName: user.full_name, avatarUrl: user.avatar_url, role: user.role },
+      user: { id: user.id, email: user.email, fullName: user.full_name, avatarUrl: user.avatar_url, role: user.role, storeVisits: user.store_visits || 0 },
       accessToken,
       refreshToken,
     };
+  }
+
+  /**
+   * Update user profile information
+   */
+  async updateUserProfile(userId, data) {
+    const { fullName, phone, address, themePreference, preferences } = data;
+    const query = `
+      UPDATE users 
+      SET full_name = COALESCE($1, full_name),
+          phone = COALESCE($2, phone),
+          address = COALESCE($3, address),
+          theme_preference = COALESCE($4, theme_preference),
+          preferences = COALESCE($5, preferences),
+          updated_at = NOW()
+      WHERE id = $6
+      RETURNING id, email, full_name, phone, address, theme_preference, preferences
+    `;
+    const result = await db.query(query, [fullName, phone, address, themePreference, preferences, userId]);
+    return result.rows[0];
+  }
+
+  /**
+   * Update user preferences
+   */
+  async updateUserPreferences(userId, preferences) {
+    const query = 'UPDATE users SET preferences = $1, updated_at = NOW() WHERE id = $2 RETURNING id, preferences';
+    const result = await db.query(query, [preferences, userId]);
+    return result.rows[0];
+  }
+
+  /**
+   * Change user password with security verification
+   */
+  async updateUserPassword(userId, currentPassword, newPassword) {
+    // Get current user password
+    const userResult = await db.query('SELECT password_hash FROM users WHERE id = $1', [userId]);
+    const user = userResult.rows[0];
+
+    if (!user || !user.password_hash) {
+      return { success: false, error: 'Password not set for this account (OAuth user?)' };
+    }
+
+    // Verify current password
+    const isValid = await this.verifyPassword(currentPassword, user.password_hash);
+    if (!isValid) {
+      return { success: false, error: 'Incorrect current password' };
+    }
+
+    // Hash and update new password
+    const newHash = await this.hashPassword(newPassword);
+    await db.query('UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2', [newHash, userId]);
+
+    return { success: true };
+  }
+
+  /**
+   * Permanently delete a user account and revoke all tokens
+   */
+  async deleteUser(userId) {
+    await db.query('BEGIN');
+    try {
+      // 1. Get user email before deletion (for login_attempts which lacks user_id)
+      const userRes = await db.query('SELECT email FROM users WHERE id = $1', [userId]);
+      const email = userRes.rows[0]?.email;
+
+      if (email) {
+        // 2. Delete login attempts (not linked by FK, uses email)
+        await db.query('DELETE FROM login_attempts WHERE email = $1', [email]);
+      }
+
+      // 3. Delete the user (This will cascade to refresh_tokens, bag_items, cart_items, and search_history)
+      const result = await db.query('DELETE FROM users WHERE id = $1 RETURNING id', [userId]);
+      
+      await db.query('COMMIT');
+      return { success: result.rows.length > 0 };
+    } catch (error) {
+      await db.query('ROLLBACK');
+      console.error('deleteUser service error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Increment store visits count
+   */
+  async incrementStoreVisits(userId) {
+    const query = 'UPDATE users SET store_visits = store_visits + 1 WHERE id = $1 RETURNING store_visits';
+    const result = await db.query(query, [userId]);
+    return result.rows[0]?.store_visits || 0;
   }
 }
 

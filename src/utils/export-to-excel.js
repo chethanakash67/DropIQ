@@ -5,197 +5,78 @@ const path = require('path');
 
 /**
  * Export PostgreSQL data to Excel
- * Creates separate sheets for Amazon and Flipkart products
+ * Creates separate sheets for all database tables
  */
 
 async function exportToExcel() {
   console.log('========================================');
-  console.log('Exporting Database to Excel');
+  console.log('Exporting COMPLETE Database to Excel');
   console.log('========================================\n');
 
   try {
-    // Fetch Amazon products
-    console.log('Fetching Amazon products...');
-    const amazonResult = await db.query(`
-      SELECT 
-        product_name,
-        asin,
-        category,
-        classified_tag,
-        price_inr,
-        rating,
-        reviews_count,
-        description,
-        image_url,
-        product_url,
-        affiliate_url,
-        availability_status,
-        review_score,
-        brand_score,
-        feature_score,
-        has_anc,
-        battery_hours,
-        has_fast_charge,
-        mic_quality_score,
-        has_app_support,
-        color,
-        design_style,
-        created_at,
-        last_updated
-      FROM amazon_products
-      WHERE is_deleted = FALSE
-      ORDER BY created_at DESC
+    // 1. Get all table names in the public schema
+    const tablesQuery = await db.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+      AND table_type = 'BASE TABLE'
     `);
-    console.log(`✓ Fetched ${amazonResult.rows.length} Amazon products`);
+    
+    const tableNames = tablesQuery.rows.map(r => r.table_name);
+    console.log(`Found ${tableNames.length} tables in the database.\n`);
 
-    // Fetch Flipkart products
-    console.log('Fetching Flipkart products...');
-    const flipkartResult = await db.query(`
-      SELECT 
-        product_name,
-        product_id,
-        category,
-        classified_tag,
-        price_inr,
-        rating,
-        reviews_count,
-        description,
-        image_url,
-        product_url,
-        affiliate_url,
-        availability_status,
-        review_score,
-        brand_score,
-        feature_score,
-        has_anc,
-        battery_hours,
-        has_fast_charge,
-        mic_quality_score,
-        has_app_support,
-        color,
-        design_style,
-        created_at,
-        last_updated
-      FROM flipkart_products
-      WHERE is_deleted = FALSE
-      ORDER BY created_at DESC
-    `);
-    console.log(`✓ Fetched ${flipkartResult.rows.length} Flipkart products`);
-
-    // Fetch Samsung products
-    console.log('Fetching Samsung products...');
-    const samsungResult = await db.query(`
-      SELECT 
-        product_name,
-        brand,
-        product_id,
-        category,
-        classified_tag,
-        price_inr,
-        rating,
-        reviews_count,
-        description,
-        image_url,
-        product_url,
-        affiliate_url,
-        availability_status,
-        review_score,
-        brand_score,
-        feature_score,
-        has_anc,
-        battery_hours,
-        has_fast_charge,
-        mic_quality_score,
-        has_app_support,
-        color,
-        design_style,
-        created_at,
-        last_updated
-      FROM samsung_products
-      WHERE is_deleted = FALSE
-      ORDER BY created_at DESC
-    `);
-    console.log(`✓ Fetched ${samsungResult.rows.length} Samsung products`);
-
-    // Fetch Sony products
-    console.log('Fetching Sony products...');
-    const sonyResult = await db.query(`
-      SELECT 
-        product_name,
-        brand,
-        product_id,
-        category,
-        classified_tag,
-        price_inr,
-        rating,
-        reviews_count,
-        description,
-        image_url,
-        product_url,
-        affiliate_url,
-        availability_status,
-        review_score,
-        brand_score,
-        feature_score,
-        has_anc,
-        battery_hours,
-        has_fast_charge,
-        mic_quality_score,
-        has_app_support,
-        color,
-        design_style,
-        created_at,
-        last_updated
-      FROM sony_products
-      WHERE is_deleted = FALSE
-      ORDER BY created_at DESC
-    `);
-    console.log(`✓ Fetched ${sonyResult.rows.length} Sony products`);
-
-    // Create workbook
     const workbook = XLSX.utils.book_new();
+    const summary = [];
+    let totalRecords = 0;
 
-    // Add Amazon sheet
-    if (amazonResult.rows.length > 0) {
-      const amazonSheet = XLSX.utils.json_to_sheet(amazonResult.rows);
-      XLSX.utils.book_append_sheet(workbook, amazonSheet, 'Amazon Products');
+    // 2. Loop through each table and fetch all records
+    for (const tableName of tableNames) {
+      console.log(`Fetching data from [${tableName}]...`);
+      
+      try {
+        const result = await db.query(`SELECT * FROM "${tableName}"`);
+        const records = result.rows;
+        console.log(`✓ Fetched ${records.length} records`);
+
+        summary.push({
+          Table: tableName,
+          'Total Records': records.length
+        });
+        totalRecords += records.length;
+
+        if (records.length > 0) {
+          // Process JSON/Object fields for Excel stringification
+          const processedRows = records.map(row => {
+            const newRow = { ...row };
+            for (const key in newRow) {
+              if (newRow[key] !== null && typeof newRow[key] === 'object') {
+                newRow[key] = JSON.stringify(newRow[key]);
+              }
+            }
+            return newRow;
+          });
+
+          // Create sheet and append to workbook
+          // Sheet names must be <= 31 chars
+          const sheetName = tableName.substring(0, 31);
+          const sheet = XLSX.utils.json_to_sheet(processedRows);
+          XLSX.utils.book_append_sheet(workbook, sheet, sheetName);
+        }
+      } catch (err) {
+        console.error(`✗ Error fetching table ${tableName}:`, err.message);
+      }
     }
 
-    // Add Flipkart sheet
-    if (flipkartResult.rows.length > 0) {
-      const flipkartSheet = XLSX.utils.json_to_sheet(flipkartResult.rows);
-      XLSX.utils.book_append_sheet(workbook, flipkartSheet, 'Flipkart Products');
-    }
-
-    // Add Samsung sheet
-    if (samsungResult.rows.length > 0) {
-      const samsungSheet = XLSX.utils.json_to_sheet(samsungResult.rows);
-      XLSX.utils.book_append_sheet(workbook, samsungSheet, 'Samsung Products');
-    }
-
-    // Add Sony sheet
-    if (sonyResult.rows.length > 0) {
-      const sonySheet = XLSX.utils.json_to_sheet(sonyResult.rows);
-      XLSX.utils.book_append_sheet(workbook, sonySheet, 'Sony Products');
-    }
-
-    // Add summary sheet
-    const summary = [
-      { Store: 'Amazon', 'Total Products': amazonResult.rows.length },
-      { Store: 'Flipkart', 'Total Products': flipkartResult.rows.length },
-      { Store: 'Samsung', 'Total Products': samsungResult.rows.length },
-      { Store: 'Sony', 'Total Products': sonyResult.rows.length },
-      { Store: 'TOTAL', 'Total Products': amazonResult.rows.length + flipkartResult.rows.length + samsungResult.rows.length + sonyResult.rows.length },
-    ];
+    // 3. Add Summary sheet
+    summary.push({ Table: 'TOTAL', 'Total Records': totalRecords });
     const summarySheet = XLSX.utils.json_to_sheet(summary);
     XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
 
-    // Generate filename with timestamp
+    // 4. Generate filename and save
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
-    const filename = `products_export_${timestamp}.xlsx`;
+    const filename = `complete_db_export_${timestamp}.xlsx`;
     const filepath = path.join(process.cwd(), filename);
 
-    // Write file
     XLSX.writeFile(workbook, filepath);
 
     console.log('\n========================================');
@@ -203,16 +84,11 @@ async function exportToExcel() {
     console.log('========================================');
     console.log(`File: ${filename}`);
     console.log(`Location: ${filepath}`);
-    console.log(`\nSummary:`);
-    console.log(`  Amazon Products: ${amazonResult.rows.length}`);
-    console.log(`  Flipkart Products: ${flipkartResult.rows.length}`);
-    console.log(`  Samsung Products: ${samsungResult.rows.length}`);
-    console.log(`  Sony Products: ${sonyResult.rows.length}`);
-    console.log(`  Total: ${amazonResult.rows.length + flipkartResult.rows.length + samsungResult.rows.length + sonyResult.rows.length}`);
+    console.log(`\nExported ${totalRecords} total records across ${tableNames.length} tables.`);
     console.log('========================================\n');
 
   } catch (error) {
-    console.error('Export failed:', error);
+    console.error('Fatal Export Error:', error);
     throw error;
   } finally {
     await db.pool.end();

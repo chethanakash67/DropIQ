@@ -99,17 +99,17 @@ export default function HowItWorks() {
     {
       icon: Search,
       title: "Search Your Gadget",
-      desc: "Simply type the name of any phone, laptop, or accessory you're looking for. Our smart search understands product names and models to find exactly what you need."
+      desc: "Simply type the name of any phone, laptop, or accessory. Our smart search understands product names and models to find exactly what you need in your locality."
     },
     {
       icon: Compare,
-      title: "Compare Across Sites",
-      desc: "We instantly scan hundreds of top online stores, local retailers, and exclusive deals to find every available option. See prices, features, and availability all in one place."
+      title: "Compare Online & Offline",
+      desc: "We instantly scan top online stores and local retailers near you. We find the most affordable place, so you can immediately go and buy from there."
     },
     {
       icon: Sparkles,
-      title: "Get the Best Value Score",
-      desc: "Our proprietary algorithm calculates a smart Value Score that balances price, features, reviews, and reliability. The higher the score, the better the deal for your needs."
+      title: "Get the Smartest Deal",
+      desc: "Every product has its true value. Our proprietary algorithm ensures you pay exactly that, nothing more, nothing less, by calculating the ultimate Value Score."
     }
   ]
 
@@ -120,7 +120,7 @@ export default function HowItWorks() {
           {"3-Step: How DropIQ Works"}
         </h2>
         <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
-          {"From search to the smartest deal in seconds. Our intelligent system does the heavy lifting so you can focus on what matters most."}
+          {"Comparing online and offline stores according to your location to find the most affordable price, so you can buy with confidence."}
         </p>
       </div>
       
@@ -154,18 +154,6 @@ export default function HowItWorks() {
             />
           ))}
         </div>
-      </div>
-
-      {/* Call to action */}
-      <div className="mt-12 text-center">
-        <p className="text-gray-600 dark:text-gray-300 mb-4">
-          {"Ready to find your next perfect deal?"}
-        </p>
-        <SmoothScrollLink href="#final-cta">
-          <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-emerald-500 to-lime-500 dark:from-cyan-500 dark:to-sky-500 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-500 transform hover:scale-105 hover:rotate-1 cursor-pointer">
-            <span>Join the Waitlist</span>
-          </div>
-        </SmoothScrollLink>
       </div>
     </SectionReveal>
   )

@@ -1,8 +1,8 @@
+require('dotenv').config();
 const db = require('../database/db');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { GoogleGenAI } = require('@google/genai');
 
-const genAI = new GoogleGenerativeAI('AIzaSyCouJEiHwYFnBxeoGSvRy2HN_sYetVt9S0');
-const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // Extract features from product description/name using keywords
 function extractFeaturesFromText(name, description, features) {
@@ -84,10 +84,14 @@ JSON Schema:
 
 Respond with ONLY the JSON object, no other text.`;
 
-    const result = await model.generateContent(prompt);
-    const response = result.response.text();
+    const result = await genAI.models.generateContent({
+      model: 'gemini-1.5-flash-latest',
+      contents: prompt
+    });
     
-    // Clean response (remove markdown code blocks if present)
+    const response = result.text;
+    
+    // Clean response
     const cleaned = response.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     const parsed = JSON.parse(cleaned);
     
@@ -132,11 +136,58 @@ function calculateMicQualityScore(brand, category) {
   return Math.min(Math.max(baseScore, 0), 1);
 }
 
+// Calculate brand score based on brand reputation
+function calculateBrandScore(brand) {
+  const brandLower = (brand || '').toLowerCase();
+  if (brandLower.includes('sony')) return 0.95;
+  if (brandLower.includes('apple')) return 0.98;
+  if (brandLower.includes('samsung')) return 0.92;
+  if (brandLower.includes('bose')) return 0.96;
+  if (brandLower.includes('sennheiser')) return 0.94;
+  if (brandLower.includes('jbl')) return 0.85;
+  if (brandLower.includes('oneplus')) return 0.82;
+  if (brandLower.includes('realme')) return 0.75;
+  if (brandLower.includes('mi') || brandLower.includes('xiaomi')) return 0.72;
+  if (brandLower.includes('boat')) return 0.68;
+  if (brandLower.includes('noise')) return 0.65;
+  if (brandLower.includes('ptron')) return 0.55;
+  return 0.60; // Default score for other brands
+}
+
+// Calculate review score based on rating
+function calculateReviewScore(rating) {
+  const r = parseFloat(rating);
+  if (!r || isNaN(r)) return 0.65; // Default score for unrated
+  return Math.min(Math.max(r / 5, 0), 1);
+}
+
+// Generate classified tag based on category
+function getClassifiedTag(category) {
+  const cat = (category || '').toLowerCase();
+  if (cat.includes('earbud') || cat.includes('tws')) return 'True Wireless Earbuds';
+  if (cat.includes('headphone')) return 'Headphones';
+  if (cat.includes('neckband')) return 'Wireless Neckbands';
+  if (cat.includes('wired')) return 'Wired Earphones';
+  return 'Audio Product';
+}
+
 async function extractAndUpdateFeatures() {
   try {
     console.log('🔍 Starting feature extraction from product data...\n');
     
-    const tables = ['amazon_products', 'flipkart_products', 'samsung_products', 'sony_products'];
+    let tables = ['amazon_products', 'flipkart_products', 'samsung_products', 'sony_products', 'croma_products', 'vijay_sales_products'];
+    
+    // Check for command line argument to filter tables
+    const tableArg = process.argv[2];
+    if (tableArg) {
+      if (tables.includes(tableArg)) {
+        tables = [tableArg];
+        console.log(`🎯 Filtering to table: ${tableArg}`);
+      } else {
+        console.error(`❌ Table ${tableArg} is not in the supported list.`);
+        process.exit(1);
+      }
+    }
     let totalUpdated = 0;
     let geminiUsed = 0;
     
@@ -197,8 +248,11 @@ async function extractAndUpdateFeatures() {
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
         
-        // Calculate mic quality score
+        // Calculate scores and tags
         const micScore = calculateMicQualityScore(product.brand, product.category);
+        const brandScore = calculateBrandScore(product.brand);
+        const reviewScore = calculateReviewScore(product.rating);
+        const classifiedTag = getClassifiedTag(product.category);
         
         // Update the product
         await db.query(`
@@ -210,8 +264,11 @@ async function extractAndUpdateFeatures() {
             has_app_support = $4,
             color = $5,
             design_style = $6,
-            mic_quality_score = $7
-          WHERE id = $8
+            mic_quality_score = $7,
+            brand_score = $8,
+            review_score = $9,
+            classified_tag = $10
+          WHERE id = $11
         `, [
           extracted.hasAnc,
           extracted.batteryHours,
@@ -220,6 +277,9 @@ async function extractAndUpdateFeatures() {
           extracted.color,
           extracted.designStyle,
           micScore,
+          brandScore,
+          reviewScore,
+          classifiedTag,
           product.id
         ]);
         

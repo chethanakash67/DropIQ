@@ -3,6 +3,8 @@ const ProductRepository = require('../repositories/product-repository');
 const sovrnRecommendations = require('../services/sovrn-recommendations');
 const sovrnPriceComparison = require('../services/sovrn-price-comparison');
 const db = require('../database/db');
+const { consumeCredits, InsufficientCreditsError } = require('../services/credits-service');
+const { optionalAuth, authenticate } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -20,8 +22,31 @@ const router = express.Router();
  * - limit: results per page (default 50)
  * - offset: pagination offset (default 0)
  */
-router.get('/search', async (req, res) => {
+router.get('/search', optionalAuth, async (req, res) => {
   try {
+    let updatedCreditState = null;
+    const shouldChargeCredits = req.query.chargeCredits === 'true';
+    const query = req.query.q || '';
+    
+    if (shouldChargeCredits && query) {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: 'Authentication required',
+          message: 'Please login to continue searching.',
+        });
+      }
+
+      // Check if user already searched for this EXACT query in the last 60 seconds
+      const alreadySearched = await ProductRepository.hasRecentSearch(req.user.id, query, 60);
+      
+      if (!alreadySearched) {
+        updatedCreditState = await consumeCredits(req.user.id, 3);
+      } else {
+        console.log(`♻️ Skipping credit charge for recurring search (60s window): "${query}"`);
+      }
+    }
+
     const filters = {
       searchTerm: req.query.q || '',
       category: req.query.category,
@@ -35,9 +60,9 @@ router.get('/search', async (req, res) => {
 
     const products = await ProductRepository.searchProducts(filters);
 
-    // Save search query to history (non-blocking)
-    if (filters.searchTerm && filters.searchTerm.trim().length > 0) {
-      ProductRepository.saveSearchQuery(filters.searchTerm).catch(err => {
+    // Save search query to history if user is logged in (non-blocking)
+    if (filters.searchTerm && filters.searchTerm.trim().length > 0 && req.user) {
+      ProductRepository.saveSearchQuery(req.user.id, filters.searchTerm).catch(err => {
         console.error('Failed to save search query:', err);
       });
     }
@@ -47,8 +72,20 @@ router.get('/search', async (req, res) => {
       count: products.length,
       filters: filters,
       products: products,
+      credits: updatedCreditState?.credits ?? req.user?.credits,
+      creditCost: shouldChargeCredits ? 3 : 0,
     });
   } catch (error) {
+    if (error instanceof InsufficientCreditsError) {
+      return res.status(402).json({
+        success: false,
+        error: 'INSUFFICIENT_CREDITS',
+        message: 'Your credits are over. Please upgrade your plan.',
+        requiredCredits: error.required,
+        availableCredits: error.available,
+        redirectTo: '/plans',
+      });
+    }
     console.error('Error in /api/products/search:', error);
     res.status(500).json({
       success: false,
@@ -60,12 +97,12 @@ router.get('/search', async (req, res) => {
 
 /**
  * GET /api/products/search-history
- * Get recent search history
+ * Get recent search history (User-specific, requires login)
  */
-router.get('/search-history', async (req, res) => {
+router.get('/search-history', authenticate, async (req, res) => {
   try {
-    const limit = req.query.limit ? parseInt(req.query.limit) : 10;
-    const history = await ProductRepository.getSearchHistory(limit);
+    const limit = req.query.limit ? parseInt(req.query.limit) : 15;
+    const history = await ProductRepository.getSearchHistory(req.user.id, limit);
 
     res.json({
       success: true,
@@ -76,7 +113,34 @@ router.get('/search-history', async (req, res) => {
     console.error('Error in /api/products/search-history:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch search history',
+    });
+  }
+});
+
+/**
+ * DELETE /api/products/search-history
+ * Clear all search history for a user
+ */
+router.delete('/search-history', authenticate, async (req, res) => {
+  try {
+    const success = await ProductRepository.clearSearchHistory(req.user.id);
+
+    if (success) {
+      res.json({
+        success: true,
+        message: 'Search history cleared successfully',
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to clear search history',
+      });
+    }
+  } catch (error) {
+    console.error('Error in DELETE /api/products/search-history:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
       message: error.message,
     });
   }
@@ -139,7 +203,10 @@ router.get('/retailers', async (req, res) => {
       { id: 'Amazon', name: 'Amazon' },
       { id: 'Flipkart', name: 'Flipkart' },
       { id: 'Samsung', name: 'Samsung Store' },
-      { id: 'Sony', name: 'Sony Store' }
+      { id: 'Sony', name: 'Sony Store' },
+      { id: 'Croma', name: 'Croma' },
+      { id: 'VijaySales', name: 'Vijay Sales' },
+      { id: 'TataCliq', name: 'TataCliq' }
     ];
 
     res.json({
@@ -151,6 +218,89 @@ router.get('/retailers', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch retailers',
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * GET /api/products/search-index
+ * Returns a lightweight product index for client-side search.
+ * Dynamically reads ALL *_products tables so it works for future stores too.
+ * Each item contains: id, product_name, brand, category, price_inr, image_url, retailer_name, normalized_key
+ */
+router.get('/search-index', async (req, res) => {
+  try {
+    // Dynamically discover all product tables in the DB
+    const tablesResult = await db.query(`
+      SELECT table_name FROM information_schema.tables
+      WHERE table_schema = 'public'
+        AND table_name LIKE '%_products'
+        AND table_type = 'BASE TABLE'
+      ORDER BY table_name
+    `);
+
+    const allProducts = [];
+
+    for (const row of tablesResult.rows) {
+      const table = row.table_name;
+      // Derive a human-readable store name from table name
+      // e.g. amazon_products → Amazon, vijay_sales_products → Vijay Sales
+      const storeName = table
+        .replace(/_products$/, '')
+        .split('_')
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+
+      try {
+        const result = await db.query(`
+          SELECT
+            id,
+            product_name,
+            brand,
+            category,
+            price_inr,
+            image_url,
+            LOWER(REGEXP_REPLACE(product_name, '[^a-zA-Z0-9]', '', 'g')) AS normalized_key
+          FROM ${table}
+          WHERE is_deleted = FALSE
+            AND product_name IS NOT NULL
+        `);
+        result.rows.forEach(p => {
+          allProducts.push({ ...p, retailer_name: storeName });
+        });
+      } catch (tableErr) {
+        // Skip tables that don't have the expected columns (e.g. offline_stores)
+        console.warn(`Skipping table ${table}:`, tableErr.message);
+      }
+    }
+
+    res.json({ success: true, count: allProducts.length, products: allProducts });
+  } catch (error) {
+    console.error('Error in /api/products/search-index:', error);
+    res.status(500).json({ success: false, error: 'Failed to build search index' });
+  }
+});
+
+/**
+ * GET /api/products/search-suggestions
+ * Get dynamic search suggestions based on global history
+ */
+router.get('/search-suggestions', async (req, res) => {
+  try {
+    const query = req.query.q || '';
+    const limit = req.query.limit ? parseInt(req.query.limit) : 5;
+    const suggestions = await ProductRepository.getDynamicSuggestions(query, limit);
+
+    res.json({
+      success: true,
+      suggestions: suggestions.map(s => s.search_query),
+    });
+  } catch (error) {
+    console.error('Error in /api/products/search-suggestions:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch suggestions',
       message: error.message,
     });
   }
@@ -193,10 +343,42 @@ router.get('/:id', async (req, res) => {
       [id]
     );
 
-    // If not found, try Flipkart
+    // If not found, try Sony
     if (result.rows.length === 0) {
       result = await db.query(
-        `SELECT *, 'Flipkart' as retailer_name FROM flipkart_products WHERE id = $1`,
+        `SELECT *, 'Sony' as retailer_name FROM sony_products WHERE id = $1`,
+        [id]
+      );
+    }
+
+    // If not found, try Samsung
+    if (result.rows.length === 0) {
+      result = await db.query(
+        `SELECT *, 'Samsung' as retailer_name FROM samsung_products WHERE id = $1`,
+        [id]
+      );
+    }
+
+    // If not found, try Croma
+    if (result.rows.length === 0) {
+      result = await db.query(
+        `SELECT *, 'Croma' as retailer_name FROM croma_products WHERE id = $1`,
+        [id]
+      );
+    }
+
+    // If not found, try Vijay Sales
+    if (result.rows.length === 0) {
+      result = await db.query(
+        `SELECT *, 'Vijay Sales' as retailer_name FROM vijay_sales_products WHERE id = $1`,
+        [id]
+      );
+    }
+
+    // If not found, try TataCliq
+    if (result.rows.length === 0) {
+      result = await db.query(
+        `SELECT *, 'TataCliq' as retailer_name FROM tatacliq_products WHERE id = $1`,
         [id]
       );
     }
@@ -235,11 +417,11 @@ router.get('/:retailer/:id/recommendations', async (req, res) => {
     const { retailer, id } = req.params;
 
     // Validate retailer
-    const validRetailers = ['amazon', 'flipkart', 'samsung', 'sony'];
+    const validRetailers = ['amazon', 'flipkart', 'samsung', 'sony', 'croma', 'vijaysales', 'tatacliq'];
     if (!validRetailers.includes(retailer.toLowerCase())) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid retailer. Must be: amazon, flipkart, samsung, or sony'
+        error: 'Invalid retailer. Must be: amazon, flipkart, samsung, sony, croma, vijaysales, or tatacliq'
       });
     }
 
@@ -328,11 +510,11 @@ router.get('/:retailer/:id/price-comparisons', async (req, res) => {
     const { retailer, id } = req.params;
 
     // Validate retailer
-    const validRetailers = ['amazon', 'flipkart', 'samsung', 'sony'];
+    const validRetailers = ['amazon', 'flipkart', 'samsung', 'sony', 'croma', 'vijaysales'];
     if (!validRetailers.includes(retailer.toLowerCase())) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid retailer. Must be: amazon, flipkart, samsung, or sony'
+        error: 'Invalid retailer. Must be: amazon, flipkart, samsung, sony, croma, or vijaysales'
       });
     }
 
