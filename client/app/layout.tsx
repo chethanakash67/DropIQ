@@ -27,9 +27,12 @@ export default function RootLayout({
         <AuthProvider>
           <CartProvider>
             <PageTransition />
-            <div className="container" style={{ flex: 1, minHeight: '100vh' }}>
-              {children}
+            <div className="main-content-wrapper" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+              <div className="container" style={{ flex: 1 }}>
+                {children}
+              </div>
             </div>
+            <Footer />
             <CartModal />
             <BagModal />
             <CartNotification />

@@ -5,11 +5,11 @@ const path = require('path');
 /**
  * Samsung Store Data Ingestion Scheduler
  * 
- * Schedule: Runs on the 30th of every month at 4:00 AM (04:00)
+ * Schedule: Runs on the 30th of every month at 1:00 AM IST
  * 
- * Cron Expression: '0 4 30 * *'
+ * Cron Expression: '0 1 30 * *'
  * - Minute: 0
- * - Hour: 4 (4 AM)
+ * - Hour: 1 (1 AM)
  * - Day of Month: 30 (30th day)
  * - Month: * (every month)
  * - Day of Week: * (any day of the week)
@@ -18,12 +18,12 @@ const path = require('path');
 console.log('========================================');
 console.log('Samsung Ingestion Scheduler Started');
 console.log('========================================');
-console.log('Schedule: 30th of every month at 4:00 AM');
+console.log('Schedule: 30th of every month at 1:00 AM IST');
 console.log('Current time:', new Date().toLocaleString());
 console.log('========================================\n');
 
 // Schedule the ingestion job
-const samsungJob = cron.schedule('0 4 30 * *', () => {
+const samsungJob = cron.schedule('0 1 30 * *', () => {
   console.log('\n========================================');
   console.log('Scheduled Samsung Ingestion Triggered');
   console.log('Time:', new Date().toLocaleString());
@@ -64,5 +64,5 @@ process.on('SIGINT', () => {
 console.log('Scheduler is running. Press Ctrl+C to stop.\n');
 console.log('Next scheduled run:');
 console.log('- Date: 30th of current/next month');
-console.log('- Time: 4:00 AM IST');
+console.log('- Time: 1:00 AM IST');
 console.log('========================================\n');

@@ -6,7 +6,6 @@ import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import {
     IconCart, IconStore, IconPhone, IconArrowLeft,
     IconStar, IconTag, IconExternalLink, IconCheckCircle
@@ -150,7 +149,7 @@ export default function ProductDetailPage() {
         product.reviews as string[] | string
     );
     const specs = parseSpecs(product.specifications as Record<string, unknown> | string);
-    const price = parseFloat(String(product.price_inr));
+    const price = parseFloat(String(product.price_inr || product.price || 0));
     const rating = parseFloat(String(product.rating));
     const inStock = product.availability_status !== 'out_of_stock';
 
@@ -404,7 +403,6 @@ export default function ProductDetailPage() {
                     )}
                 </div>
             </div>
-            <Footer />
         </div>
     );
 }

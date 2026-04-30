@@ -1,15 +1,15 @@
 const cron = require('node-cron');
-const { exec } = require('child_process');
-const path = require('path');
+const ingestApifyData = require('../jobs/ingest-apify-data');
+const ingestAllStores = require('../jobs/ingest-all-stores');
 
 /**
  * Monthly Data Ingestion Scheduler
  * 
- * Schedule: Runs on the 30th of every month at 4:00 AM (04:00)
+ * Schedule: Runs on the 30th of every month at 1:00 AM IST
  * 
- * Cron Expression: '0 4 30 * *'
+ * Cron Expression: '0 1 30 * *'
  * - Minute: 0 (at the start of the hour)
- * - Hour: 4 (4 AM)
+ * - Hour: 1 (1 AM)
  * - Day of Month: 30 (30th day)
  * - Month: * (every month)
  * - Day of Week: * (any day of the week)
@@ -18,46 +18,49 @@ const path = require('path');
 console.log('========================================');
 console.log('Monthly Ingestion Scheduler Started');
 console.log('========================================');
-console.log('Schedule: 30th of every month at 4:00 AM');
+console.log('Schedule: 30th of every month at 1:00 AM IST');
 console.log('Current time:', new Date().toLocaleString());
 console.log('========================================\n');
 
-// Schedule the ingestion job to run monthly on the 30th at 4:00 AM
-const monthlyJob = cron.schedule('0 4 30 * *', () => {
+async function runMonthlyIngestion() {
   console.log('\n========================================');
   console.log('Scheduled Monthly Ingestion Triggered');
   console.log('Time:', new Date().toLocaleString());
   console.log('========================================\n');
 
-  // Execute the global ingestion script which includes Vijay Sales, Croma, and Brands
-  const ingestionScript = path.join(__dirname, '..', 'jobs', 'ingest-all-stores.js');
+  try {
+    // Step 1: Apify (Amazon + Flipkart)
+    console.log('Step 1: Apify ingestion (Amazon + Flipkart)...');
+    await ingestApifyData();
+    console.log('✓ Apify ingestion completed');
+  } catch (err) {
+    console.error('✗ Apify ingestion failed:', err.message);
+  }
 
-  exec(`node "${ingestionScript}"`, (error, stdout, stderr) => {
-    if (error) {
-      console.error('✗ Ingestion job failed:', error.message);
-      console.error('Error details:', stderr);
-      return;
-    }
+  try {
+    // Step 2: Browse.ai stores (Vijay Sales, Croma, TataCliq, Brands, Myntra, Headphones Zone)
+    console.log('\nStep 2: Browse.ai store ingestion...');
+    await ingestAllStores();
+    console.log('✓ Browse.ai store ingestion completed');
+  } catch (err) {
+    console.error('✗ Browse.ai store ingestion failed:', err.message);
+  }
 
-    console.log(stdout);
+  console.log('\n========================================');
+  console.log('Monthly Ingestion Complete');
+  console.log('========================================\n');
+}
 
-    if (stderr) {
-      console.error('Warnings:', stderr);
-    }
-
-    console.log('✓ Monthly ingestion completed successfully');
+// Schedule the ingestion job to run monthly on the 30th at 1:00 AM IST
+const monthlyJob = cron.schedule('0 1 30 * *', () => {
+  runMonthlyIngestion().catch(err => {
+    console.error('Fatal error in monthly ingestion:', err);
   });
 }, {
   scheduled: true,
-  timezone: "Asia/Kolkata" // Indian Standard Time (IST)
+  timezone: "Asia/Kolkata"
 });
 
-// Optional: Schedule for testing - runs every minute (comment out in production)
-// const testJob = cron.schedule('* * * * *', () => {
-//   console.log('Test run at:', new Date().toLocaleString());
-// });
-
-// Keep the process running
 process.on('SIGINT', () => {
   console.log('\n========================================');
   console.log('Stopping Monthly Ingestion Scheduler...');
@@ -68,6 +71,6 @@ process.on('SIGINT', () => {
 
 console.log('Scheduler is running. Press Ctrl+C to stop.\n');
 console.log('Next scheduled run:');
-console.log('- Date: 28th of current/next month');
-console.log('- Time: 11:00 PM IST');
+console.log('- Date: 30th of current/next month');
+console.log('- Time: 1:00 AM IST');
 console.log('========================================\n');

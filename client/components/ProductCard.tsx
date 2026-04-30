@@ -14,14 +14,31 @@ interface Product {
     affiliate_url?: string;
     product_url?: string;
     store_id?: string | number;
+    last_updated?: string; // ISO string or undefined
     [key: string]: unknown;
 }
 
 export default function ProductCard({ product }: { product: Product }) {
     const router = useRouter();
     const { addToCart, addToBag } = useCart();
+
     const isOfflineStore = product.store_id !== undefined;
     const hasImage = product.image_url && product.image_url.trim() !== '';
+
+    // Data freshness label logic
+    let freshnessLabel = '';
+    if (product.last_updated) {
+        const updatedDate = new Date(product.last_updated);
+        const now = new Date();
+        const diffDays = Math.floor((now.getTime() - updatedDate.getTime()) / (1000 * 60 * 60 * 24));
+        if (diffDays <= 20) {
+            freshnessLabel = 'updated a day ago';
+        } else if (diffDays > 20 && diffDays <= 30) {
+            freshnessLabel = 'updated 3 days ago';
+        } else {
+            freshnessLabel = '';
+        }
+    }
 
     const viewProduct = () => {
         const id = product.id;
@@ -40,6 +57,22 @@ export default function ProductCard({ product }: { product: Product }) {
 
     return (
         <div className={`product-card ${isOfflineStore ? ' offline-store-product' : ''}`}>
+            {/* Colored signal for online/offline */}
+            <div
+                style={{
+                    position: 'absolute',
+                    top: 8,
+                    left: 8,
+                    width: 14,
+                    height: 14,
+                    borderRadius: '50%',
+                    background: isOfflineStore ? '#1e3a8a' : '#a020f0', // dark blue for offline, purple for online
+                    border: '2px solid #fff',
+                    zIndex: 20,
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.10)'
+                }}
+                title={isOfflineStore ? 'Offline Store' : 'Online Store'}
+            />
             <div className={`store-tag${isOfflineStore ? ' offline-tag' : ''}`}>
                 {product.retailer_name}
             </div>
@@ -52,9 +85,15 @@ export default function ProductCard({ product }: { product: Product }) {
             </div>
 
             <div className="product-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div className="product-name" onClick={viewProduct} style={{ cursor: 'pointer', marginBottom: '4px' }}>
+                <div className="product-name" onClick={viewProduct} style={{ cursor: 'pointer', marginBottom: '2px' }}>
                     {product.product_name || product.name}
                 </div>
+                {/* Data freshness label */}
+                {freshnessLabel && (
+                    <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
+                        {freshnessLabel}
+                    </div>
+                )}
 
                 <div className="product-card-footer">
                     <div className="product-price">

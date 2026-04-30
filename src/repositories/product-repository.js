@@ -509,23 +509,23 @@ class ProductRepository {
       paramIndex++;
     }
 
-    // Sorting - prioritize brand matches when brand keywords detected
+    // Sorting
     let orderBy = 'ORDER BY p.rating DESC NULLS LAST';
 
-    // If we detected brand keywords, prioritize those brands in results
-    if (searchTerm && detectedBrands.length > 0) {
-      const brandCases = detectedBrands.map((brand, idx) =>
-        `WHEN p.brand ILIKE '%${brand}%' THEN ${idx + 1}`
-      ).join(' ');
-      orderBy = `ORDER BY CASE ${brandCases} ELSE 999 END, p.rating DESC NULLS LAST`;
-    } else {
-      switch (sortBy) {
-        case 'price_asc':
-          orderBy = 'ORDER BY p.price_inr ASC NULLS LAST';
-          break;
-        case 'price_desc':
-          orderBy = 'ORDER BY p.price_inr DESC NULLS LAST';
-          break;
+    if (sortBy === 'price_asc') {
+      orderBy = 'ORDER BY p.price_inr ASC NULLS LAST';
+    } else if (sortBy === 'price_desc') {
+      orderBy = 'ORDER BY p.price_inr DESC NULLS LAST';
+    } else if (sortBy === 'rating') {
+      orderBy = 'ORDER BY p.rating DESC NULLS LAST';
+    } else if (sortBy === 'relevance' || !sortBy) {
+      if (searchTerm && detectedBrands.length > 0) {
+        const brandCases = detectedBrands.map((brand, idx) =>
+          `WHEN p.brand ILIKE '%${brand}%' THEN ${idx + 1}`
+        ).join(' ');
+        orderBy = `ORDER BY CASE ${brandCases} ELSE 999 END, p.rating DESC NULLS LAST`;
+      } else {
+        orderBy = 'ORDER BY p.rating DESC NULLS LAST';
       }
     }
 
@@ -621,6 +621,32 @@ class ProductRepository {
         `;
         const tatacliqResult = await db.query(tatacliqQuery, params);
         results = results.concat(tatacliqResult.rows);
+      }
+
+      // Query Myntra if not filtered by other retailers
+      if (!retailer || retailer === 'Myntra') {
+        const myntraQuery = `
+          SELECT 
+            p.*,
+            'Myntra' as retailer_name
+          FROM myntra_products p
+          ${whereConditions}
+        `;
+        const myntraResult = await db.query(myntraQuery, params);
+        results = results.concat(myntraResult.rows);
+      }
+
+      // Query Headphones Zone if not filtered by other retailers
+      if (!retailer || retailer === 'HeadphonesZone' || retailer === 'Headphones Zone') {
+        const headphonesZoneQuery = `
+          SELECT 
+            p.*,
+            'Headphones Zone' as retailer_name
+          FROM headphones_zone_products p
+          ${whereConditions}
+        `;
+        const headphonesZoneResult = await db.query(headphonesZoneQuery, params);
+        results = results.concat(headphonesZoneResult.rows);
       }
 
       // Query Offline Stores
@@ -727,15 +753,30 @@ class ProductRepository {
         });
       } else {
         // Standard sorting
+        // Final sort if mixed results from multiple tables
         switch (sortBy) {
           case 'price_asc':
-            results.sort((a, b) => (a.price_inr || Infinity) - (b.price_inr || Infinity));
+            results.sort((a, b) => (Number(a.price_inr || a.price) || Infinity) - (Number(b.price_inr || b.price) || Infinity));
             break;
           case 'price_desc':
-            results.sort((a, b) => (b.price_inr || 0) - (a.price_inr || 0));
+            results.sort((a, b) => (Number(b.price_inr || b.price) || 0) - (Number(a.price_inr || a.price) || 0));
             break;
+          case 'rating':
+            results.sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
+            break;
+          case 'relevance':
           default:
-            results.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+            // Relevance sort: Brand match > Rating
+            results.sort((a, b) => {
+              // If brands match detect brands, prioritize
+              if (searchTerm && detectedBrands.length > 0) {
+                const aBrandMatch = detectedBrands.some(b => a.brand?.toLowerCase().includes(b.toLowerCase()));
+                const bBrandMatch = detectedBrands.some(b => b.brand?.toLowerCase().includes(b.toLowerCase()));
+                if (aBrandMatch && !bBrandMatch) return -1;
+                if (!aBrandMatch && bBrandMatch) return 1;
+              }
+              return (Number(b.rating) || 0) - (Number(a.rating) || 0);
+            });
         }
       }
 
@@ -1425,6 +1466,97 @@ class ProductRepository {
       };
     } catch (error) {
       console.error('Error in upsertTataCliqProduct:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * UPSERT Myntra product
+   */
+  async upsertMyntraProduct(productData) {
+    const {
+      productName, brand, productId, category, priceInr, rating, reviewsCount,
+      description, features, specifications, imageUrl, productUrl, affiliateUrl,
+      availabilityStatus
+    } = productData;
+
+    try {
+      const query = `
+        INSERT INTO myntra_products (
+          product_name, brand, product_id, category, price_inr, rating, reviews_count,
+          description, features, specifications, image_url, 
+          product_url, affiliate_url, availability_status, 
+          review_score, brand_score, has_anc, battery_hours,
+          has_fast_charge, mic_quality_score, has_app_support,
+          color, design_style, classified_tag, last_updated
+        )
+        VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
+          $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, NOW()
+        )
+        ON CONFLICT (product_name) 
+        DO UPDATE SET
+          brand = EXCLUDED.brand,
+          product_id = EXCLUDED.product_id,
+          price_inr = EXCLUDED.price_inr,
+          rating = EXCLUDED.rating,
+          reviews_count = EXCLUDED.reviews_count,
+          description = EXCLUDED.description,
+          features = EXCLUDED.features,
+          specifications = EXCLUDED.specifications,
+          image_url = EXCLUDED.image_url,
+          product_url = EXCLUDED.product_url,
+          affiliate_url = EXCLUDED.affiliate_url,
+          availability_status = EXCLUDED.availability_status,
+          review_score = EXCLUDED.review_score,
+          brand_score = EXCLUDED.brand_score,
+          has_anc = EXCLUDED.has_anc,
+          battery_hours = EXCLUDED.battery_hours,
+          has_fast_charge = EXCLUDED.has_fast_charge,
+          mic_quality_score = EXCLUDED.mic_quality_score,
+          has_app_support = EXCLUDED.has_app_support,
+          color = EXCLUDED.color,
+          design_style = EXCLUDED.design_style,
+          classified_tag = EXCLUDED.classified_tag,
+          last_updated = NOW()
+        RETURNING id, (xmax = 0) AS inserted
+      `;
+
+      const values = [
+        productName,
+        brand || 'Myntra',
+        productId || null,
+        category,
+        priceInr,
+        rating || null,
+        reviewsCount || null,
+        description || null,
+        features ? JSON.stringify(features) : null,
+        specifications ? JSON.stringify(specifications) : null,
+        imageUrl || null,
+        productUrl || null,
+        affiliateUrl || null,
+        availabilityStatus || 'in_stock',
+        productData.reviewScore || 0,
+        productData.brandScore || 0,
+        productData.hasAnc || false,
+        productData.batteryHours || null,
+        productData.hasFastCharge || false,
+        productData.micQualityScore || 0,
+        productData.hasAppSupport || false,
+        productData.color || null,
+        productData.designStyle || null,
+        productData.classifiedTag || null,
+      ];
+
+      const result = await db.query(query, values);
+
+      return {
+        id: result.rows[0].id,
+        inserted: result.rows[0].inserted,
+      };
+    } catch (error) {
+      console.error('Error in upsertMyntraProduct:', error);
       throw error;
     }
   }

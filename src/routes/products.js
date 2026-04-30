@@ -206,7 +206,9 @@ router.get('/retailers', async (req, res) => {
       { id: 'Sony', name: 'Sony Store' },
       { id: 'Croma', name: 'Croma' },
       { id: 'VijaySales', name: 'Vijay Sales' },
-      { id: 'TataCliq', name: 'TataCliq' }
+      { id: 'TataCliq', name: 'TataCliq' },
+      { id: 'Myntra', name: 'Myntra' },
+      { id: 'HeadphonesZone', name: 'Headphones Zone' }
     ];
 
     res.json({
@@ -335,55 +337,82 @@ router.get('/frequent-searches', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const { retailer } = req.query;
     const db = require('../database/db');
 
-    // Try Amazon first
-    let result = await db.query(
-      `SELECT *, 'Amazon' as retailer_name FROM amazon_products WHERE id = $1`,
-      [id]
-    );
+    // Function to check a specific table
+    const checkTable = async (tableName, retailerName) => {
+      try {
+        const result = await db.query(
+          `SELECT *, '${retailerName}' as retailer_name FROM ${tableName} WHERE id = $1`,
+          [id]
+        );
+        return result.rows.length > 0 ? result.rows[0] : null;
+      } catch (err) {
+        return null;
+      }
+    };
 
-    // If not found, try Sony
-    if (result.rows.length === 0) {
-      result = await db.query(
-        `SELECT *, 'Sony' as retailer_name FROM sony_products WHERE id = $1`,
-        [id]
-      );
+    let product = null;
+
+    // 1. If retailer hint provided, try that first
+    if (retailer) {
+      const tableMap = {
+        'Amazon': 'amazon_products',
+        'Flipkart': 'flipkart_products',
+        'Sony': 'sony_products',
+        'Samsung': 'samsung_products',
+        'Croma': 'croma_products',
+        'Vijay Sales': 'vijay_sales_products',
+        'VijaySales': 'vijay_sales_products',
+        'TataCliq': 'tatacliq_products',
+        'Myntra': 'myntra_products',
+        'HeadphonesZone': 'headphones_zone_products',
+        'Headphones Zone': 'headphones_zone_products'
+      };
+
+      const tableName = tableMap[retailer];
+      if (tableName) {
+        product = await checkTable(tableName, retailer);
+      } else {
+        // Check if it's an offline store
+        const offlineRes = await db.query('SELECT table_name, store_name FROM offline_stores WHERE store_name = $1 OR store_id = $1', [retailer]);
+        if (offlineRes.rows.length > 0) {
+          product = await checkTable(offlineRes.rows[0].table_name, offlineRes.rows[0].store_name);
+        }
+      }
     }
 
-    // If not found, try Samsung
-    if (result.rows.length === 0) {
-      result = await db.query(
-        `SELECT *, 'Samsung' as retailer_name FROM samsung_products WHERE id = $1`,
-        [id]
-      );
+    // 2. If not found or no hint, check all known tables
+    if (!product) {
+      const tables = [
+        { name: 'amazon_products', label: 'Amazon' },
+        { name: 'flipkart_products', label: 'Flipkart' },
+        { name: 'sony_products', label: 'Sony' },
+        { name: 'samsung_products', label: 'Samsung' },
+        { name: 'croma_products', label: 'Croma' },
+        { name: 'vijay_sales_products', label: 'Vijay Sales' },
+        { name: 'tatacliq_products', label: 'TataCliq' },
+        { name: 'myntra_products', label: 'Myntra' },
+        { name: 'headphones_zone_products', label: 'Headphones Zone' }
+      ];
+
+      for (const t of tables) {
+        product = await checkTable(t.name, t.label);
+        if (product) break;
+      }
     }
 
-    // If not found, try Croma
-    if (result.rows.length === 0) {
-      result = await db.query(
-        `SELECT *, 'Croma' as retailer_name FROM croma_products WHERE id = $1`,
-        [id]
-      );
+    // 3. Last resort: check all offline stores
+    if (!product) {
+      const offlineStores = await db.query('SELECT table_name, store_name FROM offline_stores');
+      for (const store of offlineStores.rows) {
+        product = await checkTable(store.table_name, store.store_name);
+        if (product) break;
+      }
     }
 
-    // If not found, try Vijay Sales
-    if (result.rows.length === 0) {
-      result = await db.query(
-        `SELECT *, 'Vijay Sales' as retailer_name FROM vijay_sales_products WHERE id = $1`,
-        [id]
-      );
-    }
-
-    // If not found, try TataCliq
-    if (result.rows.length === 0) {
-      result = await db.query(
-        `SELECT *, 'TataCliq' as retailer_name FROM tatacliq_products WHERE id = $1`,
-        [id]
-      );
-    }
-
-    if (result.rows.length === 0) {
+    if (!product) {
       return res.status(404).json({
         success: false,
         error: 'Product not found',
@@ -392,7 +421,7 @@ router.get('/:id', async (req, res) => {
 
     res.json({
       success: true,
-      product: result.rows[0],
+      product: product,
     });
   } catch (error) {
     console.error('Error in /api/products/:id:', error);

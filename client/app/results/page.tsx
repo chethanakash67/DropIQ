@@ -7,7 +7,6 @@ import { useCart } from '@/context/CartContext';
 import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
 import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import InsufficientCreditsModal from '@/components/InsufficientCreditsModal';
 import { useSearch } from '@/hooks/useSearch';
 
@@ -457,8 +456,9 @@ function ResultsContent() {
                     <div className="filter-group">
                         <label>Sort By</label>
                         <select value={sortBy} onChange={e => { setSortBy(e.target.value); handleFilterChange(e.target.value); }}>
+                            <option value="relevance">Relevance</option>
+                            <option value="rating">Ratings (High to Low)</option>
                             <option value="price_asc">Price (Low to High)</option>
-                            <option value="rating">Rating (High to Low)</option>
                             <option value="price_desc">Price (High to Low)</option>
                         </select>
                     </div>
@@ -591,7 +591,6 @@ function ResultsContent() {
                 available={creditErrorMeta.available}
             />
         </div>
-        <Footer />
     </div>
     );
 }

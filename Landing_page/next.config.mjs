@@ -12,6 +12,14 @@ const nextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: "http://localhost:3001/api/:path*",
+      },
+    ];
+  },
   // Run landing page on port 3000
   ...(process.env.NODE_ENV === 'development' && {
     serverRuntimeConfig: {

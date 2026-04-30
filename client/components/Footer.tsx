@@ -10,13 +10,15 @@ export default function Footer() {
 
     return (
         <footer style={{
-            background: 'linear-gradient(135deg, #064e3b 0%, #065f46 100%)',
+            background: 'var(--bg-card)',
             padding: '80px 24px 32px',
-            color: 'rgba(255, 255, 255, 0.8)',
+            color: 'rgba(255, 255, 255, 0.6)',
             fontSize: '14px',
             marginTop: 'auto',
             position: 'relative',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            width: '100%',
+            borderTop: '1px solid var(--border)'
         }}>
             {/* Subtle Texture Overlay */}
             <div style={{

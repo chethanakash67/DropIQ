@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import CountdownTimer from '@/components/CountdownTimer';
 import DIQModal from '@/components/DIQModal';
 import { useSearch } from '@/hooks/useSearch';
@@ -506,7 +505,7 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="search-container" style={{ marginTop: '20px', marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '30px', paddingLeft: '20px' }}>
-                    <div className="search-box" style={{ flex: '0 1 65%', minWidth: 'unset' }}>
+                    <div className="search-box" style={{ flex: '0 1 85%', minWidth: 'unset' }}>
                         <input
                             type="text"
                             id="searchInput"
@@ -806,7 +805,6 @@ export default function DashboardPage() {
                 
                 <div style={{ textAlign: 'center', margin: '64px 0' }}></div>
             </div>
-            <Footer />
             {showDIQ && <DIQModal onClose={() => setShowDIQ(false)} />}
         </>
     );

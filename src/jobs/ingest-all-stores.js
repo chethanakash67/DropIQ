@@ -3,6 +3,8 @@ const ingestVijaySalesData = require('./ingest-vijay-sales-full');
 const ingestCromaData = require('./ingest-croma-full');
 const ingestTataCliqData = require('./ingest-tatacliq-full');
 const ingestBrandStores = require('./ingest-brand-stores');
+const ingestMyntraData = require('./ingest-myntra-full');
+const ingestHeadphonesZoneData = require('./ingest-headphones-zone');
 
 async function ingestAll(stores = []) {
     console.log('========================================');
@@ -13,7 +15,9 @@ async function ingestAll(stores = []) {
         'vijay-sales': ingestVijaySalesData,
         'croma': ingestCromaData,
         'tatacliq': ingestTataCliqData,
-        'brands': ingestBrandStores // Handles Samsung and Sony
+        'brands': ingestBrandStores, // Handles Samsung and Sony
+        'myntra': ingestMyntraData,
+        'headphones-zone': ingestHeadphonesZoneData
     };
 
     const targetStores = stores.length > 0 ? stores : Object.keys(allStores);

@@ -582,7 +582,7 @@ body {
 
 /* ── Search ────────────────────────────────────────────────────────────────── */
 .search-container {
-  max-width: 680px;
+  max-width: 900px;
   margin: 40px auto 0;
   position: relative;
 }
@@ -593,7 +593,7 @@ body {
   background: var(--bg-card) !important;
   border: 1.5px solid var(--border) !important;
   border-radius: 40px !important;
-  padding: 4px 6px 4px 16px !important;
+  padding: 8px 10px 8px 24px !important;
   box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important;
   transition: all 0.3s ease;
   width: 100% !important;

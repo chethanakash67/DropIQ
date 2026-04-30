@@ -9,27 +9,25 @@ class ApifyClient {
       throw new Error('APIFY_API_TOKEN is required in .env');
     }
 
-    // Get endpoints from environment
-    const amazonEndpoint = process.env.AMAZON_API_ENDPOINT;
-    const flipkartEndpoint = process.env.FLIPKART_API_ENDPOINT;
+    const amazonActorId = process.env.AMAZON_ACTOR_ID;
+    const flipkartActorId = process.env.FLIPKART_ACTOR_ID;
     const amazonLimit = parseInt(process.env.AMAZON_PRODUCT_LIMIT || '500');
     const flipkartLimit = parseInt(process.env.FLIPKART_PRODUCT_LIMIT || '450');
 
-    if (!amazonEndpoint || !flipkartEndpoint) {
-      throw new Error('AMAZON_API_ENDPOINT and FLIPKART_API_ENDPOINT are required in .env');
+    if (!amazonActorId || !flipkartActorId) {
+      throw new Error('AMAZON_ACTOR_ID and FLIPKART_ACTOR_ID are required in .env');
     }
 
-    // Define all data sources
     this.sources = [
       {
         name: 'Amazon Products',
-        url: amazonEndpoint,
+        actorId: amazonActorId,
         retailer: 'Amazon',
         limit: amazonLimit,
       },
       {
         name: 'Flipkart Products',
-        url: flipkartEndpoint,
+        actorId: flipkartActorId,
         retailer: 'Flipkart',
         limit: flipkartLimit,
       },
@@ -37,27 +35,54 @@ class ApifyClient {
   }
 
   /**
-   * Fetch products from a single Apify endpoint
+   * Resolve the last successful run for an actor and return its dataset items
    */
-  async fetchFromEndpoint(source) {
+  async fetchFromSource(source) {
     try {
       console.log(`  Fetching from: ${source.name}`);
-      console.log(`  URL: ${source.url}`);
+      console.log(`  Actor ID: ${source.actorId}`);
       console.log(`  Limit: ${source.limit} products`);
 
-      const response = await axios.get(source.url, {
+      // Step 1: Get the last successful run for this actor
+      const runsUrl = 'https://api.apify.com/v2/actor-runs';
+      const runsRes = await axios.get(runsUrl, {
+        params: {
+          token: this.apiToken,
+          actorId: source.actorId,
+          status: 'SUCCEEDED',
+          limit: 10,
+          desc: true,
+        },
+        timeout: 30000,
+      });
+
+      const runs = runsRes.data?.data?.items || [];
+      // Filter to ensure we only get runs from THIS actor (API may return runs from all actors)
+      const actorRuns = runs.filter(r => r.actId === source.actorId);
+      if (actorRuns.length === 0) {
+        console.warn(`  ⚠ No successful runs found for actor ${source.actorId}`);
+        return [];
+      }
+
+      const lastRun = actorRuns[0];
+      const datasetId = lastRun.defaultDatasetId;
+      console.log(`  ✓ Last successful run: ${lastRun.id} (started: ${lastRun.startedAt})`);
+      console.log(`  Dataset ID: ${datasetId}`);
+
+      // Step 2: Fetch items from the dataset
+      const datasetUrl = `https://api.apify.com/v2/datasets/${datasetId}/items`;
+      const response = await axios.get(datasetUrl, {
         params: {
           token: this.apiToken,
           format: 'json',
           limit: source.limit,
         },
-        timeout: 60000, // 60 second timeout
+        timeout: 120000,
       });
 
       const products = response.data || [];
       console.log(`  ✓ Fetched ${products.length} products from ${source.name}`);
 
-      // Tag products with their source retailer
       return products.map(product => ({
         ...product,
         _sourceRetailer: source.retailer,
@@ -67,13 +92,12 @@ class ApifyClient {
     } catch (error) {
       if (error.response) {
         console.error(`  ✗ API Error from ${source.name}:`, error.response.status, error.response.statusText);
-        console.error(`  Response:`, error.response.data);
       } else if (error.request) {
         console.error(`  ✗ No response from ${source.name}:`, error.message);
       } else {
         console.error(`  ✗ Error with ${source.name}:`, error.message);
       }
-      return []; // Return empty array on error, continue with other sources
+      return [];
     }
   }
 
@@ -88,7 +112,7 @@ class ApifyClient {
     const allProducts = [];
 
     for (const source of this.sources) {
-      const products = await this.fetchFromEndpoint(source);
+      const products = await this.fetchFromSource(source);
       allProducts.push(...products);
     }
 
