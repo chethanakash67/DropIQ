@@ -6,8 +6,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
-
-const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || "http://localhost:3002"
+import { dashboardPath } from "@/lib/dashboard-url"
 
 export default function SearchDemo() {
   const [query, setQuery] = useState("")
@@ -234,12 +233,12 @@ export default function SearchDemo() {
                   Sign up to see the full list of products and unlock real-time price tracking across all retailers.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <Link href={`${DASHBOARD_URL}/signup`} className="flex-1">
+                  <Link href={dashboardPath("/signup")} className="flex-1">
                     <Button className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-lg">
                       Sign Up Free
                     </Button>
                   </Link>
-                  <Link href={`${DASHBOARD_URL}/login`} className="flex-1">
+                  <Link href={dashboardPath("/login")} className="flex-1">
                     <Button variant="outline" className="w-full h-12 border-2 border-emerald-100 dark:border-slate-800 hover:bg-emerald-50 dark:hover:bg-slate-800 text-gray-900 dark:text-white font-bold rounded-xl text-lg">
                       Login
                     </Button>

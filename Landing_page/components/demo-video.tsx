@@ -2,8 +2,7 @@ import SectionReveal from "./section-reveal"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { UserPlus } from "lucide-react"
-
-const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || "http://localhost:3001"
+import { dashboardPath } from "@/lib/dashboard-url"
 
 export default function DemoVideo() {
   return (
@@ -47,7 +46,7 @@ export default function DemoVideo() {
       <p className="text-gray-600">
         {"Create your free account and start comparing prices instantly."}
       </p>
-      <Link href={`${DASHBOARD_URL}/signup`} target="_blank" rel="noopener noreferrer">
+      <Link href={dashboardPath("/signup")} target="_blank" rel="noopener noreferrer">
         <Button size="lg" className="w-full rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-lg whitespace-nowrap">
           <UserPlus className="mr-2 h-5 w-5 shrink-0" />
           {"Sign Up, It's Free"}

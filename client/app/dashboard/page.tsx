@@ -10,6 +10,11 @@ import CountdownTimer from '@/components/CountdownTimer';
 import DIQModal from '@/components/DIQModal';
 import { useSearch } from '@/hooks/useSearch';
 
+type DashboardProduct = {
+    image_url?: string;
+    [key: string]: unknown;
+};
+
 const CategoryItem = ({ cat, router }: { cat: any, router: any }) => {
     const [bloomProducts, setBloomProducts] = useState<any[]>([]);
     
@@ -18,7 +23,7 @@ const CategoryItem = ({ cat, router }: { cat: any, router: any }) => {
             try {
                 const res = await fetch(`/api/products/search?q=${encodeURIComponent(cat.q)}&limit=3`);
                 const data = await res.json();
-                setBloomProducts(data.products || []);
+                setBloomProducts(productsFrom(data));
             } catch (err) {
                 console.error("Failed to fetch bloom:", err);
             }
@@ -62,6 +67,12 @@ const CategoryItem = ({ cat, router }: { cat: any, router: any }) => {
         </div>
     );
 };
+
+const productsFrom = (data: { products?: unknown } | null | undefined): DashboardProduct[] =>
+    Array.isArray(data?.products) ? data.products as DashboardProduct[] : [];
+
+const searchesFrom = (data: { searches?: unknown } | null | undefined): string[] =>
+    Array.isArray(data?.searches) ? data.searches.filter((search): search is string => typeof search === 'string') : [];
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -174,15 +185,23 @@ export default function DashboardPage() {
 
                 const [loot, festive, grab, suggested, gadgets, favs, frequent] = await Promise.all(fetchPromises);
                 
-                if (loot.success) setLootDeals(loot.products);
-                if (festive.success) setFestiveCollection(festive.products);
-                if (grab.success) setGrabOrGone(grab.products);
-                if (suggested.success) setSuggestedForYou(suggested.products);
-                if (gadgets.success) setBestGadgets([...gadgets.products].reverse());
-                if (favs.success) setFavourites(favs.products);
+                const lootProducts = productsFrom(loot);
+                const festiveProducts = productsFrom(festive);
+                const grabProducts = productsFrom(grab);
+                const suggestedProducts = productsFrom(suggested);
+                const gadgetProducts = productsFrom(gadgets);
+                const favouriteProducts = productsFrom(favs);
+                const frequentSearchItems = searchesFrom(frequent);
+
+                if (loot.success) setLootDeals(lootProducts);
+                if (festive.success) setFestiveCollection(festiveProducts);
+                if (grab.success) setGrabOrGone(grabProducts);
+                if (suggested.success) setSuggestedForYou(suggestedProducts);
+                if (gadgets.success) setBestGadgets([...gadgetProducts].reverse());
+                if (favs.success) setFavourites(favouriteProducts);
                 if (frequent.success) {
-                    setFrequentSearches(frequent.searches);
-                    setInitialFrequent(frequent.searches);
+                    setFrequentSearches(frequentSearchItems);
+                    setInitialFrequent(frequentSearchItems);
                 }
                 
                 if (currentUser) {
@@ -202,10 +221,10 @@ export default function DashboardPage() {
                 
                 setCategoryMeta(prev => prev.map((cat, i) => ({
                     ...cat,
-                    image: (catImages[i].success && catImages[i].products.length > 0) ? catImages[i].products[0].image_url : null
+                    image: (catImages[i].success && productsFrom(catImages[i]).length > 0) ? productsFrom(catImages[i])[0].image_url : null
                 })));
 
-                const allProds = [...loot.products, ...festive.products, ...suggested.products].filter(p => p.image_url);
+                const allProds = [...lootProducts, ...festiveProducts, ...suggestedProducts].filter(p => p.image_url);
                 if (allProds.length > 0) {
                     const sorted = allProds.sort(() => 0.5 - Math.random());
                     setSlideshowImages(sorted.slice(0, 5));
@@ -711,7 +730,7 @@ export default function DashboardPage() {
                             justifyContent: 'space-around',
                             alignItems: 'center'
                         }}>
-                            {festiveCollection.slice(0, 8).map((p, i) => renderCard(p, i, 'festive', true))}
+                            {festiveCollection.slice(0, 8).map((p, i) => renderCard(p, i, 'festive'))}
                         </div>
                     </div>
                 )}

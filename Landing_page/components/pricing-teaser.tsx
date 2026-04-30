@@ -7,8 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Check, Sparkles, Crown, UserPlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-
-const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || "http://localhost:3001"
+import { dashboardPath } from "@/lib/dashboard-url"
 
 function Feature({ text }: { text: string }) {
   return (
@@ -285,7 +284,7 @@ export default function PricingTeaser() {
       </div>
 
       <div className="mt-8 max-w-xl mx-auto flex justify-center">
-        <Link href={`${DASHBOARD_URL}/signup`} target="_blank" rel="noopener noreferrer">
+          <Link href={dashboardPath("/signup")} target="_blank" rel="noopener noreferrer">
           <Button size="lg" className="rounded-full px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-lg whitespace-nowrap">
             <UserPlus className="mr-2 h-5 w-5 shrink-0" />
             {"Sign Up, It's Free"}
