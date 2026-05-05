@@ -18,6 +18,7 @@ client_secret_544129425396-nhr9cbgtmakj1024g0kueufr64dmgie2.apps.googleuserconte
 # Large media and data files (high memory)
 loader_preview/
 *.mp4
+!frontend/landing-page/public/videos/*.mp4
 *.zip
 *.xlsx
 *.xls
@@ -30,4 +31,3 @@ LICENSE
 *.h5
 *.pkl
 *.model
-
