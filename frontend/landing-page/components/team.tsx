@@ -15,23 +15,23 @@ type Member = {
 
 const members: Member[] = [
   {
-    name: "Akash",
-    role: "Founder & Product Manager",
+    name: "Sai Videsh",
+    role: "Co-Founder & Product Manager",
     img: "/images/founders/pic-6.png",
     about: "IIITDMK student, building micro solutions for problems and learning new stuff.",
     linkedin: "https://www.linkedin.com/in/sai-videsh-ssv",
   },
   {
     name: "Senoay Shaw",
-    role: "Founder & Marketing",
+    role: "Co-Founder & Marketing",
     img: "/images/founders/seonay_profile.png",
     about: "Handles distribution and growth strategy for tech innovators.",
     linkedin: "https://www.linkedin.com/in/senoay-shaw-3970922a0/",
   },
   {
     name: "Chethan Akash",
-    role: "Co-founder & Developer",
-    img: "/images/founders/pic-6.png",
+    role: "Co-Founder & Developer",
+    img: "/images/founders/chethanakash.jpeg",
     about: "Building intelligent web experiences at the intersection of development and AI.",
     linkedin: "https://www.linkedin.com/in/chethan-akash/",
   },
