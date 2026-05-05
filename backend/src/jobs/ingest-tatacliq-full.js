@@ -184,7 +184,7 @@ async function ingestTataCliqFull() {
     console.log('========================================\n');
 
   } catch (error) {
-    console.error('Fatal Error:', error);
+    console.error('Fatal Error:', error.message);
   }
 }
 

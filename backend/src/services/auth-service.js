@@ -3,12 +3,14 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const db = require('../database/db');
 const { normalizePlanType } = require('./credits-service');
+const emailService = require('./email-service');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-change-in-production';
 const ACCESS_TOKEN_EXPIRY = '15m'; // 15 minutes
 const REFRESH_TOKEN_EXPIRY = '7d'; // 7 days
 const SALT_ROUNDS = 12;
+const EMAIL_OTP_EXPIRY_MINUTES = Number(process.env.EMAIL_OTP_EXPIRY_MINUTES || 10);
 
 // Ensure Google OAuth columns exist (idempotent)
 async function ensureGoogleColumns() {
@@ -23,11 +25,43 @@ async function ensureGoogleColumns() {
     await db.query(`UPDATE users SET plan_type = 'free' WHERE plan_type IS NULL`);
     await db.query(`UPDATE users SET credits = 20 WHERE credits IS NULL`);
     await db.query(`UPDATE users SET credits_last_refreshed = CURRENT_TIMESTAMP WHERE credits_last_refreshed IS NULL`);
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS email_verification_otps (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        email VARCHAR(255) NOT NULL,
+        code_hash VARCHAR(255) NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        consumed_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_email_verification_otps_user_id ON email_verification_otps(user_id)`);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_email_verification_otps_email ON email_verification_otps(email)`);
   } catch (_) { }
 }
 ensureGoogleColumns();
 
 class AuthService {
+  emailVerificationRequired() {
+    return process.env.AUTH_REQUIRE_EMAIL_VERIFICATION !== 'false';
+  }
+
+  normalizeEmail(email) {
+    return String(email || '').trim().toLowerCase();
+  }
+
+  hashEmailOtp(email, otp) {
+    return crypto
+      .createHmac('sha256', JWT_SECRET)
+      .update(`${this.normalizeEmail(email)}:${String(otp).trim()}`)
+      .digest('hex');
+  }
+
+  generateEmailOtp() {
+    return String(crypto.randomInt(100000, 1000000));
+  }
+
   /**
    * Hash password using bcrypt
    */
@@ -162,6 +196,8 @@ class AuthService {
    * Register new user
    */
   async registerUser(email, password, fullName = null, planType = 'free') {
+    const normalizedEmail = this.normalizeEmail(email);
+
     // Hash password
     const passwordHash = await this.hashPassword(password);
 
@@ -175,11 +211,134 @@ class AuthService {
     const query = `
       INSERT INTO users (email, password_hash, full_name, plan_type, credits)
       VALUES ($1, $2, $3, $4, $5)
-      RETURNING id, email, full_name, role, plan_type, credits, created_at
+      RETURNING id, email, full_name, role, plan_type, credits, email_verified, created_at
     `;
 
-    const result = await db.query(query, [email, passwordHash, fullName, normalizedPlanType, credits]);
+    const result = await db.query(query, [normalizedEmail, passwordHash, fullName, normalizedPlanType, credits]);
     return result.rows[0];
+  }
+
+  async createEmailVerificationOtp(user) {
+    const otp = this.generateEmailOtp();
+    const codeHash = this.hashEmailOtp(user.email, otp);
+    const expiresAt = new Date(Date.now() + EMAIL_OTP_EXPIRY_MINUTES * 60 * 1000);
+
+    await db.query(
+      `UPDATE email_verification_otps
+       SET consumed_at = NOW()
+       WHERE user_id = $1 AND consumed_at IS NULL`,
+      [user.id]
+    );
+
+    await db.query(
+      `INSERT INTO email_verification_otps (user_id, email, code_hash, expires_at)
+       VALUES ($1, $2, $3, $4)`,
+      [user.id, this.normalizeEmail(user.email), codeHash, expiresAt]
+    );
+
+    return otp;
+  }
+
+  async createAndSendEmailVerificationOtp(user) {
+    const otp = await this.createEmailVerificationOtp(user);
+    const isDevelopment = process.env.NODE_ENV !== 'production';
+
+    try {
+      const mailResult = await emailService.sendVerificationOtp({
+        to: user.email,
+        fullName: user.full_name,
+        otp,
+        expiresInMinutes: EMAIL_OTP_EXPIRY_MINUTES,
+      });
+
+      if (isDevelopment) {
+        console.log(`🔐 Dev email verification OTP for ${user.email}: ${otp}`);
+      }
+
+      return {
+        sent: mailResult.sent,
+        devOtp: isDevelopment ? otp : undefined,
+        message: mailResult.sent
+          ? 'Verification code sent to your email.'
+          : 'Email is not configured locally. Use the dev OTP from the server log.',
+      };
+    } catch (error) {
+      console.error('Failed to send verification OTP:', error.message);
+
+      if (isDevelopment) {
+        console.log(`🔐 Dev email verification OTP for ${user.email}: ${otp}`);
+      }
+
+      return {
+        sent: false,
+        devOtp: isDevelopment ? otp : undefined,
+        message: isDevelopment
+          ? 'Email delivery failed locally. Use the dev OTP shown by the app/server log.'
+          : 'Failed to send verification code. Please try again.',
+        error: error.message,
+      };
+    }
+  }
+
+  async verifyEmailOtp(email, otp) {
+    const normalizedEmail = this.normalizeEmail(email);
+    const cleanOtp = String(otp || '').trim();
+
+    if (!/^\d{6}$/.test(cleanOtp)) {
+      return { success: false, error: 'Enter the 6-digit verification code' };
+    }
+
+    const user = await this.getUserByEmail(normalizedEmail);
+    if (!user) {
+      return { success: false, error: 'Account not found' };
+    }
+
+    if (user.email_verified) {
+      return { success: true, user, alreadyVerified: true };
+    }
+
+    const codeHash = this.hashEmailOtp(normalizedEmail, cleanOtp);
+    const otpResult = await db.query(
+      `SELECT id, expires_at
+       FROM email_verification_otps
+       WHERE user_id = $1
+         AND email = $2
+         AND code_hash = $3
+         AND consumed_at IS NULL
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [user.id, normalizedEmail, codeHash]
+    );
+
+    const otpRow = otpResult.rows[0];
+    if (!otpRow) {
+      return { success: false, error: 'Invalid verification code' };
+    }
+
+    if (new Date(otpRow.expires_at).getTime() < Date.now()) {
+      return { success: false, error: 'Verification code expired. Please resend a new code.' };
+    }
+
+    await db.query('BEGIN');
+    try {
+      await db.query(
+        'UPDATE email_verification_otps SET consumed_at = NOW() WHERE id = $1',
+        [otpRow.id]
+      );
+      const verified = await db.query(
+        `UPDATE users
+         SET email_verified = true, updated_at = NOW()
+         WHERE id = $1
+         RETURNING id, email, full_name, role, plan_type, credits, store_visits, email_verified`,
+        [user.id]
+      );
+      await db.query('COMMIT');
+
+      return { success: true, user: verified.rows[0] };
+    } catch (error) {
+      await db.query('ROLLBACK');
+      throw error;
+    }
   }
 
   /**
@@ -191,11 +350,12 @@ class AuthService {
     console.log('IP:', ipAddress);
 
     // Get user by email
+    const normalizedEmail = this.normalizeEmail(email);
     const userQuery = 'SELECT * FROM users WHERE email = $1';
     console.log('Executing user query...');
 
     try {
-      const userResult = await db.query(userQuery, [email]);
+      const userResult = await db.query(userQuery, [normalizedEmail]);
       console.log('Query result rows:', userResult.rows.length);
 
       if (userResult.rows.length === 0) {
@@ -227,6 +387,17 @@ class AuthService {
       }
 
       console.log('✅ Password verified');
+
+      if (this.emailVerificationRequired() && !user.email_verified) {
+        console.log('❌ Email not verified; sending a new verification OTP');
+        const otpResult = await this.createAndSendEmailVerificationOtp(user);
+        return {
+          success: false,
+          requiresVerification: true,
+          devOtp: otpResult.devOtp,
+          error: 'Please verify your email. We sent a new verification code.'
+        };
+      }
 
       // Record successful login
       await this.recordLoginAttempt(email, ipAddress, true);
@@ -350,8 +521,18 @@ class AuthService {
    */
   async emailExists(email) {
     const query = 'SELECT COUNT(*) as count FROM users WHERE email = $1';
-    const result = await db.query(query, [email]);
+    const result = await db.query(query, [this.normalizeEmail(email)]);
     return parseInt(result.rows[0].count) > 0;
+  }
+
+  async getUserByEmail(email) {
+    const query = `
+      SELECT id, email, full_name, role, plan_type, credits, store_visits, is_active, email_verified, created_at
+      FROM users
+      WHERE email = $1
+    `;
+    const result = await db.query(query, [this.normalizeEmail(email)]);
+    return result.rows[0] || null;
   }
 
   /**

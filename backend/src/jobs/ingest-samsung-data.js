@@ -307,7 +307,6 @@ async function ingestSamsungData(customTaskId = null) {
 
   } catch (error) {
     console.error('\n✗ Fatal error during Samsung ingestion:', error.message);
-    console.error(error);
     process.exit(1);
   }
 }
@@ -320,7 +319,7 @@ if (require.main === module) {
       process.exit(0);
     })
     .catch(error => {
-      console.error('✗ Samsung ingestion failed:', error);
+      console.error('✗ Samsung ingestion failed:', error.message);
       process.exit(1);
     });
 }

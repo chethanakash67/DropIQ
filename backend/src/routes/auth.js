@@ -58,6 +58,29 @@ const validatePassword = (password) => {
     /[0-9]/.test(password);
 };
 
+const toPublicUser = (user) => ({
+  id: user.id,
+  email: user.email,
+  fullName: user.full_name,
+  role: user.role,
+  planType: normalizePlanType(user.plan_type),
+  credits: user.credits,
+  storeVisits: user.store_visits || 0,
+  emailVerified: !!user.email_verified,
+});
+
+async function issueAuthTokens(user) {
+  const accessToken = authService.generateAccessToken(user);
+  const refreshToken = authService.generateRefreshToken(user);
+  await authService.storeRefreshToken(user.id, refreshToken);
+
+  return {
+    user: toPublicUser(user),
+    accessToken,
+    refreshToken,
+  };
+}
+
 /**
  * POST /api/auth/signup
  * Register new user
@@ -68,7 +91,8 @@ const validatePassword = (password) => {
 router.post('/signup', rateLimiter, async (req, res) => {
   try {
     console.log('\n=== SIGNUP REQUEST ===');
-    const { email, password, fullName } = req.body;
+    const { password, fullName } = req.body;
+    const email = authService.normalizeEmail(req.body.email);
     console.log('Email:', email);
     console.log('Full Name:', fullName);
     console.log('Password provided:', !!password);
@@ -100,12 +124,23 @@ router.post('/signup', rateLimiter, async (req, res) => {
 
     console.log('✅ Validation passed');
 
-    // Check if email exists
     console.log('Checking if email exists...');
-    const emailExists = await authService.emailExists(email);
-    console.log('Email exists:', emailExists);
+    const existingUser = await authService.getUserByEmail(email);
+    console.log('Email exists:', !!existingUser);
 
-    if (emailExists) {
+    if (existingUser) {
+      if (authService.emailVerificationRequired() && !existingUser.email_verified) {
+        const otpResult = await authService.createAndSendEmailVerificationOtp(existingUser);
+        return res.status(200).json({
+          success: true,
+          requiresVerification: true,
+          message: otpResult.message,
+          email: existingUser.email,
+          user: toPublicUser(existingUser),
+          devOtp: otpResult.devOtp,
+        });
+      }
+
       console.log('❌ Email already registered');
       return res.status(409).json({
         success: false,
@@ -118,32 +153,26 @@ router.post('/signup', rateLimiter, async (req, res) => {
     const user = await authService.registerUser(email, password, fullName);
     console.log('✅ User registered:', user.id, user.email);
 
-    console.log('✅ User registered:', user.id, user.email);
+    if (authService.emailVerificationRequired()) {
+      console.log('Sending verification OTP...');
+      const otpResult = await authService.createAndSendEmailVerificationOtp(user);
+      console.log('✅ Verification OTP prepared:', { sent: otpResult.sent });
 
-    // Generate tokens
+      return res.status(201).json({
+        success: true,
+        requiresVerification: true,
+        message: otpResult.message,
+        email: user.email,
+        user: toPublicUser(user),
+        devOtp: otpResult.devOtp,
+      });
+    }
+
     console.log('Generating tokens...');
-    const accessToken = authService.generateAccessToken(user);
-    const refreshToken = authService.generateRefreshToken(user);
-    console.log('✅ Tokens generated');
-
-    console.log('Storing refresh token...');
-    await authService.storeRefreshToken(user.id, refreshToken);
-    console.log('✅ Refresh token stored');
-
     const responseData = {
       success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        fullName: user.full_name,
-        role: user.role,
-        planType: normalizePlanType(user.plan_type),
-        credits: user.credits
-      },
-      accessToken,
-      refreshToken
+      ...(await issueAuthTokens(user)),
     };
-
     console.log('✅ Signup successful! Sending response...');
     res.status(201).json(responseData);
 
@@ -152,6 +181,99 @@ router.post('/signup', rateLimiter, async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Registration failed'
+    });
+  }
+});
+
+/**
+ * POST /api/auth/verify-email
+ * Verify a password signup with a 6-digit OTP.
+ *
+ * Request: { email, otp }
+ * Response: { success, user, accessToken, refreshToken }
+ */
+router.post('/verify-email', rateLimiter, async (req, res) => {
+  try {
+    const email = authService.normalizeEmail(req.body.email);
+    const otp = String(req.body.otp || '').trim();
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email and verification code are required'
+      });
+    }
+
+    if (!validateEmail(email)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid email format'
+      });
+    }
+
+    const result = await authService.verifyEmailOtp(email, otp);
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    res.json({
+      success: true,
+      ...(await issueAuthTokens(result.user)),
+    });
+  } catch (error) {
+    console.error('Email verification error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Email verification failed'
+    });
+  }
+});
+
+/**
+ * POST /api/auth/resend-otp
+ * Resend the email verification OTP for an unverified account.
+ *
+ * Request: { email }
+ */
+router.post('/resend-otp', rateLimiter, async (req, res) => {
+  try {
+    const email = authService.normalizeEmail(req.body.email);
+
+    if (!email || !validateEmail(email)) {
+      return res.status(400).json({
+        success: false,
+        error: 'A valid email is required'
+      });
+    }
+
+    const user = await authService.getUserByEmail(email);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'Account not found'
+      });
+    }
+
+    if (user.email_verified) {
+      return res.json({
+        success: true,
+        alreadyVerified: true,
+        message: 'Email is already verified.'
+      });
+    }
+
+    const otpResult = await authService.createAndSendEmailVerificationOtp(user);
+    res.json({
+      success: true,
+      requiresVerification: true,
+      message: otpResult.message,
+      devOtp: otpResult.devOtp,
+    });
+  } catch (error) {
+    console.error('Resend OTP error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to resend verification code'
     });
   }
 });
@@ -200,9 +322,11 @@ router.post('/login', rateLimiter, async (req, res) => {
 
     if (!result.success) {
       console.log('❌ Authentication failed:', result.error);
-      return res.status(401).json({
+      return res.status(result.requiresVerification ? 403 : 401).json({
         success: false,
-        error: result.error
+        error: result.error,
+        requiresVerification: !!result.requiresVerification,
+        devOtp: result.devOtp,
       });
     }
 

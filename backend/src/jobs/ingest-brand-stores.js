@@ -554,7 +554,7 @@ async function ingestBrandStores() {
     console.log('========================================\n');
 
   } catch (error) {
-    console.error('\n✗ Fatal error during brand ingestion:', error);
+    console.error('\n✗ Fatal error during brand ingestion:', error.message);
     process.exit(1);
   }
 }
@@ -566,7 +566,7 @@ if (require.main === module) {
       process.exit(0);
     })
     .catch(error => {
-      console.error('✗ Brand ingestion failed:', error);
+      console.error('✗ Brand ingestion failed:', error.message);
       process.exit(1);
     });
 }

@@ -10,13 +10,20 @@ const authRouter = require('./routes/auth');
 const webhooksRouter = require('./routes/webhooks');
 const contactRouter = require('./routes/contact');
 
-// ── Background Schedulers ────────────────────────────────────────────────────
-require('./scheduler/monthly-ingestion');
-require('./scheduler/samsung-ingestion');
-require('./scheduler/offline-store-sync');
-
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+function startSchedulers() {
+  if (process.env.DISABLE_SCHEDULERS === 'true') {
+    console.log('Background schedulers disabled by DISABLE_SCHEDULERS=true');
+    return;
+  }
+
+  // ── Background Schedulers ──────────────────────────────────────────────────
+  require('./scheduler/monthly-ingestion');
+  require('./scheduler/samsung-ingestion');
+  require('./scheduler/offline-store-sync');
+}
 
 // ── Simple Logger ────────────────────────────────────────────────────────────
 app.use((req, res, next) => {
@@ -88,7 +95,9 @@ app.use((err, req, res, next) => {
   res.status(500).json({ success: false, error: 'Internal server error', message: err.message });
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
+  startSchedulers();
+
   const hasGoogle = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
   console.log(`
 ========================================
@@ -96,6 +105,27 @@ app.listen(PORT, () => {
   Google OAuth: ${hasGoogle ? '✅ configured' : '⚠️  not configured (set GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET)'}
 ========================================
   `);
+});
+
+server.on('error', (error) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`
+========================================
+  Port ${PORT} is already in use.
+========================================
+Another backend process is already running on http://localhost:${PORT}.
+
+To find it:
+  lsof -nP -iTCP:${PORT} -sTCP:LISTEN
+
+To stop it:
+  kill <PID>
+========================================
+`);
+    process.exit(1);
+  }
+
+  throw error;
 });
 
 module.exports = app;

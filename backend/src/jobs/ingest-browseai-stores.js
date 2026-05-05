@@ -593,7 +593,7 @@ if (require.main === module) {
   ingestBrowseAiStores(process.argv.slice(2))
     .then(() => db.pool.end())
     .catch(async error => {
-      console.error('Fatal Browse.ai store ingestion error:', error);
+      console.error('Fatal Browse.ai store ingestion error:', error.message);
       await db.pool.end();
       process.exit(1);
     });

@@ -311,7 +311,7 @@ async function ingestGenericRetailer(retailerName, listRobotId, detailRobotId) {
     console.log(`\nCompleted Ingestion for ${retailerName}.`);
 
   } catch (error) {
-    console.error('Fatal Error:', error);
+    console.error('Fatal Error:', error.message);
   }
 }
 

@@ -204,7 +204,7 @@ if (require.main === module) {
       process.exit(0);
     })
     .catch((error) => {
-      console.error('Fatal error:', error);
+      console.error('Fatal error:', error.message);
       process.exit(1);
     });
 }

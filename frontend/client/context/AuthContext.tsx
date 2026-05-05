@@ -15,6 +15,15 @@ interface User {
     credits?: number;
     creditsLastRefreshed?: string;
     storeVisits?: number;
+    emailVerified?: boolean;
+}
+
+interface AuthActionResult {
+    requiresVerification?: boolean;
+    alreadyVerified?: boolean;
+    email?: string;
+    message?: string;
+    devOtp?: string;
 }
 
 interface AuthContextType {
@@ -23,7 +32,9 @@ interface AuthContextType {
     accessToken: string | null;
     loading: boolean;
     login: (email: string, password: string) => Promise<void>;
-    signup: (fullName: string, email: string, password: string) => Promise<void>;
+    signup: (fullName: string, email: string, password: string) => Promise<AuthActionResult>;
+    verifyEmailOtp: (email: string, otp: string) => Promise<void>;
+    resendVerificationOtp: (email: string) => Promise<AuthActionResult>;
     logout: () => Promise<void>;
     authenticatedFetch: (url: string, options?: RequestInit) => Promise<Response>;
 }
@@ -137,12 +148,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.error || 'Signup failed');
+        if (data.requiresVerification) {
+            return {
+                requiresVerification: true,
+                email: data.email || email,
+                message: data.message,
+                devOtp: data.devOtp,
+            };
+        }
 
         setAccessToken(data.accessToken);
         setRefreshToken(data.refreshToken);
         setCurrentUser(data.user);
         localStorage.setItem('accessToken', data.accessToken);
         localStorage.setItem('refreshToken', data.refreshToken);
+        return { requiresVerification: false };
+    };
+
+    const verifyEmailOtp = async (email: string, otp: string) => {
+        const res = await fetch('/api/auth/verify-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, otp }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Verification failed');
+
+        setAccessToken(data.accessToken);
+        setRefreshToken(data.refreshToken);
+        setCurrentUser(data.user);
+        localStorage.setItem('accessToken', data.accessToken);
+        localStorage.setItem('refreshToken', data.refreshToken);
+    };
+
+    const resendVerificationOtp = async (email: string) => {
+        const res = await fetch('/api/auth/resend-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to resend verification code');
+
+        return {
+            requiresVerification: !!data.requiresVerification,
+            alreadyVerified: !!data.alreadyVerified,
+            email,
+            message: data.message,
+            devOtp: data.devOtp,
+        };
     };
 
     const logout = async () => {
@@ -178,7 +232,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     return (
-        <AuthContext.Provider value={{ currentUser, setCurrentUser, accessToken, loading, login, signup, logout, authenticatedFetch }}>
+        <AuthContext.Provider value={{ currentUser, setCurrentUser, accessToken, loading, login, signup, verifyEmailOtp, resendVerificationOtp, logout, authenticatedFetch }}>
             {children}
         </AuthContext.Provider>
     );
