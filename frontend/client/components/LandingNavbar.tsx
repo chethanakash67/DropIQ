@@ -4,11 +4,11 @@ import React from 'react';
 import Link from 'next/link';
 
 const links = [
-    { href: "/about", label: "How it Works" },
-    { href: "/about#why-different", label: "Why Different" },
-    { href: "/about#social-proof", label: "Testimonials" },
-    { href: "/about#team", label: "Team" },
-    { href: "/about#pricing", label: "Pricing" },
+    { href: "/#how-it-works", label: "How it Works" },
+    { href: "/#why-different", label: "Why Different" },
+    { href: "/#social-proof", label: "Testimonials" },
+    { href: "/#team", label: "Team" },
+    { href: "/#pricing", label: "Pricing" },
 ];
 
 export default function LandingNavbar() {
@@ -28,7 +28,7 @@ export default function LandingNavbar() {
             justifyContent: 'space-between'
         }}>
             {/* Brand */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
                 <img 
                     src="/images/founders/des-1-removebg-preview_cropped.png" 
                     alt="Logo" 
@@ -44,7 +44,7 @@ export default function LandingNavbar() {
                 }}>
                     DropiQ
                 </span>
-            </div>
+            </Link>
 
             {/* Links - Desktop Only */}
             <div style={{ display: 'flex', gap: '8px' }}>
