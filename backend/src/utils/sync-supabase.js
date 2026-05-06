@@ -11,6 +11,7 @@ const DEFAULT_TABLES = [
   'vijay_sales_products',
   'tatacliq_products',
   'myntra_products',
+  'zebronics_products',
   'offline_stores',
   'search_history',
   'cart_items',
