@@ -21,7 +21,7 @@ export default function CursorTail() {
 
     const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches
     const coarse = window.matchMedia("(pointer: coarse)").matches
-
+//hi
     if (prefersReduced || coarse) {
       setEnabled(false)
       return
