@@ -19,6 +19,7 @@ client_secret_544129425396-nhr9cbgtmakj1024g0kueufr64dmgie2.apps.googleuserconte
 loader_preview/
 *.mp4
 !frontend/landing-page/public/videos/*.mp4
+!frontend/client/public/videos/*.mp4
 *.zip
 *.xlsx
 *.xls
