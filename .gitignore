@@ -26,6 +26,8 @@ loader_preview/
 *.exe
 LICENSE
 
+Landing_page/
+client/
 # High memory / binary files
 *.traineddata
 *.weights
