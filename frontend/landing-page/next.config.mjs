@@ -4,6 +4,9 @@ const backendUrl = (process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || "h
 const nextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+    turbo: {
+      root: process.cwd(),
+    },
   },
   images: {
     formats: ['image/webp', 'image/avif'],
@@ -22,12 +25,8 @@ const nextConfig = {
       },
     ];
   },
-  // Run landing page on port 3000
-  ...(process.env.NODE_ENV === 'development' && {
-    serverRuntimeConfig: {
-      port: 3000
-    }
-  }),
+  // Note: serverRuntimeConfig removed - not supported in Next.js 15+ with Turbopack
+  // Use environment variables or API routes instead
   webpack: (config, { dev, isServer }) => {
     // Optimize bundle size
     if (!dev && !isServer) {
@@ -42,7 +41,7 @@ const nextConfig = {
         },
       }
     }
-    
+
     return config
   },
 }
