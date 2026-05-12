@@ -6,7 +6,39 @@ const { authenticate } = require('../middleware/auth');
 const { normalizePlanType } = require('../services/credits-service');
 const db = require('../database/db');
 
-const FRONTEND_URL = process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dropiq-t62y.onrender.com';
+const DEFAULT_FRONTEND_URL = 'https://dropiq-t62y.onrender.com';
+
+function isLocalhostUrl(value) {
+  try {
+    const parsed = new URL(value);
+    return ['localhost', '127.0.0.1', '::1'].includes(parsed.hostname);
+  } catch {
+    return false;
+  }
+}
+
+function normalizeBaseUrl(value) {
+  return value.replace(/\/+$/, '');
+}
+
+function resolveFrontendUrl() {
+  const candidates = [
+    process.env.FRONTEND_URL,
+    process.env.NEXT_PUBLIC_DASHBOARD_URL,
+    DEFAULT_FRONTEND_URL,
+  ].filter(Boolean);
+
+  for (const candidate of candidates) {
+    if (process.env.NODE_ENV === 'production' && isLocalhostUrl(candidate)) {
+      continue;
+    }
+    return normalizeBaseUrl(candidate);
+  }
+
+  return DEFAULT_FRONTEND_URL;
+}
+
+const FRONTEND_URL = resolveFrontendUrl();
 
 // Simple in-memory rate limiter (use Redis in production for distributed systems)
 const rateLimitMap = new Map();

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { dashboardPath } from "@/lib/dashboard-url"
 
-const LOCAL_DASHBOARD_SIGNUP = "http://localhost:3000/signup"
+const FALLBACK_DASHBOARD_SIGNUP = "https://dropiq-t62y.onrender.com/signup"
 
 function hasSameOrigin(target: string, origin: string) {
   try {
@@ -16,7 +16,7 @@ export function GET(request: NextRequest) {
   const target = dashboardPath("/signup")
 
   if (hasSameOrigin(target, currentOrigin)) {
-    return NextResponse.redirect(hasSameOrigin(LOCAL_DASHBOARD_SIGNUP, currentOrigin) ? new URL("/", request.url) : LOCAL_DASHBOARD_SIGNUP)
+    return NextResponse.redirect(hasSameOrigin(FALLBACK_DASHBOARD_SIGNUP, currentOrigin) ? new URL("/", request.url) : FALLBACK_DASHBOARD_SIGNUP)
   }
 
   return NextResponse.redirect(target)

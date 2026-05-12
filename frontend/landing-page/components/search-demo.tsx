@@ -9,8 +9,6 @@ import Link from "next/link"
 import { useSearch } from "@/hooks/useSearch"
 import { dashboardPath } from "@/lib/dashboard-url"
 
-const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || "http://localhost:3000"
-
 export default function SearchDemo() {
   const [query, setQuery] = useState("")
   const [hasSearched, setHasSearched] = useState(false)
@@ -174,7 +172,7 @@ export default function SearchDemo() {
 
           {searchCount >= 1 ? (
             <div className="absolute right-2 top-2 bottom-2 flex items-center gap-2">
-              <Link href={`${DASHBOARD_URL}/signup`}>
+              <Link href={dashboardPath("/signup")}>
                 <button
                   type="button"
                   className="h-full py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-all text-sm"
@@ -276,7 +274,7 @@ export default function SearchDemo() {
                   results.slice(0, 10).map((res, i) => {
                     const minPrice = Math.min(...results.map(r => r.price_inr || Infinity));
                     const isBest = res.price_inr === minPrice;
-                    const productLink = `${DASHBOARD_URL}/product/${res.id}?retailer=${encodeURIComponent(res.retailer_name)}`;
+                    const productLink = dashboardPath(`/product/${res.id}?retailer=${encodeURIComponent(res.retailer_name)}`);
                     
                     return (
                       <Link key={i} href={productLink}>
