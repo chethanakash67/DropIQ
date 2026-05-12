@@ -7,6 +7,7 @@ const { normalizePlanType } = require('../services/credits-service');
 const db = require('../database/db');
 
 const DEFAULT_FRONTEND_URL = 'https://dropiq-t62y.onrender.com';
+const ALLOW_LOCALHOST_FRONTEND_URL = process.env.ALLOW_LOCALHOST_FRONTEND_URL === 'true';
 
 function isLocalhostUrl(value) {
   try {
@@ -22,6 +23,11 @@ function normalizeBaseUrl(value) {
 }
 
 function resolveFrontendUrl() {
+  const isHostedEnvironment =
+    process.env.NODE_ENV === 'production' ||
+    process.env.RENDER === 'true' ||
+    !!process.env.RENDER_EXTERNAL_URL;
+
   const candidates = [
     process.env.FRONTEND_URL,
     process.env.NEXT_PUBLIC_DASHBOARD_URL,
@@ -29,7 +35,7 @@ function resolveFrontendUrl() {
   ].filter(Boolean);
 
   for (const candidate of candidates) {
-    if (process.env.NODE_ENV === 'production' && isLocalhostUrl(candidate)) {
+    if (isLocalhostUrl(candidate) && isHostedEnvironment && !ALLOW_LOCALHOST_FRONTEND_URL) {
       continue;
     }
     return normalizeBaseUrl(candidate);
@@ -39,6 +45,7 @@ function resolveFrontendUrl() {
 }
 
 const FRONTEND_URL = resolveFrontendUrl();
+console.log(`[Auth] Resolved frontend redirect URL: ${FRONTEND_URL}`);
 
 // Simple in-memory rate limiter (use Redis in production for distributed systems)
 const rateLimitMap = new Map();

@@ -13,6 +13,7 @@ const contactRouter = require('./routes/contact');
 const app = express();
 const PORT = process.env.PORT || 3001;
 const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || 'https://dropiq-t62y.onrender.com/api/auth/google/callback';
+const SERVICE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
 function startSchedulers() {
   if (process.env.DISABLE_SCHEDULERS === 'true') {
@@ -102,7 +103,7 @@ const server = app.listen(PORT, () => {
   const hasGoogle = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
   console.log(`
 ========================================
-  DropIQ API  →  http://localhost:${PORT}
+  DropIQ API  →  ${SERVICE_URL}
   Google OAuth: ${hasGoogle ? '✅ configured' : '⚠️  not configured (set GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET)'}
   Google Callback URL: ${GOOGLE_CALLBACK_URL}
 ========================================
