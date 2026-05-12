@@ -68,7 +68,9 @@ app.use(cors({
     'http://127.0.0.1:3002',
     'http://127.0.0.1:3003',
     'http://127.0.0.1:3004',
+    'https://dropiq-nine.vercel.app',
     process.env.FRONTEND_URL,
+    process.env.NEXT_PUBLIC_DASHBOARD_URL,
   ].filter(Boolean),
   credentials: true,
 }));

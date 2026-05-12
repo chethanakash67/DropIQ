@@ -6,7 +6,7 @@ const { authenticate } = require('../middleware/auth');
 const { normalizePlanType } = require('../services/credits-service');
 const db = require('../database/db');
 
-const DEFAULT_FRONTEND_URL = 'https://dropiq-t62y.onrender.com';
+const DEFAULT_FRONTEND_URL = 'https://dropiq-nine.vercel.app';
 const ALLOW_LOCALHOST_FRONTEND_URL = process.env.ALLOW_LOCALHOST_FRONTEND_URL === 'true';
 
 function isLocalhostUrl(value) {

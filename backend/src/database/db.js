@@ -9,6 +9,7 @@ const connectionString =
   '';
 
 const shouldUseSsl =
+  isProduction ||
   process.env.DB_SSL === 'true' ||
   process.env.PGSSLMODE === 'require' ||
   /sslmode=require/i.test(connectionString);
@@ -36,7 +37,12 @@ if (isProduction && !connectionString && host === 'localhost') {
 const poolConfig = connectionString
   ? {
       connectionString,
-      ssl: shouldUseSsl ? { rejectUnauthorized: false } : undefined,
+      ssl: shouldUseSsl ? { rejectUnauthorized: false } : false,
+      ...(isProduction && {
+        connectionTimeoutMillis: 10000,
+        idleTimeoutMillis: 30000,
+        max: 20,
+      }),
     }
   : {
       host,
@@ -44,7 +50,7 @@ const poolConfig = connectionString
       database,
       user,
       password,
-      ssl: shouldUseSsl ? { rejectUnauthorized: false } : undefined,
+      ssl: shouldUseSsl ? { rejectUnauthorized: false } : false,
     };
 
 const pool = new Pool(poolConfig);
