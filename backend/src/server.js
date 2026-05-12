@@ -12,6 +12,7 @@ const contactRouter = require('./routes/contact');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || 'https://dropiq-t62y.onrender.com/api/auth/google/callback';
 
 function startSchedulers() {
   if (process.env.DISABLE_SCHEDULERS === 'true') {
@@ -36,7 +37,7 @@ passport.use(new GoogleStrategy(
   {
     clientID: process.env.GOOGLE_CLIENT_ID || 'GOOGLE_CLIENT_ID_NOT_SET',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'GOOGLE_CLIENT_SECRET_NOT_SET',
-    callbackURL: process.env.GOOGLE_CALLBACK_URL || 'https://dropiq-t62y.onrender.com/api/auth/google/callback',
+    callbackURL: GOOGLE_CALLBACK_URL,
     scope: ['profile', 'email'],
   },
   async (_accessToken, _refreshToken, profile, done) => {
@@ -103,6 +104,7 @@ const server = app.listen(PORT, () => {
 ========================================
   DropIQ API  →  http://localhost:${PORT}
   Google OAuth: ${hasGoogle ? '✅ configured' : '⚠️  not configured (set GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET)'}
+  Google Callback URL: ${GOOGLE_CALLBACK_URL}
 ========================================
   `);
 });
