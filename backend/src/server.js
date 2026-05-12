@@ -36,7 +36,7 @@ passport.use(new GoogleStrategy(
   {
     clientID: process.env.GOOGLE_CLIENT_ID || 'GOOGLE_CLIENT_ID_NOT_SET',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'GOOGLE_CLIENT_SECRET_NOT_SET',
-    callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3001/api/auth/google/callback',
+    callbackURL: process.env.GOOGLE_CALLBACK_URL || 'https://dropiq-t62y.onrender.com/api/auth/google/callback',
     scope: ['profile', 'email'],
   },
   async (_accessToken, _refreshToken, profile, done) => {

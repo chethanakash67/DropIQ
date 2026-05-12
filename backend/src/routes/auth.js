@@ -6,7 +6,7 @@ const { authenticate } = require('../middleware/auth');
 const { normalizePlanType } = require('../services/credits-service');
 const db = require('../database/db');
 
-const FRONTEND_URL = process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_DASHBOARD_URL || 'http://localhost:3000';
+const FRONTEND_URL = process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dropiq-t62y.onrender.com';
 
 // Simple in-memory rate limiter (use Redis in production for distributed systems)
 const rateLimitMap = new Map();
