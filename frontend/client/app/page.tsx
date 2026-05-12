@@ -28,7 +28,7 @@ const DynamicTeam = dynamic(() => import("@/components/landing/team"), {
 
 export default function Page() {
   return (
-    <main>
+    <main className="dropiq-landing">
       <Navbar />
       <Hero />
       <HowItWorks />

@@ -137,9 +137,11 @@
   animation: accordion-up 0.2s ease-out;
 }
 
-/* ── Emerald Shining Theme (Landing Page) ───────────────────────── */
-:root {
-  --bg: #fdfbf7; /* Light beige/cream background */
+/* ── Emerald Shining Theme (Dashboard only) ───────────────────────── */
+/* These variables are scoped to dashboard pages only.
+   On the landing page (.dropiq-landing), Tailwind theme variables take precedence. */
+body:not(:has(.dropiq-landing)) {
+  --bg: #fdfbf7;
   --bg-secondary: #f0fdf4;
   --bg-card: #fdfbf7;
   --bg-card-hover: #fcf9f2;
@@ -150,9 +152,9 @@
   --text-primary: #1e293b;
   --text-secondary: #334155;
   --text-muted: #64748b;
-  --accent: #10b981; /* Emerald */
+  --accent: #10b981;
   --accent-hover: #059669;
-  --accent2: #84cc16; /* Lime */
+  --accent2: #84cc16;
   --accent2-hover: #65a30d;
   --danger: #ef4444;
   --gradient-vibrant: linear-gradient(135deg, #10b981 0%, #84cc16 50%, #10b981 100%);
@@ -167,8 +169,9 @@
   --bg-nav: linear-gradient(135deg, rgba(6, 78, 59, 0.9) 0%, rgba(6, 95, 70, 0.9) 100%);
 }
 
-/* ── Emerald Dark Theme ───────────────────────── */
-[data-theme='dark'] {
+/* ── Emerald Dark Theme (Dashboard only) ───────────────────────── */
+body:not(:has(.dropiq-landing))[data-theme='dark'],
+[data-theme='dark'] body:not(:has(.dropiq-landing)) {
   --bg: #000;
   --bg-secondary: #181818;
   --bg-card: #181818;
@@ -188,10 +191,10 @@
   --bg-nav: linear-gradient(135deg, #181818 0%, #232323 100%);
 }
 
-/* ── Reset ─────────────────────────────────────────────────────────────────── */
-*,
-*::before,
-*::after {
+/* ── Reset (Dashboard only — landing page uses Tailwind's preflight) ──── */
+body:not(:has(.dropiq-landing)) *,
+body:not(:has(.dropiq-landing)) *::before,
+body:not(:has(.dropiq-landing)) *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -201,7 +204,7 @@ html {
   scroll-behavior: smooth;
 }
 
-body {
+body:not(:has(.dropiq-landing)) {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg);
   color: var(--text);
@@ -210,11 +213,14 @@ body {
   line-height: 1.6;
 }
 
-.container {
+body:not(:has(.dropiq-landing)) .container {
   max-width: 1280px;
   margin: 0 auto;
   padding: 0 24px;
 }
+
+/* Landing page no longer needs container overrides — dashboard .container
+   is now scoped away from the landing page via body:not(:has(.dropiq-landing)) */
 
 /* ── Auth Pages ────────────────────────────────────────────────────────────── */
 .auth-wrapper {
