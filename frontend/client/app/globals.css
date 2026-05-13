@@ -738,8 +738,9 @@ body:not(:has(.dropiq-landing)) .container {
   padding: 8px 10px 8px 24px !important;
   box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important;
   transition: all 0.3s ease;
-  width: 100% !important;
-  overflow: visible !important; /* Crucial for absolute positioned dropdown */
+  flex: 1; /* Allow it to grow and fill space */
+  min-width: 300px;
+  overflow: visible !important;
 }
 
 .search-box:focus-within {
@@ -762,11 +763,16 @@ body:not(:has(.dropiq-landing)) .container {
 .search-container {
   display: flex !important;
   justify-content: flex-start !important;
-  padding-left: 20px !important;
+  align-items: center !important;
+  gap: 20px !important;
+  padding: 0 24px !important;
   width: 100% !important;
+  max-width: 1200px !important;
+  margin: 40px auto 0 !important;
   position: relative;
-  z-index: 2000 !important; /* Ensure it's above all content */
+  z-index: 2000 !important;
   overflow: visible !important;
+  flex-wrap: wrap; /* Prevent crashing on small screens */
 }
 
 /* Merged into above definition */
@@ -1103,8 +1109,8 @@ body:not(:has(.dropiq-landing)) .container {
   flex-direction: column;
   position: relative;
   overflow: hidden;
-  height: 100%;
-  min-height: 320px; /* Fixed minimum height to prevent resize */
+  height: auto; /* Changed from 100% to auto */
+  min-height: 280px; /* Reduced to be more flexible */
   z-index: 1;
 }
 
@@ -1317,12 +1323,13 @@ body:not(:has(.dropiq-landing)) .container {
   z-index: 10;
   color: white;
   text-align: left;
-  padding: 60px;
+  padding: 40px; /* Reduced from 60px */
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  max-width: 600px; /* Prevent text from spanning too wide */
 }
 
 .slideshow-tag {
@@ -1339,7 +1346,7 @@ body:not(:has(.dropiq-landing)) .container {
 }
 
 .slideshow-title {
-  font-size: 48px;
+  font-size: clamp(24px, 4vw, 48px); /* Responsive font size */
   font-weight: 900;
   line-height: 1.1;
   margin-bottom: 12px;

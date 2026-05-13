@@ -88,20 +88,20 @@ const shouldUseSsl =
 // ── Pool Configuration ──────────────────────────────────────────────────────
 const poolConfig = connectionString
   ? {
-      connectionString,
-      ssl: shouldUseSsl ? { rejectUnauthorized: false } : false,
-      connectionTimeoutMillis: isHosted ? 10000 : 5000,
-      idleTimeoutMillis: isHosted ? 30000 : 10000,
-      max: isHosted ? 20 : 10,
-    }
+    connectionString,
+    ssl: shouldUseSsl ? { rejectUnauthorized: false } : false,
+    connectionTimeoutMillis: isHosted ? 10000 : 5000,
+    idleTimeoutMillis: isHosted ? 30000 : 10000,
+    max: isHosted ? 20 : 10,
+  }
   : {
-      host,
-      port,
-      database,
-      user,
-      password,
-      ssl: shouldUseSsl ? { rejectUnauthorized: false } : false,
-    };
+    host,
+    port,
+    database,
+    user,
+    password,
+    ssl: shouldUseSsl ? { rejectUnauthorized: false } : false,
+  };
 
 // Log what we're connecting to (without secrets)
 const target = connectionString

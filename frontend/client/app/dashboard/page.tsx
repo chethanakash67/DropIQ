@@ -481,7 +481,7 @@ export default function DashboardPage() {
             const cardWidth = isSuggested ? '100%' : '260px';
             const cardClass = isSuggested ? "product-card" : "product-card floating-card";
             return (
-                <div key={`${uniqueKey}-${i}`} className={cardClass} onClick={() => loadProduct(String(p.id || ''), p.retailer_name || '')} style={{ cursor: 'pointer', minWidth: cardWidth, maxWidth: cardWidth, padding: '16px' }}>
+                <div key={`${uniqueKey}-${i}`} className={cardClass} onClick={() => loadProduct(String(p.id || ''), p.retailer_name || '')} style={{ cursor: 'pointer', minWidth: cardWidth, maxWidth: cardWidth, padding: '16px', minHeight: 'unset', height: '120px' }}>
                     <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '16px', height: '100%' }}>
                         {p.image_url ? (
                             <img src={p.image_url} alt={displayTitle} style={{ width: '80px', height: '80px', objectFit: 'contain', flexShrink: 0 }} />
@@ -567,8 +567,8 @@ export default function DashboardPage() {
                     </div>
                 </div>
 
-                <div className="search-container" style={{ marginTop: '20px', marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '30px', paddingLeft: '20px' }}>
-                    <div className="search-box" style={{ flex: '0 1 85%', minWidth: 'unset' }}>
+                <div className="search-container" style={{ marginTop: '20px', marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '20px', width: '100%' }}>
+                    <div className="search-box" style={{ flex: 1, minWidth: '300px' }}>
                         <input
                             type="text"
                             id="searchInput"
