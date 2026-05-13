@@ -2,8 +2,7 @@ require('dotenv').config();
 const dns = require('dns');
 const { Pool } = require('pg');
 
-// Force IPv4 DNS resolution — Render's free tier cannot reach Supabase via IPv6.
-// Without this, Node.js resolves db.*.supabase.co to an IPv6 address, causing ENETUNREACH.
+// Force IPv4 DNS resolution — Render cannot reach Supabase via IPv6.
 dns.setDefaultResultOrder('ipv4first');
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -13,11 +12,41 @@ const isProduction = process.env.NODE_ENV === 'production';
 const isRender = !!(process.env.RENDER || process.env.RENDER_EXTERNAL_URL);
 const isHosted = isProduction || isRender;
 
-const connectionString =
+// ── Supabase IPv6→IPv4 Pooler Auto-Fix ──────────────────────────────────────
+// Supabase direct DB hosts (db.REF.supabase.co) are IPv6-ONLY.
+// Render's free tier cannot make IPv6 outbound connections.
+// This function rewrites the URL to use the Supabase Connection Pooler,
+// which runs on *.pooler.supabase.com and supports IPv4.
+function fixSupabaseDirectUrl(url) {
+  if (!url) return url;
+  try {
+    const parsed = new URL(url);
+    // Match db.<ref>.supabase.co (direct connection — IPv6 only)
+    const directMatch = parsed.hostname.match(/^db\.([a-z]+)\.supabase\.co$/);
+    if (directMatch && isHosted) {
+      const ref = directMatch[1];
+      // Rewrite to pooler: username becomes postgres.REF, host becomes pooler, port 6543
+      const originalUser = parsed.username; // usually "postgres"
+      parsed.username = `${originalUser}.${ref}`;
+      parsed.hostname = `aws-0-ap-south-1.pooler.supabase.com`;
+      parsed.port = '6543';
+      const newUrl = parsed.toString();
+      console.log(`[DB] Auto-converted Supabase direct URL (IPv6-only) → pooler URL (IPv4)`);
+      console.log(`[DB]   From: db.${ref}.supabase.co:5432`);
+      console.log(`[DB]   To:   aws-0-ap-south-1.pooler.supabase.com:6543`);
+      return newUrl;
+    }
+  } catch (_) { /* not a valid URL, skip */ }
+  return url;
+}
+
+const rawConnectionString =
   process.env.DATABASE_URL ||
   process.env.RENDER_DATABASE_URL ||
   process.env.POSTGRES_URL ||
   '';
+
+const connectionString = fixSupabaseDirectUrl(rawConnectionString);
 
 // ── Hosted environment guards ───────────────────────────────────────────────
 const host = process.env.DB_HOST || process.env.PGHOST;
@@ -76,7 +105,7 @@ const poolConfig = connectionString
 
 // Log what we're connecting to (without secrets)
 const target = connectionString
-  ? `DATABASE_URL (${connectionString.replace(/\/\/[^@]+@/, '//***@').substring(0, 60)}...)`
+  ? `DATABASE_URL (${connectionString.replace(/\/\/[^@]+@/, '//***@').substring(0, 80)}...)`
   : `${host}:${port}/${database}`;
 console.log(`[DB] Environment: ${isHosted ? 'HOSTED' : 'LOCAL'} | Target: ${target}`);
 
