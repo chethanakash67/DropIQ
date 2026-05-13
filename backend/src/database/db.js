@@ -1,5 +1,10 @@
 require('dotenv').config();
+const dns = require('dns');
 const { Pool } = require('pg');
+
+// Force IPv4 DNS resolution — Render's free tier cannot reach Supabase via IPv6.
+// Without this, Node.js resolves db.*.supabase.co to an IPv6 address, causing ENETUNREACH.
+dns.setDefaultResultOrder('ipv4first');
 
 const isProduction = process.env.NODE_ENV === 'production';
 
