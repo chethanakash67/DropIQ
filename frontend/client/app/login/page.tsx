@@ -31,6 +31,7 @@ export default function LoginPage() {
         setSubmitting(true);
         try {
             await login(email, password);
+            sessionStorage.setItem('just_logged_in', 'true');
             router.replace('/dashboard');
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : 'Login failed');

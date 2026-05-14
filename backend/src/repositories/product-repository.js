@@ -608,11 +608,10 @@ class ProductRepository {
           const result = await db.query(query, [...params, retailerName]);
           results = results.concat(result.rows);
         } catch (error) {
-          if (error.code === '42P01') {
-            console.warn(`Skipping missing product table: ${tableName}`);
-            return;
-          }
-          throw error;
+          // Robust safety: If any table query fails (missing table, column error, etc.), 
+          // skip it and continue with other stores instead of crashing the whole search.
+          console.warn(`⚠️ Skipping store ${retailerName} (${tableName}): ${error.message}`);
+          return;
         }
       };
 
@@ -626,13 +625,18 @@ class ProductRepository {
         { tableName: 'tatacliq_products', retailerName: 'TataCliq', aliases: ['Tata Cliq'] },
         { tableName: 'myntra_products', retailerName: 'Myntra' },
         { tableName: 'zebronics_products', retailerName: 'Zebronics', aliases: ['Zepronics', 'Zebronix', 'Zeb'] },
+        { tableName: 'boat_products', retailerName: 'boAt', aliases: ['boat'] },
+        { tableName: 'reliance_digital_products', retailerName: 'Reliance Digital', aliases: ['Reliance', 'RelianceDigital'] },
+        { tableName: 'oneplus_products', retailerName: 'OnePlus', aliases: ['one plus'] },
         { tableName: 'headphones_zone_products', retailerName: 'Headphones Zone', aliases: ['HeadphonesZone'] },
       ];
       const queriedTables = new Set();
 
+      const queryTasks = [];
+
       for (const table of knownProductTables) {
         if (retailerMatches(table.retailerName, table.aliases)) {
-          await queryProductTable(table.tableName, table.retailerName);
+          queryTasks.push(queryProductTable(table.tableName, table.retailerName));
           queriedTables.add(table.tableName);
         }
       }
@@ -653,10 +657,13 @@ class ProductRepository {
         const retailerName = displayNameFromTable(tableName);
         const tableAlias = tableName.replace(/_products$/, '');
         if (retailerMatches(retailerName, [tableAlias])) {
-          await queryProductTable(tableName, retailerName);
+          queryTasks.push(queryProductTable(tableName, retailerName));
           queriedTables.add(tableName);
         }
       }
+
+      // Execute all product table queries in parallel
+      await Promise.all(queryTasks);
 
       // Query Offline Stores
       if (!retailer || retailer.includes('_o')) {
@@ -665,10 +672,10 @@ class ProductRepository {
           const offlineStoresQuery = 'SELECT store_id, store_name, table_name, owner_name, owner_phone FROM offline_stores';
           const offlineStoresResult = await db.query(offlineStoresQuery);
           
-          for (const store of offlineStoresResult.rows) {
+          const offlineTasks = offlineStoresResult.rows.map(async (store) => {
             // Skip if filtering by specific retailer and this isn't it
             if (retailer && retailer !== store.store_name && retailer !== store.store_id) {
-              continue;
+              return;
             }
 
             // Build search query for this store's products
@@ -727,12 +734,12 @@ class ProductRepository {
               results = results.concat(storeResult.rows);
             } catch (storeError) {
               console.error(`Error querying store ${store.store_name}:`, storeError.message);
-              // Continue with other stores even if one fails
             }
-          }
+          });
+
+          await Promise.all(offlineTasks);
         } catch (offlineError) {
           console.error('Error querying offline stores:', offlineError.message);
-          // Continue even if offline stores query fails
         }
       }
 

@@ -1,8 +1,9 @@
 node_modules/
 .env
-*.lottie
+.lottie
 *.log
 .DS_Store
+supabase/
 dist/
 build/
 coverage/

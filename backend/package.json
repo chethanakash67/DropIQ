@@ -11,6 +11,7 @@
     "dev:all": "concurrently \"npm run dev\" \"npm run dev:landing\" \"npm run dev:client\"",
     "scheduler": "node src/scheduler/monthly-ingestion.js",
     "scheduler:samsung": "node src/scheduler/samsung-ingestion.js",
+    "scheduler:brands": "node src/scheduler/brand-stores-ingestion.js",
     "ingest": "node src/jobs/ingest-apify-data.js",
     "ingest:brands": "node src/jobs/ingest-brand-stores.js",
     "ingest:browseai-stores": "node src/jobs/ingest-browseai-stores.js",

@@ -97,6 +97,9 @@
 
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden !important;
+    width: 100%;
+    position: relative;
   }
 }
 
@@ -2683,9 +2686,9 @@ body:not(:has(.dropiq-landing)) .container {
 .cart-modal-content {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: 20px;
   width: 90%;
-  max-width: 780px;
+  max-width: 820px;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
@@ -2748,11 +2751,11 @@ body:not(:has(.dropiq-landing)) .container {
 
 .cart-item {
   display: flex;
-  gap: 16px;
-  padding: 16px;
+  gap: 20px;
+  padding: 18px;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: 12px;
   margin-bottom: 12px;
   align-items: center;
   transition: var(--transition);
@@ -2844,7 +2847,7 @@ body:not(:has(.dropiq-landing)) .container {
   color: var(--text);
   width: 30px;
   height: 30px;
-  border-radius: var(--radius-sm);
+  border-radius: 6px;
   cursor: pointer;
   font-size: 16px;
   font-weight: 700;
@@ -2869,7 +2872,7 @@ body:not(:has(.dropiq-landing)) .container {
 
 .cart-item-subtotal {
   text-align: right;
-  min-width: 90px;
+  min-width: 110px;
 }
 
 .cart-item-subtotal p {
@@ -2880,11 +2883,11 @@ body:not(:has(.dropiq-landing)) .container {
 }
 
 .remove-btn {
-  background: rgba(134, 134, 139, 0.06);
-  border: 1px solid var(--border);
-  color: #86868b;
-  padding: 5px 10px;
-  border-radius: var(--radius-sm);
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  padding: 6px 10px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
   transition: var(--transition);
@@ -3270,4 +3273,126 @@ body:not(:has(.dropiq-landing)) .container {
 .profile-page-root,
 .diq-results-page {
   padding-top: 84px !important;
+}
+
+/* ── Page Transition & Loader Optimization ──────────────────────────────── */
+@keyframes loader-pulse {
+  0% { transform: scale(0.95); opacity: 0.5; }
+  50% { transform: scale(1.05); opacity: 0.8; }
+  100% { transform: scale(0.95); opacity: 0.5; }
+}
+
+.loader-fallback-pulser {
+  animation: loader-pulse 1.5s infinite ease-in-out;
+}
+
+/* ── Visited Stores Modal ──────────────────────────────────────────────── */
+/* ── Standardized Premium Modal System ────────────────────────────────── */
+.modal-overlay-standard {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  z-index: 9999999 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: modal-fade-in 0.3s ease-out;
+  pointer-events: auto !important;
+}
+
+.modal-container-standard {
+  background: var(--bg-card);
+  width: 100%;
+  max-width: 600px;
+  border-radius: 28px;
+  padding: 32px;
+  border: 1px solid var(--border);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  font-family: 'Inter', sans-serif;
+}
+
+.modal-item-box {
+  display: flex;
+  gap: 24px;
+  padding: 24px;
+  background: var(--bg-secondary);
+  border-radius: 18px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  align-items: center;
+}
+
+.modal-item-box:hover {
+  border-color: var(--accent);
+  background: var(--bg-card);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background: none;
+  border: none;
+  font-size: 32px;
+  cursor: pointer;
+  color: var(--text-muted);
+  line-height: 1;
+  transition: color 0.2s;
+  z-index: 10;
+}
+
+.modal-close-btn:hover {
+  color: #ef4444;
+}
+
+/* ── Store Analytics Badges ────────────────────────────────────────────── */
+.store-visit-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 6px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(16, 185, 129, 0.1);
+}
+
+.store-visit-count {
+  font-size: 13px;
+  font-weight: 800;
+  color: #10b981;
+}
+
+.store-visit-label {
+  font-size: 10px;
+  color: #10b981;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ── Legacy Modal Adjustments for Back-Compat ───────────────────────────── */
+.cart-modal-content {
+  padding: 32px !important;
+  border-radius: 28px !important;
+  max-width: 650px !important;
+}
+
+.cart-item {
+  padding: 24px !important;
+  gap: 24px !important;
+  border-radius: 18px !important;
+  margin-bottom: 16px !important;
+}
+
+@keyframes modal-fade-in {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }

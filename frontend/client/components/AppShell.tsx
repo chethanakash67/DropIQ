@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import CartModal from "@/components/CartModal";
@@ -15,6 +16,17 @@ import { ThemeProvider } from "@/components/landing/theme-provider";
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isLandingPage = pathname === "/";
+
+  // Preload Lottie assets for faster transitions
+  useEffect(() => {
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'fetch';
+    link.href = '/cart-loading.lottie';
+    link.crossOrigin = 'anonymous';
+    document.head.appendChild(link);
+    return () => { try { document.head.removeChild(link); } catch(e) {} };
+  }, []);
 
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>

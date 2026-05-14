@@ -92,20 +92,23 @@ const CategoryItem = ({ cat, router }: { cat: CategoryMeta, router: DashboardRou
 const productsFrom = (data: { products?: unknown } | null | undefined): DashboardProduct[] =>
     Array.isArray(data?.products) ? data.products as DashboardProduct[] : [];
 
+// Persistent cache outside the component to allow instant loads when returning to the dashboard
+let dashboardCache: any = null;
+
 const searchesFrom = (data: { searches?: unknown } | null | undefined): string[] =>
     Array.isArray(data?.searches) ? data.searches.filter((search): search is string => typeof search === 'string') : [];
 
 export default function DashboardPage() {
     const router = useRouter();
     const { currentUser, loading, authenticatedFetch } = useAuth();
-    const { cart } = useCart();
+    const { cart, bag } = useCart();
     const { search: clientSearch, indexLoaded } = useSearch(); // client-side instant search
     
     const [searchTerm, setSearchTerm] = useState('');
     const [showDIQ, setShowDIQ] = useState(false);
-    const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
-    const [frequentSearches, setFrequentSearches] = useState<string[]>(['Earphones', 'Earpods', 'Headphones', 'Neckbands', 'Smartwatch']);
-    const [initialFrequent, setInitialFrequent] = useState<string[]>(['Earphones', 'Earpods', 'Headphones', 'Neckbands', 'Smartwatch']);
+    const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>(dashboardCache?.searchHistory || []);
+    const [frequentSearches, setFrequentSearches] = useState<string[]>(dashboardCache?.frequentSearches || ['Earphones', 'Earpods', 'Headphones', 'Neckbands', 'Smartwatch']);
+    const [initialFrequent, setInitialFrequent] = useState<string[]>(dashboardCache?.frequentSearches || ['Earphones', 'Earpods', 'Headphones', 'Neckbands', 'Smartwatch']);
     const [isHistoryVisible, setIsHistoryVisible] = useState(false);
     const [cooldownTime, setCooldownTime] = useState(0);
     const RECENT_SEARCHES_KEY = 'dropiq_recent_searches';
@@ -137,10 +140,10 @@ export default function DashboardPage() {
     };
 
     
-    const [lootDeals, setLootDeals] = useState<DashboardProduct[]>([]);
-    const [festiveCollection, setFestiveCollection] = useState<DashboardProduct[]>([]);
+    const [lootDeals, setLootDeals] = useState<DashboardProduct[]>(dashboardCache?.lootDeals || []);
+    const [festiveCollection, setFestiveCollection] = useState<DashboardProduct[]>(dashboardCache?.festiveCollection || []);
     const [grabOrGone, setGrabOrGone] = useState<DashboardProduct[]>([]);
-    const [suggestedForYou, setSuggestedForYou] = useState<DashboardProduct[]>([]);
+    const [suggestedForYou, setSuggestedForYou] = useState<DashboardProduct[]>(dashboardCache?.suggestedForYou || []);
     const [bestGadgets, setBestGadgets] = useState<DashboardProduct[]>([]);
     const [favourites, setFavourites] = useState<DashboardProduct[]>([]);
     
@@ -153,7 +156,7 @@ export default function DashboardPage() {
 
     const [slideshowImages, setSlideshowImages] = useState<DashboardProduct[]>([]);
     const [slideshowIndex, setSlideshowIndex] = useState(0);
-    const [isPageReady, setIsPageReady] = useState(false);
+    const [isPageReady, setIsPageReady] = useState(!!dashboardCache);
 
     useEffect(() => {
         if (!loading && !currentUser) router.replace('/login');
@@ -179,81 +182,73 @@ export default function DashboardPage() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // Fetch data on mount
-    useEffect(() => {
-        // Start the reveal timer IMMEDIATELY to sync with global loader (2s)
-        // This runs only once on mount to ensure a stable reveal even if currentUser flickers
-        const revealTimer = setTimeout(() => setIsPageReady(true), 1900);
-        return () => clearTimeout(revealTimer);
-    }, []);
-
     useEffect(() => {
         const fetchInitialData = async () => {
+            // 1. Instant load from Cache
+            if (dashboardCache) {
+                setLootDeals(dashboardCache.lootDeals || []);
+                setFestiveCollection(dashboardCache.festiveCollection || []);
+                setSuggestedForYou(dashboardCache.suggestedForYou || []);
+                setFrequentSearches(dashboardCache.frequentSearches || []);
+                setInitialFrequent(dashboardCache.frequentSearches || []);
+                setSearchHistory(dashboardCache.searchHistory || []);
+                setIsPageReady(true);
+                if (Date.now() - dashboardCache.timestamp < 600000) return;
+            }
+
             try {
-                // Hydrate local cache
-                const localRecent = loadRecentSearches();
-                if (localRecent.length > 0) setSearchHistory(localRecent);
-
-                const fetchPromises = [
-                    fetch('/api/products/search?limit=8&sortBy=price_desc').then(r => r.json()),
-                    fetch('/api/products/search?limit=12&sortBy=rating').then(r => r.json()),
-                    fetch('/api/products/search?limit=8&sortBy=price_asc').then(r => r.json()),
-                    fetch('/api/products/search?limit=8&sortBy=rating').then(r => r.json()),
-                    fetch('/api/products/search?limit=8').then(r => r.json()),
-                    fetch('/api/products/search?limit=8').then(r => r.json()),
-                    fetch('/api/products/frequent-searches').then(r => r.json())
-                ];
-
-                const [loot, festive, grab, suggested, gadgets, favs, frequent] = await Promise.all(fetchPromises);
+                // 2. Simple sequential fetches
+                const lootRes = await fetch('/api/products/search?limit=8&sortBy=price_desc');
+                const lootData = await lootRes.json();
                 
-                const lootProducts = productsFrom(loot);
-                const festiveProducts = productsFrom(festive);
-                const grabProducts = productsFrom(grab);
-                const suggestedProducts = productsFrom(suggested);
-                const gadgetProducts = productsFrom(gadgets);
-                const favouriteProducts = productsFrom(favs);
-                const frequentSearchItems = searchesFrom(frequent);
-
-                if (loot.success) setLootDeals(lootProducts);
-                if (festive.success) setFestiveCollection(festiveProducts);
-                if (grab.success) setGrabOrGone(grabProducts);
-                if (suggested.success) setSuggestedForYou(suggestedProducts);
-                if (gadgets.success) setBestGadgets([...gadgetProducts].reverse());
-                if (favs.success) setFavourites(favouriteProducts);
-                if (frequent.success) {
-                    setFrequentSearches(frequentSearchItems);
-                    setInitialFrequent(frequentSearchItems);
-                }
+                const festiveRes = await fetch('/api/products/search?limit=12&sortBy=rating');
+                const festiveData = await festiveRes.json();
                 
+                const freqRes = await fetch('/api/products/frequent-searches');
+                const freqData = await freqRes.json();
+
+                let historyItems: string[] = [];
                 if (currentUser) {
-                    const historyRes = await authenticatedFetch('/api/products/search-history?limit=15');
-                    if (historyRes.ok) {
-                        const historyData = await historyRes.json();
-                        const historyItems: SearchHistoryItem[] = Array.isArray(historyData.history) ? historyData.history : [];
-                        const serverHistory = historyItems
-                            .map((item) => (typeof item === 'string' ? item : (item.search_query || item.query)))
-                            .filter((item): item is string => Boolean(item));
-                        if (serverHistory.length > 0) setSearchHistory(serverHistory);
+                    const hRes = await authenticatedFetch('/api/products/search-history?limit=10');
+                    const hData = await hRes.json();
+                    if (hData.success) {
+                        historyItems = hData.history.map((h: any) => typeof h === 'string' ? h : (h.search_query || h.query));
                     }
                 }
-                
-                const catImages = await Promise.all(categoryMeta.map(cat => 
-                    fetch(`/api/products/search?limit=1&q=${cat.q}`).then(r => r.json())
-                ));
-                
-                setCategoryMeta(prev => prev.map((cat, i) => ({
-                    ...cat,
-                    image: (catImages[i].success && productsFrom(catImages[i]).length > 0) ? productsFrom(catImages[i])[0].image_url ?? null : null
-                })));
 
-                const allProds = [...lootProducts, ...festiveProducts, ...suggestedProducts].filter(p => p.image_url);
-                if (allProds.length > 0) {
-                    const sorted = allProds.sort(() => 0.5 - Math.random());
-                    setSlideshowImages(sorted.slice(0, 5));
+                // 3. Update States
+                const loot = productsFrom(lootData);
+                const festive = productsFrom(festiveData);
+                const trending = searchesFrom(freqData);
+                const suggested = [...festive].reverse().slice(0, 8);
+
+                if (lootData.success) setLootDeals(loot);
+                if (festiveData.success) {
+                    setFestiveCollection(festive);
+                    setSuggestedForYou(suggested);
                 }
+                if (freqData.success) {
+                    setFrequentSearches(trending);
+                    setInitialFrequent(trending);
+                }
+                setSearchHistory(historyItems);
 
-            } catch (e) {
-                console.error("Dashboard data load failed", e);
+                // 5. Store in Cache
+                dashboardCache = {
+                    lootDeals: loot,
+                    festiveCollection: festive,
+                    suggestedForYou: suggested,
+                    frequentSearches: trending,
+                    searchHistory: historyItems,
+                    timestamp: Date.now()
+                };
+
+                setIsPageReady(true);
+                window.dispatchEvent(new CustomEvent('dashboard-ready'));
+            } catch (error) {
+                console.error("Dashboard minimal load failed:", error);
+                setIsPageReady(true);
+                window.dispatchEvent(new CustomEvent('dashboard-ready'));
             }
         };
         if (currentUser) fetchInitialData();
@@ -443,12 +438,13 @@ export default function DashboardPage() {
         router.push(`/product/${id}?retailer=${encodeURIComponent(retailer)}`);
     };
 
-    if (loading || !currentUser) return null;
+    // Removed the early null return that causes white flash. 
+    // Instead, we handle the loading state inside the JSX with visibility.
 
 
-    const planType = currentUser.planType === 'premium' ? 'max' : currentUser.planType || 'free';
+    const planType = currentUser?.planType === 'premium' ? 'max' : currentUser?.planType || 'free';
     const maxCredits = planType === 'max' ? 75 : planType === 'pro' ? 50 : 20;
-    const currentCredits = currentUser.credits ?? 0;
+    const currentCredits = currentUser?.credits ?? 0;
     const usedCredits = Math.max(0, maxCredits - currentCredits);
 
     // Get freshness label for product
@@ -872,6 +868,21 @@ export default function DashboardPage() {
                             alignItems: 'stretch'
                         }}>
                             {cart.map((p, i) => renderCard(p, i, 'cart'))}
+                        </div>
+                    </div>
+                )}
+
+                {bag.length > 0 && (
+                    <div className="dashboard-section" style={{ marginBottom: '64px' }}>
+                        <h2 className="dashboard-section-header" style={{ borderColor: '#10b981', color: '#047857' }}>My Saved Bag</h2>
+                        <div style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', 
+                            gap: '32px',
+                            justifyContent: 'flex-start',
+                            alignItems: 'stretch'
+                        }}>
+                            {bag.map((p, i) => renderCard(p, i, 'bag'))}
                         </div>
                     </div>
                 )}

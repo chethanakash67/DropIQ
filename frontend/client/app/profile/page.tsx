@@ -30,6 +30,10 @@ export default function ProfilePage() {
 
     const [status, setStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [showVisitedModal, setShowVisitedModal] = useState(false);
+    const [visitedHistory, setVisitedHistory] = useState<any[]>([]);
+    const [productHistory, setProductHistory] = useState<any[]>([]);
+    const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
 
     useEffect(() => {
         if (!loading && !currentUser) {
@@ -48,6 +52,14 @@ export default function ProfilePage() {
             });
             document.documentElement.setAttribute('data-theme', currentUser.themePreference || 'light');
         }
+
+        // Load visited stores history (v2 with stats)
+        const history = JSON.parse(localStorage.getItem('visited_stores_v2') || '[]');
+        setVisitedHistory(history);
+
+        // Load DropIQ product history
+        const pHistory = JSON.parse(localStorage.getItem('dropiq_product_history') || '[]');
+        setProductHistory(pHistory);
     }, [currentUser, loading, router]);
 
     const handleProfileUpdate = async (e: React.FormEvent) => {
@@ -122,6 +134,9 @@ export default function ProfilePage() {
             if (res.ok) {
                 localStorage.removeItem('dropiq_cart');
                 localStorage.removeItem('dropiq_bag');
+                localStorage.removeItem('visited_stores');
+                localStorage.removeItem('visited_stores_v2');
+                localStorage.removeItem('dropiq_product_history');
                 window.location.reload();
             } else {
                 alert('Failed to clear data');
@@ -349,7 +364,7 @@ export default function ProfilePage() {
                                 </div>
 
                                 {/* ACCOUNT ACTIONS SECTION */}
-                                <div style={{ background: 'var(--bg-card)', padding: '24px', borderRadius: '24px', border: '1px solid var(--border)' }}>
+                                <div style={{ background: 'var(--bg-card)', padding: '24px', borderRadius: '24px', border: '1px solid var(--border)', marginBottom: '32px' }}>
                                     <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '20px' }}>Account & Data Actions</h3>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                         <button 
@@ -372,6 +387,64 @@ export default function ProfilePage() {
                                         </button>
                                     </div>
                                 </div>
+
+                                {/* PRODUCT VISIT HISTORY SECTION */}
+                                 <div style={{ background: 'var(--bg-card)', padding: '32px', borderRadius: '24px', border: '1px solid var(--border)', width: '100%', overflow: 'hidden' }}>
+                                     <div style={{ marginBottom: '24px' }}>
+                                         <h3 style={{ fontSize: '18px', fontWeight: 800, letterSpacing: '-0.5px' }}>Product Visit History</h3>
+                                         <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '4px' }}>Last {productHistory.length} products you viewed on DropIQ.</p>
+                                     </div>
+                                     
+                                    {productHistory.length === 0 ? (
+                                         <div style={{ textAlign: 'center', padding: '32px', background: 'var(--bg-secondary)', borderRadius: '16px', border: '1px dashed var(--border)' }}>
+                                             <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>No internal product visits yet.</p>
+                                         </div>
+                                     ) : (
+                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                             {(isHistoryExpanded ? productHistory : productHistory.slice(0, 2)).map((p, i) => (
+                                                 <div key={i} onClick={() => router.push(`/product/${p.id}?retailer=${encodeURIComponent(p.retailer || '')}`)} style={{ 
+                                                     display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', borderRadius: '16px', 
+                                                     background: 'var(--bg-secondary)', border: '1px solid var(--border)', cursor: 'pointer', transition: '0.2s',
+                                                     width: '100%', minWidth: 0, boxSizing: 'border-box'
+                                                 }} className="modal-item-box-hover">
+                                                     <div style={{ width: '48px', height: '48px', background: 'white', borderRadius: '12px', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)', flexShrink: 0 }}>
+                                                        <img src={p.image} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                                                     </div>
+                                                     <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                                                         <div style={{ fontSize: '14px', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--text-primary)', width: '100%' }}>{p.name}</div>
+                                                         <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.retailer} • ₹{p.price}</div>
+                                                     </div>
+                                                     <div style={{ fontSize: '10px', color: '#10b981', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', flexShrink: 0 }}>VIEWED</div>
+                                                 </div>
+                                             ))}
+                                             
+                                             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '4px' }}>
+                                                 {!isHistoryExpanded && productHistory.length > 2 && (
+                                                     <button 
+                                                        onClick={() => setIsHistoryExpanded(true)}
+                                                        style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '12px', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}
+                                                     >
+                                                        View All ({productHistory.length})
+                                                     </button>
+                                                 )}
+                                                 {isHistoryExpanded && (
+                                                     <button 
+                                                        onClick={() => setIsHistoryExpanded(false)}
+                                                        style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '12px', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}
+                                                     >
+                                                        Show Less
+                                                     </button>
+                                                 )}
+                                                 <button 
+                                                    onClick={(e) => { e.stopPropagation(); if(confirm('Clear product history?')) { localStorage.removeItem('dropiq_product_history'); setProductHistory([]); } }}
+                                                    style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '12px', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}
+                                                 >
+                                                    Clear History
+                                                 </button>
+                                             </div>
+                                         </div>
+                                     )}
+                                 </div>
                             </div>
                         </div>
                     )}
@@ -511,18 +584,86 @@ export default function ProfilePage() {
                     )}
 
                     {activeTab === 'orders' && (
-                        <div className="tab-view animate-fade-in" style={{ textAlign: 'center', padding: '100px 20px', background: 'var(--bg-card)', borderRadius: '24px', border: '1px solid var(--border)' }}>
-                            <h2 style={{ fontSize: '24px', fontWeight: 600 }}>Marketplace Redirects</h2>
-                            <p style={{ color: 'var(--text-muted)', marginTop: '10px', maxWidth: '400px', margin: '10px auto 0' }}>
-                                This track shows the number of products you&apos;ve visited from our platform to their original store listings.
+                        <div className="tab-view animate-fade-in" style={{ textAlign: 'center', padding: '80px 20px', background: 'var(--bg-card)', borderRadius: '24px', border: '1px solid var(--border)' }}>
+                            <h2 style={{ fontSize: '28px', fontWeight: 800, letterSpacing: '-1px' }}>Marketplace Redirects</h2>
+                            <p style={{ color: 'var(--text-muted)', marginTop: '12px', maxWidth: '450px', margin: '12px auto 0', fontSize: '15px', lineHeight: '1.6' }}>
+                                Track your discovery journey. See exactly how many products you&apos;ve explored across our partner stores.
                             </p>
-                            <div style={{ marginTop: '40px', fontSize: '48px', fontWeight: 900, color: 'var(--accent)' }}>{currentUser?.storeVisits || 0}</div>
-                            <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '30px' }}>Total Store Visits</p>
-                            <button className="shiny-shield-btn" style={{ padding: '12px 32px', borderRadius: '12px' }} onClick={() => router.push('/dashboard')}>Start Exploring</button>
+                            <div style={{ marginTop: '48px', fontSize: '72px', fontWeight: 900, color: 'var(--accent)', lineHeight: 1, letterSpacing: '-2px' }}>{currentUser?.storeVisits || 0}</div>
+                            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '48px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase' }}>Total Discoveries</p>
+                            
+                            <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+                                <button 
+                                    className="shiny-shield-btn" 
+                                    style={{ padding: '14px 32px', borderRadius: '16px', fontSize: '14px', fontWeight: 700 }} 
+                                    onClick={() => router.push('/dashboard')}
+                                >
+                                    Start Exploring
+                                </button>
+                                <button 
+                                    className="shiny-shield-btn" 
+                                    onClick={() => {
+                                        const history = JSON.parse(localStorage.getItem('visited_stores_v2') || '[]');
+                                        setVisitedHistory(history);
+                                        setShowVisitedModal(true);
+                                    }}
+                                    style={{ 
+                                        padding: '14px 32px', 
+                                        borderRadius: '16px', 
+                                        fontSize: '14px', 
+                                        fontWeight: 700, 
+                                        background: 'var(--bg-secondary)', 
+                                        color: 'var(--text-primary)', 
+                                        border: '1px solid var(--border)',
+                                        boxShadow: 'none'
+                                    }}
+                                >
+                                    Stores Explored
+                                </button>
+                            </div>
                         </div>
                     )}
                 </main>
             </div>
+
+            {/* VISITED STORES MODAL */}
+            {showVisitedModal && (
+                <div className="modal-overlay-standard" onClick={() => setShowVisitedModal(false)}>
+                    <div className="modal-container-standard" onClick={e => e.stopPropagation()}>
+                        <button className="modal-close-btn" onClick={() => setShowVisitedModal(false)}>×</button>
+                        
+                        <div style={{ marginBottom: '32px' }}>
+                            <h3 style={{ fontSize: '24px', fontWeight: 800, letterSpacing: '-0.5px' }}>Marketplace Analytics</h3>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '4px' }}>Deep dive into your store discovery statistics.</p>
+                        </div>
+                        
+                        {visitedHistory.length === 0 ? (
+                            <div style={{ textAlign: 'center', padding: '48px 0', background: 'var(--bg-secondary)', borderRadius: '20px', border: '1px dashed var(--border)' }}>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '15px' }}>No store interactions recorded yet.</p>
+                            </div>
+                        ) : (
+                            <div className="visited-stores-list">
+                                {visitedHistory.map((store, i) => (
+                                    <div key={i} className="modal-item-box" style={{ justifyContent: 'space-between' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                            <span style={{ fontWeight: 700, fontSize: '16px', color: 'var(--text-primary)' }}>{store.name}</span>
+                                            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Last redirect: {new Date(store.lastVisited).toLocaleDateString()}</span>
+                                        </div>
+                                        <div className="store-visit-badge">
+                                            <span className="store-visit-count">{store.count || 1}</span>
+                                            <span className="store-visit-label">Products</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        
+                        <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '32px', textAlign: 'center', lineHeight: '1.6' }}>
+                            These statistics help us understand your preferences to provide better personalized deals and cross-store price comparisons.
+                        </p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

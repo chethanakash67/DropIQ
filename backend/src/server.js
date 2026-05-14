@@ -1,6 +1,6 @@
-require('dotenv').config();
-const express = require('express');
 const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+const express = require('express');
 const cors = require('cors');
 const passport = require('passport');
 const { Strategy: GoogleStrategy } = require('passport-google-oauth20');
@@ -12,7 +12,10 @@ const contactRouter = require('./routes/contact');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || 'https://dropiq-t62y.onrender.com/api/auth/google/callback';
+const IS_PROD = process.env.NODE_ENV === 'production';
+const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || (IS_PROD 
+  ? 'https://dropiq-t62y.onrender.com/api/auth/google/callback'
+  : 'http://localhost:3001/api/auth/google/callback');
 const SERVICE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
 function startSchedulers() {

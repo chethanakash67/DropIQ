@@ -39,6 +39,12 @@ const STORES = [
 
 function browseAiApiKey(store) {
   if (!store) return process.env.BROWSEAI_API_KEY;
+  
+  // Use Akash's master key for these three specific stores as requested
+  if (['ONEPLUS', 'RELIANCE_DIGITAL', 'BOAT'].includes(store.key)) {
+    return process.env.BROWSEAI_API_KEY_AKASH || process.env.BROWSEAI_API_KEY;
+  }
+
   return process.env[`BROWSEAI_${store.key}_API_KEY`]
     || process.env[`BROWSEAI_${store.key}_MAIN_API`]
     || process.env.BROWSEAI_API_KEY;

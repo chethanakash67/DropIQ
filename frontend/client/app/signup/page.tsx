@@ -39,6 +39,7 @@ export default function SignupPage() {
             setSubmitting(true);
             try {
                 await verifyEmailOtp(verificationEmail || email, otp);
+                sessionStorage.setItem('just_logged_in', 'true');
                 router.replace('/dashboard');
             } catch (err: unknown) {
                 setError(err instanceof Error ? err.message : 'Verification failed');
@@ -63,6 +64,7 @@ export default function SignupPage() {
                 setDevOtp(result.devOtp || '');
                 return;
             }
+            sessionStorage.setItem('just_logged_in', 'true');
             router.replace('/dashboard');
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : 'Signup failed');
@@ -154,9 +156,19 @@ export default function SignupPage() {
                                 {info}
                             </div>
                         )}
-                        {devOtp && (
-                            <div style={{ padding: '12px 16px', background: '#fffbeb', border: '1px solid #fde68a', color: '#92400e', borderRadius: '12px', fontSize: '14px' }}>
-                                Development OTP: <strong>{devOtp}</strong>
+                        {(devOtp || (process.env.NODE_ENV === 'development' && verificationRequired)) && (
+                            <div style={{ 
+                                padding: '16px', 
+                                background: '#fffbeb', 
+                                border: '2px dashed #fde68a', 
+                                color: '#92400e', 
+                                borderRadius: '16px', 
+                                fontSize: '14px',
+                                textAlign: 'center',
+                                marginBottom: '10px'
+                            }}>
+                                <div style={{ fontSize: '12px', textTransform: 'uppercase', fontWeight: 700, marginBottom: '4px', opacity: 0.7 }}>Development Mode Code</div>
+                                <strong style={{ fontSize: '24px', letterSpacing: '4px' }}>{devOtp || 'Check Server Logs'}</strong>
                             </div>
                         )}
 

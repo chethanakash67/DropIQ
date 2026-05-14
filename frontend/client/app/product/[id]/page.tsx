@@ -120,6 +120,25 @@ export default function ProductDetailPage() {
 
     }, [product]);
 
+    useEffect(() => {
+        if (!product) return;
+        // Track internal DropIQ product page visit for "System Settings" history
+        try {
+            const raw = localStorage.getItem('dropiq_product_history');
+            const history = JSON.parse(raw || '[]');
+            const entry = {
+                id: product.id,
+                name: product.product_name,
+                image: product.image_url,
+                retailer: product.retailer_name,
+                price: product.price_inr,
+                timestamp: new Date().toISOString()
+            };
+            const filtered = history.filter((p: any) => p.id !== product.id);
+            localStorage.setItem('dropiq_product_history', JSON.stringify([entry, ...filtered].slice(0, 15)));
+        } catch(e) {}
+    }, [product]);
+
     const handleAddToCart = () => {
         if (!product) return;
         addToCart(product);
@@ -166,7 +185,29 @@ export default function ProductDetailPage() {
     };
 
     const handleStoreClick = async () => {
-        if (!currentUser) return;
+        if (!currentUser || !product) return;
+
+        // Track visited store locally for the "See visited stores" history with statistics
+        try {
+            const visitedRaw = localStorage.getItem('visited_stores_v2');
+            const visited = JSON.parse(visitedRaw || '[]');
+            const storeName = product.retailer_name || product.merchant || 'Unknown Store';
+            
+            let existing = visited.find((s: any) => s.name === storeName);
+            if (existing) {
+                existing.count = (existing.count || 0) + 1;
+                existing.lastVisited = new Date().toISOString();
+            } else {
+                visited.push({ name: storeName, count: 1, lastVisited: new Date().toISOString() });
+            }
+            
+            // Sort by most recent visit
+            visited.sort((a: any, b: any) => new Date(b.lastVisited).getTime() - new Date(a.lastVisited).getTime());
+            localStorage.setItem('visited_stores_v2', JSON.stringify(visited.slice(0, 15)));
+        } catch(e) {
+            console.error("Failed to save visit history", e);
+        }
+
         try {
             const res = await authenticatedFetch('/api/auth/me/increment-visits', { method: 'POST' });
             if (res.ok) {

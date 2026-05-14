@@ -6,7 +6,8 @@ const { authenticate } = require('../middleware/auth');
 const { normalizePlanType } = require('../services/credits-service');
 const db = require('../database/db');
 
-const DEFAULT_FRONTEND_URL = 'https://dropiq-nine.vercel.app';
+const IS_PROD = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+const DEFAULT_FRONTEND_URL = IS_PROD ? 'https://dropiq-nine.vercel.app' : 'http://localhost:3000';
 const ALLOW_LOCALHOST_FRONTEND_URL = process.env.ALLOW_LOCALHOST_FRONTEND_URL === 'true';
 
 function isLocalhostUrl(value) {

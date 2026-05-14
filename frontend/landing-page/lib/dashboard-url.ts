@@ -1,6 +1,9 @@
-const DEFAULT_DASHBOARD_URL = "https://dropiq-t62y.onrender.com"
-const CONFIGURED_DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL
 const IS_PROD = process.env.NODE_ENV === "production"
+const DEFAULT_DASHBOARD_URL = IS_PROD 
+  ? "https://dropiq-nine.vercel.app" 
+  : "http://localhost:3000"
+
+const CONFIGURED_DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL
 
 const configuredLooksLocal =
   !!CONFIGURED_DASHBOARD_URL &&
