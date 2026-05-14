@@ -1,4 +1,7 @@
 const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
+
+const resend = new Resend(process.env.RESEND_API_KEY || 're_GmRVUrMy_AqKtQ54cJwufo52aeQrBLfVP');
 
 const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || 'DropIQ';
 
@@ -42,9 +45,24 @@ function escapeHtml(value = '') {
 }
 
 async function sendMail(options) {
-  const transporter = createTransporter();
-  const from = `"${EMAIL_FROM_NAME}" <${process.env.EMAIL_USER}>`;
-  await transporter.sendMail({ from, ...options });
+  if (process.env.NODE_ENV === 'production') {
+    const from = `${EMAIL_FROM_NAME} <onboarding@resend.dev>`;
+    const response = await resend.emails.send({
+      from,
+      to: options.to,
+      subject: options.subject,
+      text: options.text,
+      html: options.html,
+    });
+    if (response.error) {
+      throw new Error(response.error.message);
+    }
+    return response;
+  } else {
+    const transporter = createTransporter();
+    const from = `"${EMAIL_FROM_NAME}" <${process.env.EMAIL_USER}>`;
+    return await transporter.sendMail({ from, ...options });
+  }
 }
 
 async function sendVerificationOtp({ to, fullName, otp, expiresInMinutes }) {
