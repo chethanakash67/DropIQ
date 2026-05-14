@@ -48,7 +48,12 @@ class AuthService {
       return process.env.AUTH_REQUIRE_EMAIL_VERIFICATION === 'true';
     }
 
-    return process.env.NODE_ENV !== 'production';
+    const isHostedProduction =
+      process.env.NODE_ENV === 'production' ||
+      process.env.RENDER === 'true' ||
+      !!process.env.RENDER_EXTERNAL_URL;
+
+    return !isHostedProduction;
   }
 
   normalizeEmail(email) {
