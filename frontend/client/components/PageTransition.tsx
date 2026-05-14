@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import Lottie from 'lottie-react';
+import cartLoadingAnimation from '../public/cart-loading.json';
 
 // Module-level variable to track if the dashboard has already been "seen" in this session
 // This survives navigation but is reset on hard refresh (F5)
@@ -76,8 +77,8 @@ export default function PageTransition() {
                 }} />
                 
                 {isFirstEntry ? (
-                    <DotLottieReact
-                        src="/cart-loading.lottie"
+                    <Lottie
+                        animationData={cartLoadingAnimation}
                         loop
                         autoplay
                         style={{ width: '180px', height: '180px', zIndex: 1 }}

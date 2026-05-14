@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { IconLightbulb, IconArrowLeft, IconArrowRight, IconCart, IconClipboard } from '@/components/Icons';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
+import PremiumAlert from './PremiumAlert';
 import InsufficientCreditsModal from './InsufficientCreditsModal';
 
 interface DIQOption {
@@ -67,6 +68,11 @@ export default function DIQModal({ onClose }: DIQModalProps) {
     const [tempImportance, setTempImportance] = useState<Record<string, number>>({});
     const [creditsModalOpen, setCreditsModalOpen] = useState(false);
     const [creditErrorMeta, setCreditErrorMeta] = useState<{ required?: number; available?: number }>({});
+    const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean; title: string; message: string; type?: 'danger' | 'warning' | 'info' | 'success' }>({
+        isOpen: false,
+        title: '',
+        message: '',
+    });
 
     useEffect(() => {
         (async () => {
@@ -112,7 +118,15 @@ export default function DIQModal({ onClose }: DIQModalProps) {
 
     const goNext = () => {
         const ans = answers[currentQuestion.id];
-        if (!ans?.id) { alert('Please select an option before proceeding.'); return; }
+        if (!ans?.id) { 
+            setAlertConfig({
+                isOpen: true,
+                title: 'Option Required',
+                message: 'Please select an option before proceeding to the next question.',
+                type: 'warning'
+            });
+            return; 
+        }
         if (currentIndex < questions.length - 1) setCurrentIndex(i => i + 1);
     };
 
@@ -122,7 +136,15 @@ export default function DIQModal({ onClose }: DIQModalProps) {
 
     const handleSubmit = async () => {
         const lastQ = questions[questions.length - 1];
-        if (!answers[lastQ.id]?.id) { alert('Please select an option before submitting.'); return; }
+        if (!answers[lastQ.id]?.id) { 
+            setAlertConfig({
+                isOpen: true,
+                title: 'Selection Incomplete',
+                message: 'Please select an option for the final question before submitting.',
+                type: 'warning'
+            });
+            return; 
+        }
 
         setSubmitting(true);
         try {
@@ -144,10 +166,20 @@ export default function DIQModal({ onClose }: DIQModalProps) {
                 setResults(data.products);
                 setShowResults(true);
             } else {
-                alert('Failed to get recommendations. Please try again.');
+                setAlertConfig({
+                    isOpen: true,
+                    title: 'Recommendation Error',
+                    message: 'We could not generate recommendations right now. Please try again.',
+                    type: 'danger'
+                });
             }
         } catch (_) {
-            alert('Failed to get recommendations. Please try again.');
+            setAlertConfig({
+                isOpen: true,
+                title: 'Connection Error',
+                message: 'Unable to reach the recommendation engine. Check your connection.',
+                type: 'danger'
+            });
         } finally {
             setSubmitting(false);
         }
@@ -318,6 +350,13 @@ export default function DIQModal({ onClose }: DIQModalProps) {
                     onClose={() => setCreditsModalOpen(false)}
                     required={creditErrorMeta.required}
                     available={creditErrorMeta.available}
+                />
+                <PremiumAlert 
+                    isOpen={alertConfig.isOpen}
+                    title={alertConfig.title}
+                    message={alertConfig.message}
+                    type={alertConfig.type}
+                    onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })}
                 />
             </div>
         </div>

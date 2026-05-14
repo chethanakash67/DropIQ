@@ -7,6 +7,7 @@ import { Button } from "@/components/landing/ui/button"
 import { Badge } from "@/components/landing/ui/badge"
 import Link from "next/link"
 import { useSearch } from "@/hooks/useSearch"
+import PremiumAlert from "@/components/PremiumAlert"
 import { dashboardPath } from "@/lib/dashboard-url"
 
 export default function SearchDemo() {
@@ -20,6 +21,11 @@ export default function SearchDemo() {
   const [inlineSuggestions, setInlineSuggestions] = useState<string[]>([])
   const [frequentSearches, setFrequentSearches] = useState<string[]>([])
   const [suggestionState, setSuggestionState] = useState<{ original: string, suggested: string } | null>(null)
+  const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean; title: string; message: string; type?: 'danger' | 'warning' | 'info' | 'success' }>({
+    isOpen: false,
+    title: '',
+    message: '',
+  });
 
   const { search: clientSearch, indexLoaded } = useSearch()
 
@@ -127,11 +133,21 @@ export default function SearchDemo() {
         }
       } else {
         console.error("Search failed:", data.error || data.message)
-        alert(data.message || "Search failed. Please try another term.")
+        setAlertConfig({
+          isOpen: true,
+          title: 'Search Failed',
+          message: data.message || "We couldn't find any results for that term. Try another search.",
+          type: 'info'
+        });
       }
     } catch (err: any) {
       console.error("Search failed:", err)
-      alert(`Unable to reach search server. Please ensure the backend is running.`);
+      setAlertConfig({
+        isOpen: true,
+        title: 'Connection Error',
+        message: 'Unable to reach our search servers. Please try again in a moment.',
+        type: 'danger'
+      });
     } finally {
       setIsLoading(false)
     }
@@ -365,6 +381,13 @@ export default function SearchDemo() {
           )}
         </div>
       )}
+      <PremiumAlert 
+        isOpen={alertConfig.isOpen}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })}
+      />
     </section>
   )
 }

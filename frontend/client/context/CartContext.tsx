@@ -41,6 +41,7 @@ interface CartContextType {
     removeFromCart: (index: number) => void;
     updateQuantity: (index: number, change: number) => void;
     clearCart: () => void;
+    clearBag: () => void;
     getCartTotal: () => number;
     
     addToBag: (product: CartProductInput) => void;
@@ -224,11 +225,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const clearCart = useCallback(() => {
-        if (confirm('Are you sure you want to clear your cart?')) {
-            setCart([]);
-            localStorage.setItem('dropiq_cart', JSON.stringify([]));
-            showNotification('🗑️ Cart cleared');
-        }
+        setCart([]);
+        localStorage.setItem('dropiq_cart', JSON.stringify([]));
+        showNotification('🗑️ Cart cleared');
+    }, []);
+
+    const clearBag = useCallback(() => {
+        setBag([]);
+        localStorage.setItem('dropiq_bag', JSON.stringify([]));
+        showNotification('🗑️ Bag cleared');
     }, []);
 
     const addToBag = useCallback((product: CartProductInput) => {
@@ -276,7 +281,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     return (
         <CartContext.Provider value={{ 
-            cart, bag, totalItems, totalBagItems, addToCart, removeFromCart, updateQuantity, clearCart, getCartTotal, 
+            cart, bag, totalItems, totalBagItems, addToCart, removeFromCart, updateQuantity, clearCart, clearBag, getCartTotal, 
             addToBag, removeFromBag,
             showCart, setShowCart, showBag, setShowBag,
             notification, syncWithBackend, fetchFromBackend, clearLocalData

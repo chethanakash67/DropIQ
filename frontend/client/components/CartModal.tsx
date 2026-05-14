@@ -1,10 +1,17 @@
 'use client';
 
 import { useCart } from '@/context/CartContext';
+import { useState } from 'react';
+import PremiumAlert from '@/components/PremiumAlert';
 import { IconCart, IconPhone, IconLink, IconTrash } from '@/components/Icons';
 
 export default function CartModal() {
     const { cart, showCart, setShowCart, removeFromCart, updateQuantity, clearCart, getCartTotal } = useCart();
+    const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean; title: string; message: string; type?: 'danger' | 'warning' | 'info' | 'success'; onConfirm?: () => void }>({
+        isOpen: false,
+        title: '',
+        message: '',
+    });
 
     if (!showCart) return null;
 
@@ -83,7 +90,15 @@ export default function CartModal() {
                     <div style={{ display: 'flex', gap: '12px' }}>
                         <button 
                             style={{ background: 'transparent', border: '1px solid #fee2e2', color: '#ef4444', padding: '12px 24px', borderRadius: '14px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}
-                            onClick={clearCart}
+                            onClick={() => {
+                                setAlertConfig({
+                                    isOpen: true,
+                                    title: 'Clear Cart?',
+                                    message: 'Are you sure you want to remove all items from your cart? This cannot be undone.',
+                                    type: 'danger',
+                                    onConfirm: clearCart
+                                });
+                            }}
                         >
                             Clear Cart
                         </button>
@@ -97,6 +112,14 @@ export default function CartModal() {
                     </div>
                 </div>
             </div>
+            <PremiumAlert 
+                isOpen={alertConfig.isOpen}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                type={alertConfig.type}
+                onConfirm={alertConfig.onConfirm}
+                onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })}
+            />
         </div>
     );
 }

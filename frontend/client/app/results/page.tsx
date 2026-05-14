@@ -7,6 +7,7 @@ import { useCart } from '@/context/CartContext';
 import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
 import Navbar from '@/components/Navbar';
+import PremiumAlert from '@/components/PremiumAlert';
 import InsufficientCreditsModal from '@/components/InsufficientCreditsModal';
 import { useSearch } from '@/hooks/useSearch';
 
@@ -65,6 +66,11 @@ function ResultsContent() {
     const [creditsModalOpen, setCreditsModalOpen] = useState(false);
     const [creditErrorMeta, setCreditErrorMeta] = useState<{ required?: number; available?: number }>({});
     const [cooldownTime, setCooldownTime] = useState(0);
+    const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean; title: string; message: string; type?: 'danger' | 'warning' | 'info' | 'success' }>({
+        isOpen: false,
+        title: '',
+        message: '',
+    });
 
     // On mount: resume any in-progress cooldown from sessionStorage (survives navigation)
     useEffect(() => {
@@ -248,7 +254,15 @@ function ResultsContent() {
 
     const handleSearch = () => {
         const q = searchTerm.trim();
-        if (!q) { alert('Please enter a search term'); return; }
+        if (!q) { 
+            setAlertConfig({
+                isOpen: true,
+                title: 'Search Term Required',
+                message: 'Please enter a product name or brand to start searching.',
+                type: 'warning'
+            });
+            return; 
+        }
         
         // Manual search click - force charge intent
         if (q === currentQ) {
@@ -561,6 +575,13 @@ function ResultsContent() {
                 onClose={() => setCreditsModalOpen(false)}
                 required={creditErrorMeta.required}
                 available={creditErrorMeta.available}
+            />
+            <PremiumAlert 
+                isOpen={alertConfig.isOpen}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                type={alertConfig.type}
+                onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })}
             />
         </div>
     </div>

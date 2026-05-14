@@ -1,12 +1,19 @@
 'use client';
 
 import { useCart } from '@/context/CartContext';
+import { useState } from 'react';
+import PremiumAlert from '@/components/PremiumAlert';
 import type { CartItem } from '@/context/CartContext';
 import { useRouter } from 'next/navigation';
 
 export default function BagModal() {
-    const { bag, showBag, setShowBag, removeFromBag, addToCart } = useCart();
+    const { bag, showBag, setShowBag, removeFromBag, addToCart, clearBag } = useCart();
     const router = useRouter();
+    const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean; title: string; message: string; type?: 'danger' | 'warning' | 'info' | 'success'; onConfirm?: () => void }>({
+        isOpen: false,
+        title: '',
+        message: '',
+    });
 
     if (!showBag) return null;
 
@@ -98,14 +105,40 @@ export default function BagModal() {
 
                 <div style={{ marginTop: '32px', borderTop: '1px solid var(--border)', paddingTop: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <p style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 500 }}>Items in your bag are synced to your account.</p>
-                    <button 
-                        style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', padding: '8px 20px', borderRadius: '12px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}
-                        onClick={() => setShowBag(false)}
-                    >
-                        Close Bag
-                    </button>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        {bag.length > 0 && (
+                            <button 
+                                style={{ background: 'transparent', border: '1px solid #fee2e2', color: '#ef4444', padding: '10px 20px', borderRadius: '12px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}
+                                onClick={() => {
+                                    setAlertConfig({
+                                        isOpen: true,
+                                        title: 'Empty Bag?',
+                                        message: 'Do you want to remove all saved items from your bag?',
+                                        type: 'danger',
+                                        onConfirm: clearBag
+                                    });
+                                }}
+                            >
+                                Clear Bag
+                            </button>
+                        )}
+                        <button 
+                            style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', padding: '10px 20px', borderRadius: '12px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}
+                            onClick={() => setShowBag(false)}
+                        >
+                            Close Bag
+                        </button>
+                    </div>
                 </div>
             </div>
+            <PremiumAlert 
+                isOpen={alertConfig.isOpen}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                type={alertConfig.type}
+                onConfirm={alertConfig.onConfirm}
+                onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })}
+            />
         </div>
     );
 }

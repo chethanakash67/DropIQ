@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
+import PremiumAlert from '@/components/PremiumAlert';
 import { useAuth } from '@/context/AuthContext';
 
 const plans = [
@@ -37,6 +38,11 @@ export default function PlansPage() {
     const { currentUser, authenticatedFetch, setCurrentUser } = useAuth();
     const [isUpgrading, setIsUpgrading] = useState<string | null>(null);
     const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success'>('idle');
+    const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean; title: string; message: string; type?: 'danger' | 'warning' | 'info' | 'success' }>({
+        isOpen: false,
+        title: '',
+        message: '',
+    });
 
     const handleUpgrade = async (planId: string) => {
         if (planId === 'max') return;
@@ -63,12 +69,22 @@ export default function PlansPage() {
                     setPaymentStatus('idle');
                 }, 2000);
             } else {
-                alert('Upgrade failed. Please try again.');
+                setAlertConfig({
+                    isOpen: true,
+                    title: 'Upgrade Failed',
+                    message: 'We could not process your upgrade at this time. Please try again.',
+                    type: 'danger'
+                });
                 setIsUpgrading(null);
                 setPaymentStatus('idle');
             }
         } catch (err) {
-            alert('Connection error');
+            setAlertConfig({
+                isOpen: true,
+                title: 'Connection Error',
+                message: 'Unable to reach the payment server. Please check your connection.',
+                type: 'danger'
+            });
             setIsUpgrading(null);
             setPaymentStatus('idle');
         }
@@ -169,6 +185,13 @@ export default function PlansPage() {
                     </div>
                 )}
             </div>
+            <PremiumAlert 
+                isOpen={alertConfig.isOpen}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                type={alertConfig.type}
+                onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })}
+            />
         </div>
     );
 }

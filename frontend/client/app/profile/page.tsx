@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import Navbar from '@/components/Navbar';
+import PremiumAlert from '@/components/PremiumAlert';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -26,6 +27,19 @@ export default function ProfilePage() {
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
+    });
+
+    const [alertConfig, setAlertConfig] = useState<{ 
+        isOpen: boolean; 
+        title: string; 
+        message: string; 
+        onConfirm?: () => void; 
+        type?: 'danger' | 'warning' | 'info' | 'success';
+        confirmText?: string;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
     });
 
     const [status, setStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
@@ -62,12 +76,7 @@ export default function ProfilePage() {
         setProductHistory(pHistory);
     }, [currentUser, loading, router]);
 
-    const handleProfileUpdate = async (e: React.FormEvent) => {
-        e.preventDefault();
-        
-        const confirmSave = window.confirm('Save changes to your profile? This will update your primary account details.');
-        if (!confirmSave) return;
-
+    const actualProfileUpdate = async () => {
         setIsSaving(true);
         setStatus(null);
 
@@ -82,22 +91,56 @@ export default function ProfilePage() {
             if (res.ok) {
                 const data = await res.json();
                 setCurrentUser({ ...currentUser!, ...data.user });
-                setStatus({ type: 'success', msg: 'Profile updated correctly in database!' });
+                setAlertConfig({
+                    isOpen: true,
+                    title: 'Update Successful',
+                    message: 'Your profile details have been securely updated.',
+                    type: 'success',
+                    confirmText: 'Great'
+                });
             } else {
                 const err = await res.json();
-                setStatus({ type: 'error', msg: `${err.error || 'Update failed'}` });
+                setAlertConfig({
+                    isOpen: true,
+                    title: 'Update Failed',
+                    message: err.error || 'We could not update your profile at this time.',
+                    type: 'danger'
+                });
             }
         } catch (err) {
-            setStatus({ type: 'error', msg: '❌ Connection error' });
+            setAlertConfig({
+                isOpen: true,
+                title: 'Connection Error',
+                message: 'Unable to reach the server. Please check your internet.',
+                type: 'danger'
+            });
         } finally {
             setIsSaving(false);
         }
     };
 
+    const handleProfileUpdate = (e: React.FormEvent) => {
+        e.preventDefault();
+        setAlertConfig({
+            isOpen: true,
+            title: 'Save Changes?',
+            message: 'This will update your primary account details across all DropIQ services.',
+            type: 'warning',
+            confirmText: 'Save Details',
+            onConfirm: actualProfileUpdate
+        });
+    };
+
     const handlePasswordUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
         if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-            setStatus({ type: 'error', msg: '❌ New passwords do not match' });
+            setAlertConfig({
+                isOpen: true,
+                title: 'Passwords Don\'t Match',
+                message: 'Your new password and confirmation password are different. Please try again.',
+                type: 'warning',
+                confirmText: 'Got it'
+            });
             return;
         }
 
@@ -113,22 +156,37 @@ export default function ProfilePage() {
             });
 
             if (res.ok) {
-                setStatus({ type: 'success', msg: 'Password changed successfully!' });
                 setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                setAlertConfig({
+                    isOpen: true,
+                    title: '🔐 Password Changed',
+                    message: 'Your password has been updated successfully. Keep it safe!',
+                    type: 'success',
+                    confirmText: 'Perfect'
+                });
             } else {
                 const err = await res.json();
-                setStatus({ type: 'error', msg: `${err.error || 'Password update failed'}` });
+                setAlertConfig({
+                    isOpen: true,
+                    title: 'Password Update Failed',
+                    message: err.error || 'We could not update your password. Please check your current password and try again.',
+                    type: 'danger',
+                    confirmText: 'Try Again'
+                });
             }
         } catch (err) {
-            setStatus({ type: 'error', msg: '❌ Connection error' });
+            setAlertConfig({
+                isOpen: true,
+                title: 'Connection Error',
+                message: 'Unable to reach the server. Please check your connection.',
+                type: 'danger'
+            });
         } finally {
             setIsSaving(false);
         }
     };
 
     const handleClearData = async () => {
-        if (!window.confirm('Are you sure you want to clear all shopping data? This will empty your cart and bag permanently.')) return;
-        
         try {
             const res = await authenticatedFetch('/api/auth/me/data', { method: 'DELETE' });
             if (res.ok) {
@@ -137,31 +195,57 @@ export default function ProfilePage() {
                 localStorage.removeItem('visited_stores');
                 localStorage.removeItem('visited_stores_v2');
                 localStorage.removeItem('dropiq_product_history');
-                window.location.reload();
+                setAlertConfig({
+                    isOpen: true,
+                    title: 'Data Cleared',
+                    message: 'All your shopping data has been removed. The page will now refresh.',
+                    type: 'success',
+                    onConfirm: () => window.location.reload()
+                });
             } else {
-                alert('Failed to clear data');
+                setAlertConfig({
+                    isOpen: true,
+                    title: 'Error',
+                    message: 'Failed to clear your data. Please try again.',
+                    type: 'danger'
+                });
             }
         } catch (_) {
-            alert('Connection error');
+            setAlertConfig({
+                isOpen: true,
+                title: 'Connection Error',
+                message: 'Failed to reach the server.',
+                type: 'danger'
+            });
         }
     };
 
     const handleDeleteAccount = async () => {
-        if (!window.confirm('CRITICAL: Are you sure you want to delete your account? This action is permanent and cannot be undone.')) return;
-        if (!window.confirm('Type "DELETE" in the next prompt to confirm.')) return;
-        const confirmStr = window.prompt('Please type DELETE to confirm:');
-        if (confirmStr !== 'DELETE') return;
-
         try {
             const res = await authenticatedFetch('/api/auth/me', { method: 'DELETE' });
             if (res.ok) {
-                alert('Account deleted. You will be logged out.');
-                logout();
+                setAlertConfig({
+                    isOpen: true,
+                    title: 'Account Deleted',
+                    message: 'Your account has been permanently removed. You will now be logged out.',
+                    type: 'success',
+                    onConfirm: logout
+                });
             } else {
-                alert('Failed to delete account');
+                setAlertConfig({
+                    isOpen: true,
+                    title: 'Deletion Failed',
+                    message: 'We could not delete your account. Please contact support.',
+                    type: 'danger'
+                });
             }
         } catch (_) {
-            alert('Connection error');
+            setAlertConfig({
+                isOpen: true,
+                title: 'Connection Error',
+                message: 'Failed to reach the server.',
+                type: 'danger'
+            });
         }
     };
 
@@ -368,19 +452,40 @@ export default function ProfilePage() {
                                     <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '20px' }}>Account & Data Actions</h3>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                         <button 
-                                            onClick={logout}
+                                            onClick={() => setAlertConfig({
+                                                isOpen: true,
+                                                title: 'Sign Out?',
+                                                message: 'Are you sure you want to sign out from this device?',
+                                                type: 'warning',
+                                                confirmText: 'Sign Out',
+                                                onConfirm: logout
+                                            })}
                                             style={{ textAlign: 'left', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '8px 0', fontSize: '14px', fontWeight: 500 }}
                                         >
                                             → Sign Out from this device
                                         </button>
                                         <button 
-                                            onClick={handleClearData}
+                                            onClick={() => setAlertConfig({
+                                                isOpen: true,
+                                                title: 'Clear Shopping Data?',
+                                                message: 'This will remove all items from your cart and saved bag. This action cannot be undone.',
+                                                type: 'danger',
+                                                confirmText: 'Clear Everything',
+                                                onConfirm: handleClearData
+                                            })}
                                             style={{ textAlign: 'left', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '8px 0', fontSize: '14px', fontWeight: 500 }}
                                         >
                                             → Clear All Shopping Data
                                         </button>
                                         <button 
-                                            onClick={handleDeleteAccount}
+                                            onClick={() => setAlertConfig({
+                                                isOpen: true,
+                                                title: 'Delete Account?',
+                                                message: 'We are sorry to see you go. This will permanently delete your account and all associated data. This cannot be undone.',
+                                                type: 'danger',
+                                                confirmText: 'Delete Forever',
+                                                onConfirm: handleDeleteAccount
+                                            })}
                                             style={{ textAlign: 'left', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '8px 0', fontSize: '14px', fontWeight: 500 }}
                                         >
                                             → Delete My Account Forever
@@ -410,11 +515,25 @@ export default function ProfilePage() {
                                                      <div style={{ width: '48px', height: '48px', background: 'white', borderRadius: '12px', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)', flexShrink: 0 }}>
                                                         <img src={p.image} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                                                      </div>
-                                                     <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
-                                                         <div style={{ fontSize: '14px', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--text-primary)', width: '100%' }}>{p.name}</div>
-                                                         <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.retailer} • ₹{p.price}</div>
+                                                     <div style={{ flex: 1, minWidth: 0, paddingRight: '8px' }}>
+                                                         <div style={{ 
+                                                             fontSize: '14px', 
+                                                             fontWeight: 700, 
+                                                             color: 'var(--text-primary)', 
+                                                             width: '100%',
+                                                             lineHeight: '1.4',
+                                                             display: '-webkit-box',
+                                                             WebkitLineClamp: 2,
+                                                             WebkitBoxOrient: 'vertical',
+                                                             overflow: 'hidden'
+                                                         }}>
+                                                             {p.name}
+                                                         </div>
+                                                         <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                                                             {p.retailer} • ₹{p.price}
+                                                         </div>
                                                      </div>
-                                                     <div style={{ fontSize: '10px', color: '#10b981', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', flexShrink: 0 }}>VIEWED</div>
+                                                     <div style={{ fontSize: '10px', color: '#10b981', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', flexShrink: 0, background: 'rgba(16, 185, 129, 0.1)', padding: '4px 8px', borderRadius: '6px' }}>VIEWED</div>
                                                  </div>
                                              ))}
                                              
@@ -436,7 +555,17 @@ export default function ProfilePage() {
                                                      </button>
                                                  )}
                                                  <button 
-                                                    onClick={(e) => { e.stopPropagation(); if(confirm('Clear product history?')) { localStorage.removeItem('dropiq_product_history'); setProductHistory([]); } }}
+                                                    onClick={(e) => { e.stopPropagation(); setAlertConfig({
+                                                            isOpen: true,
+                                                            title: 'Clear History?',
+                                                            message: 'This will remove all products from your visit history locally.',
+                                                            type: 'danger',
+                                                            confirmText: 'Clear History',
+                                                            onConfirm: () => {
+                                                                localStorage.removeItem('dropiq_product_history');
+                                                                setProductHistory([]);
+                                                            }
+                                                        }); }}
                                                     style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '12px', cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}
                                                  >
                                                     Clear History
@@ -664,6 +793,15 @@ export default function ProfilePage() {
                     </div>
                 </div>
             )}
+            <PremiumAlert 
+                isOpen={alertConfig.isOpen}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                type={alertConfig.type}
+                confirmText={alertConfig.confirmText}
+                onConfirm={alertConfig.onConfirm}
+                onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })}
+            />
         </div>
     );
 }

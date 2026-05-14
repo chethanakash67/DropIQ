@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import Navbar from '@/components/Navbar';
+import PremiumAlert from '@/components/PremiumAlert';
 import CountdownTimer from '@/components/CountdownTimer';
 import DIQModal from '@/components/DIQModal';
 import { useSearch } from '@/hooks/useSearch';
@@ -148,14 +149,19 @@ export default function DashboardPage() {
     const [favourites, setFavourites] = useState<DashboardProduct[]>([]);
     
     const [categoryMeta, setCategoryMeta] = useState<CategoryMeta[]>([
-        { name: 'Earpods', price: '299', image: null, q: 'earpods' },
-        { name: 'Earphones', price: '199', image: null, q: 'earphone' },
-        { name: 'Headphones', price: '499', image: null, q: 'headphone' },
-        { name: 'Neckbands', price: '399', image: null, q: 'neckband' }
+        { name: 'Earpods', price: '299', image: 'https://m.media-amazon.com/images/I/31HM2REQEnL._SY300_SX300_QL70_FMwebp_.jpg', q: 'earpods' },
+        { name: 'Earphones', price: '199', image: 'https://m.media-amazon.com/images/I/31immGsw0TL._SY300_SX300_QL70_FMwebp_.jpg', q: 'earphone' },
+        { name: 'Headphones', price: '499', image: 'https://m.media-amazon.com/images/I/31NwIPwIdlL._SY300_SX300_QL70_FMwebp_.jpg', q: 'headphone' },
+        { name: 'Neckbands', price: '399', image: 'https://m.media-amazon.com/images/I/31-gSmPV0kL._SY300_SX300_QL70_FMwebp_.jpg', q: 'neckband' }
     ]);
 
     const [slideshowImages, setSlideshowImages] = useState<DashboardProduct[]>([]);
     const [slideshowIndex, setSlideshowIndex] = useState(0);
+    const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean; title: string; message: string; onConfirm?: () => void; type?: 'danger' | 'warning' | 'info' | 'success'; confirmText?: string }>({
+        isOpen: false,
+        title: '',
+        message: '',
+    });
     const [isPageReady, setIsPageReady] = useState(!!dashboardCache);
 
     useEffect(() => {
@@ -197,15 +203,34 @@ export default function DashboardPage() {
             }
 
             try {
-                // 2. Simple sequential fetches
+                // 2. Fetch Loot Deals (Fastest/Primary section)
                 const lootRes = await fetch('/api/products/search?limit=8&sortBy=price_desc');
                 const lootData = await lootRes.json();
+                const loot = productsFrom(lootData);
+                if (lootData.success) {
+                    setLootDeals(loot);
+                    // Immediate Slideshow Update (Part 1)
+                    const initialSlides = loot.filter(p => p.image_url).slice(0, 5);
+                    if (initialSlides.length > 0) setSlideshowImages(initialSlides);
+                }
                 
+                // 3. Fetch Festive Collection
                 const festiveRes = await fetch('/api/products/search?limit=12&sortBy=rating');
                 const festiveData = await festiveRes.json();
+                const festive = productsFrom(festiveData);
+                if (festiveData.success) {
+                    setFestiveCollection(festive);
+                    setSuggestedForYou([...festive].reverse().slice(0, 8));
+                    // Progressive Slideshow Update (Part 2)
+                    setSlideshowImages(prev => {
+                        const combined = [...prev, ...festive].filter(p => p.image_url);
+                        return [...new Map(combined.map(p => [p.id, p])).values()].slice(0, 5);
+                    });
+                }
                 
                 const freqRes = await fetch('/api/products/frequent-searches');
                 const freqData = await freqRes.json();
+                const trending = searchesFrom(freqData);
 
                 let historyItems: string[] = [];
                 if (currentUser) {
@@ -216,30 +241,20 @@ export default function DashboardPage() {
                     }
                 }
 
-                // 3. Update States
-                const loot = productsFrom(lootData);
-                const festive = productsFrom(festiveData);
-                const trending = searchesFrom(freqData);
-                const suggested = [...festive].reverse().slice(0, 8);
-
-                if (lootData.success) setLootDeals(loot);
-                if (festiveData.success) {
-                    setFestiveCollection(festive);
-                    setSuggestedForYou(suggested);
-                }
                 if (freqData.success) {
                     setFrequentSearches(trending);
                     setInitialFrequent(trending);
                 }
                 setSearchHistory(historyItems);
 
-                // 5. Store in Cache
+                // 4. Store in Cache
                 dashboardCache = {
                     lootDeals: loot,
                     festiveCollection: festive,
-                    suggestedForYou: suggested,
+                    suggestedForYou: [...festive].reverse().slice(0, 8),
                     frequentSearches: trending,
                     searchHistory: historyItems,
+                    slideshowImages: [...loot, ...festive].filter(p => p.image_url).slice(0, 5),
                     timestamp: Date.now()
                 };
 
@@ -304,22 +319,28 @@ export default function DashboardPage() {
 
     const handleClearHistory = async (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!window.confirm('Clear all search history?')) return;
-        
-        try {
-            const res = await authenticatedFetch('/api/products/search-history', {
-                method: 'DELETE'
-            });
-            if (res.ok) {
-                setSearchHistory([]);
-                localStorage.removeItem(RECENT_SEARCHES_KEY);
+        setAlertConfig({
+            isOpen: true,
+            title: 'Clear History?',
+            message: 'Are you sure you want to clear your search history? This cannot be undone.',
+            type: 'danger',
+            confirmText: 'Clear All',
+            onConfirm: async () => {
+                try {
+                    const res = await authenticatedFetch('/api/products/search-history', {
+                        method: 'DELETE'
+                    });
+                    if (res.ok) {
+                        setSearchHistory([]);
+                        localStorage.removeItem(RECENT_SEARCHES_KEY);
+                    }
+                } catch (err) {
+                    console.error('Failed to clear history:', err);
+                    setSearchHistory([]);
+                    localStorage.removeItem(RECENT_SEARCHES_KEY);
+                }
             }
-        } catch (err) {
-            console.error('Failed to clear history:', err);
-            // Keep UX consistent even if API fails
-            setSearchHistory([]);
-            localStorage.removeItem(RECENT_SEARCHES_KEY);
-        }
+        });
     };
 
     useEffect(() => {
@@ -486,7 +507,17 @@ export default function DashboardPage() {
                         )}
                         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
                             <div className="product-brand" style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>{p.brand || 'DROP IQ'}</div>
-                            <div className="product-title" style={{ fontSize: '14px', fontWeight: 600, marginTop: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            <div className="product-title" style={{ 
+                                fontSize: '14px', 
+                                fontWeight: 600, 
+                                marginTop: '4px', 
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden',
+                                lineHeight: '1.2',
+                                height: '2.4em'
+                            }}>
                                 {displayTitle}
                             </div>
                             <div style={{ fontSize: '9px', color: '#059669', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '3px', marginTop: '4px', padding: '1px 6px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '8px', width: 'fit-content' }}>
@@ -513,7 +544,18 @@ export default function DashboardPage() {
                         <div style={{ width: '100%', height: isFestive ? '110px' : '100px', background: 'rgba(16,185,129,0.06)', marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px' }}>No Image</div>
                     )}
                     <div className="product-brand" style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>{p.brand || 'DROP IQ'}</div>
-                    <div className="product-title" style={{ fontSize: isFestive ? '13px' : '14px', fontWeight: 600, marginTop: '4px', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: isFestive ? 1 : 2, WebkitBoxOrient: 'vertical' }}>
+                    <div className="product-title" style={{ 
+                        fontSize: isFestive ? '13px' : '14px', 
+                        fontWeight: 600, 
+                        marginTop: '4px', 
+                        flex: 1, 
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        lineHeight: '1.2',
+                        height: '2.4em'
+                    }}>
                         {displayTitle}
                     </div>
                     <div style={{ fontSize: '9px', color: '#059669', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '3px', marginTop: '4px', padding: '1px 6px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '8px', width: 'fit-content' }}>
@@ -912,6 +954,15 @@ export default function DashboardPage() {
                 <div style={{ textAlign: 'center', margin: '64px 0' }}></div>
             </div>
             {showDIQ && <DIQModal onClose={() => setShowDIQ(false)} />}
+            <PremiumAlert 
+                isOpen={alertConfig.isOpen}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                type={alertConfig.type}
+                confirmText={alertConfig.confirmText}
+                onConfirm={alertConfig.onConfirm}
+                onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })}
+            />
         </>
     );
 }
