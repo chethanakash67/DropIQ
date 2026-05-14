@@ -73,19 +73,12 @@ async function maybeRefreshCreditsForUser(userId) {
 }
 
 async function maybeRefreshAndGetUser(userId) {
-  await db.query('BEGIN');
-  try {
-    const updated = await maybeRefreshCreditsForUser(userId);
-    await db.query('COMMIT');
-    if (!updated) return null;
-    return {
-      ...updated,
-      plan_type: normalizePlanType(updated.plan_type),
-    };
-  } catch (error) {
-    await db.query('ROLLBACK');
-    throw error;
-  }
+  const updated = await maybeRefreshCreditsForUser(userId);
+  if (!updated) return null;
+  return {
+    ...updated,
+    plan_type: normalizePlanType(updated.plan_type),
+  };
 }
 
 // Cache to prevent double-charging within a short window (e.g. React StrictMode or double-clicks)

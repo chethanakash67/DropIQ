@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { IconWarning, IconEyeOpen, IconEyeClosed } from '@/components/Icons';
+import { IconEyeOpen, IconEyeClosed } from '@/components/Icons';
 import LandingNavbar from '@/components/LandingNavbar';
-import LandingFooter from '@/components/LandingFooter';
+import AuthLottieLoader from '@/components/AuthLottieLoader';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -35,7 +35,6 @@ export default function LoginPage() {
             router.replace('/dashboard');
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : 'Login failed');
-        } finally {
             setSubmitting(false);
         }
     };
@@ -44,6 +43,7 @@ export default function LoginPage() {
 
     return (
         <div style={{ minHeight: '100vh', background: '#fdfbf7', display: 'flex', flexDirection: 'column' }}>
+            {submitting && <AuthLottieLoader message="Signing you in..." />}
             <LandingNavbar />
             
             <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '100px 20px' }}>
@@ -65,6 +65,7 @@ export default function LoginPage() {
                     <a
                         href="/api/auth/google"
                         className="google-button"
+                        onClick={() => setSubmitting(true)}
                         style={{ 
                             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px',
                             padding: '14px', borderRadius: '16px', border: '1px solid #e2e8f0',

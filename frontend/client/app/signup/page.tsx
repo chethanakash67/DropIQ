@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { IconWarning, IconEyeOpen, IconEyeClosed } from '@/components/Icons';
+import { IconEyeOpen, IconEyeClosed } from '@/components/Icons';
 import LandingNavbar from '@/components/LandingNavbar';
-import LandingFooter from '@/components/LandingFooter';
+import AuthLottieLoader from '@/components/AuthLottieLoader';
 
 export default function SignupPage() {
     const router = useRouter();
@@ -43,7 +43,6 @@ export default function SignupPage() {
                 router.replace('/dashboard');
             } catch (err: unknown) {
                 setError(err instanceof Error ? err.message : 'Verification failed');
-            } finally {
                 setSubmitting(false);
             }
             return;
@@ -62,13 +61,13 @@ export default function SignupPage() {
                 setVerificationEmail(result.email || email);
                 setInfo(result.message || 'We sent a verification code to your email.');
                 setDevOtp(result.devOtp || '');
+                setSubmitting(false);
                 return;
             }
             sessionStorage.setItem('just_logged_in', 'true');
             router.replace('/dashboard');
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : 'Signup failed');
-        } finally {
             setSubmitting(false);
         }
     };
@@ -92,6 +91,9 @@ export default function SignupPage() {
 
     return (
         <div style={{ minHeight: '100vh', background: '#fdfbf7', display: 'flex', flexDirection: 'column' }}>
+            {submitting && (
+                <AuthLottieLoader message={verificationRequired ? 'Verifying your account...' : 'Creating your account...'} />
+            )}
             <LandingNavbar />
             
             <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '100px 20px' }}>
@@ -121,6 +123,7 @@ export default function SignupPage() {
                             <a
                                 href="/api/auth/google"
                                 className="google-button"
+                                onClick={() => setSubmitting(true)}
                                 style={{
                                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px',
                                     padding: '14px', borderRadius: '16px', border: '1px solid #e2e8f0',

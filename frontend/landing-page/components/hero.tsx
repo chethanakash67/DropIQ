@@ -1,6 +1,6 @@
 "use client"
 
-import type React from "react"
+import React, { useState, useEffect } from "react"
 
 import GlowButton from "./glow-button"
 import { Badge } from "@/components/ui/badge"
@@ -18,6 +18,21 @@ const AnimatedCounter = dynamic(() => import("./animated-counter"), {
 })
 
 export default function Hero() {
+  const slideshowProducts = [
+    { name: "Premium Earbuds", url: "https://m.media-amazon.com/images/I/31qGR9hxtsL._SX300_SY300_QL70_FMwebp_.jpg" },
+    { name: "Wired Headphones", url: "https://rukminim1.flixcart.com/image/400/400/xif0q/headphone/s/k/s/best-performing-with-low-latency-wired-cbt-cabtronics-original-imahjhcfykzejntc.jpeg?q=70" },
+    { name: "Samsung Galaxy Buds", url: "https://images.samsung.com/is/image/samsung/p6pim/in/sm-r400nzaains/gallery/in-galaxy-buds-fe-480225-sm-r400nzaains-thumb-538531516?$Q90_330_330_F_PNG$" },
+    { name: "TWS Earbuds", url: "https://img.tatacliq.com/images/i23//437Wx649H/MP000000025388609_437Wx649H_202503292347271.jpeg" }
+  ];
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slideshowProducts.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, []);
+
   const fullLine = "Discover the 'most reasonable price' for every 'particular product'"
 
   const HIGHLIGHT_CLASS =
@@ -126,8 +141,18 @@ export default function Hero() {
                         <span className="relative z-10 drop-shadow-sm">{"DropIQ"}</span>
                       </div>
 
-                      {/* Title */}
-                      <h3 className="mt-4 text-lg font-semibold text-slate-900 dark:text-white">{"iPhone 15 Pro"}</h3>
+                      {/* Title and Image Slideshow */}
+                      <div className="mt-4 flex flex-col items-center min-h-[140px] justify-center transition-all duration-300">
+                        <img 
+                          key={slideshowProducts[currentSlide].url}
+                          src={slideshowProducts[currentSlide].url} 
+                          alt={slideshowProducts[currentSlide].name}
+                          className="h-28 object-contain mb-2 mix-blend-multiply dark:mix-blend-normal rounded-md animate-in fade-in zoom-in duration-500"
+                        />
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white text-center animate-in fade-in slide-in-from-bottom-2 duration-500">
+                          {slideshowProducts[currentSlide].name}
+                        </h3>
+                      </div>
 
                       {/* Rows */}
                       <div className="mt-3 space-y-2">

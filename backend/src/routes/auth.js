@@ -490,32 +490,23 @@ router.post('/logout-all', authenticate, async (req, res) => {
  */
 router.get('/me', authenticate, async (req, res) => {
   try {
-    const user = await authService.getUserById(req.user.id);
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: 'User not found'
-      });
-    }
-
     res.json({
       success: true,
       user: {
-        id: user.id,
-        email: user.email,
-        fullName: user.full_name,
-        phone: user.phone,
-        address: user.address,
-        preferences: user.preferences,
-        themePreference: user.theme_preference,
-        role: user.role,
-        planType: req.user.planType || normalizePlanType(user.plan_type),
-        credits: req.user.credits ?? user.credits,
-        creditsLastRefreshed: user.credits_last_refreshed,
-        emailVerified: user.email_verified,
-        createdAt: user.created_at,
-        lastLogin: user.last_login
+        id: req.user.id,
+        email: req.user.email,
+        fullName: req.user.fullName,
+        phone: req.user.phone,
+        address: req.user.address,
+        preferences: req.user.preferences,
+        themePreference: req.user.themePreference,
+        role: req.user.role,
+        planType: req.user.planType,
+        credits: req.user.credits,
+        creditsLastRefreshed: req.user.creditsLastRefreshed,
+        emailVerified: req.user.emailVerified,
+        createdAt: req.user.createdAt,
+        lastLogin: req.user.lastLogin
       }
     });
 

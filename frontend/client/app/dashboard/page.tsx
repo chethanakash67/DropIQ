@@ -17,6 +17,7 @@ type DashboardProduct = {
     brand?: string;
     price_inr?: number | string;
     image_url?: string;
+    image?: string;
     retailer_name?: string;
     last_updated?: string;
 };
@@ -155,7 +156,12 @@ export default function DashboardPage() {
         { name: 'Neckbands', price: '399', image: 'https://m.media-amazon.com/images/I/31-gSmPV0kL._SY300_SX300_QL70_FMwebp_.jpg', q: 'neckband' }
     ]);
 
-    const [slideshowImages, setSlideshowImages] = useState<DashboardProduct[]>([]);
+    const [slideshowImages, setSlideshowImages] = useState<any[]>([
+        { image: 'https://m.media-amazon.com/images/I/31qGR9hxtsL._SX300_SY300_QL70_FMwebp_.jpg', name: 'Premium Earbuds' },
+        { image: 'https://rukminim1.flixcart.com/image/400/400/xif0q/headphone/s/k/s/best-performing-with-low-latency-wired-cbt-cabtronics-original-imahjhcfykzejntc.jpeg?q=70', name: 'Wired Headphones' },
+        { image: 'https://images.samsung.com/is/image/samsung/p6pim/in/sm-r400nzaains/gallery/in-galaxy-buds-fe-480225-sm-r400nzaains-thumb-538531516?$Q90_330_330_F_PNG$', name: 'Samsung Galaxy Buds FE' },
+        { image: 'https://img.tatacliq.com/images/i23//437Wx649H/MP000000025388609_437Wx649H_202503292347271.jpeg', name: 'TWS Earbuds' }
+    ]);
     const [slideshowIndex, setSlideshowIndex] = useState(0);
     const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean; title: string; message: string; onConfirm?: () => void; type?: 'danger' | 'warning' | 'info' | 'success'; confirmText?: string }>({
         isOpen: false,
@@ -209,9 +215,7 @@ export default function DashboardPage() {
                 const loot = productsFrom(lootData);
                 if (lootData.success) {
                     setLootDeals(loot);
-                    // Immediate Slideshow Update (Part 1)
-                    const initialSlides = loot.filter(p => p.image_url).slice(0, 5);
-                    if (initialSlides.length > 0) setSlideshowImages(initialSlides);
+                    // setSlideshowImages removed for static slideshow
                 }
                 
                 // 3. Fetch Festive Collection
@@ -221,11 +225,7 @@ export default function DashboardPage() {
                 if (festiveData.success) {
                     setFestiveCollection(festive);
                     setSuggestedForYou([...festive].reverse().slice(0, 8));
-                    // Progressive Slideshow Update (Part 2)
-                    setSlideshowImages(prev => {
-                        const combined = [...prev, ...festive].filter(p => p.image_url);
-                        return [...new Map(combined.map(p => [p.id, p])).values()].slice(0, 5);
-                    });
+                    // Progressive Slideshow Update (Part 2) - removed for static
                 }
                 
                 const freqRes = await fetch('/api/products/frequent-searches');

@@ -1,15 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import Navbar from '@/components/Navbar';
 import {
-    IconCart, IconStore, IconPhone, IconArrowLeft,
-    IconStar, IconTag, IconExternalLink, IconCheckCircle
+    IconStore, IconArrowLeft,
+    IconStar, IconTag, IconCheckCircle
 } from '@/components/Icons';
+import {
+    getProductDetailCacheKey,
+    readProductDetailCache,
+    writeProductDetailCache,
+} from '@/utils/product-detail-cache';
 
 interface Product {
     id: string | number;
@@ -47,6 +51,21 @@ interface Comparison {
     product_url?: string;
 }
 
+interface ProductHistoryEntry {
+    id: string | number;
+    name?: string;
+    image?: string;
+    retailer?: string;
+    price?: number | string;
+    timestamp: string;
+}
+
+interface VisitedStoreEntry {
+    name: string;
+    count: number;
+    lastVisited: string;
+}
+
 function parseJson<T>(val: T[] | string | undefined | null): T[] {
     if (!val) return [];
     if (Array.isArray(val)) return val;
@@ -66,7 +85,7 @@ export default function ProductDetailPage() {
     const id = params.id as string;
     const retailerHint = searchParams.get('retailer');
     const { currentUser, loading: authLoading, authenticatedFetch, setCurrentUser } = useAuth();
-    const { addToCart, addToBag, totalItems, totalBagItems, setShowCart, setShowBag } = useCart();
+    const { addToCart, addToBag } = useCart();
 
     const [product, setProduct] = useState<Product | null>(null);
     const [loading, setLoading] = useState(true);
@@ -74,58 +93,101 @@ export default function ProductDetailPage() {
     const [comparisons, setComparisons] = useState<Comparison[]>([]);
     const [compsLoading, setCompsLoading] = useState(false);
     const [recommendations, setRecommendations] = useState<Product[]>([]);
-    const [recsLoading, setRecsLoading] = useState(false);
     const [cartAdded, setCartAdded] = useState(false);
     const [bagAdded, setBagAdded] = useState(false);
     const [showAllSpecs, setShowAllSpecs] = useState(false);
+    const [loadedCacheKey, setLoadedCacheKey] = useState<string | null>(null);
 
     useEffect(() => {
         if (!authLoading && !currentUser) router.replace('/login');
     }, [authLoading, currentUser, router]);
 
     useEffect(() => {
-        if (!id) return;
+        if (!id || !currentUser?.id) return;
+
+        const cacheKey = getProductDetailCacheKey(currentUser.id, id, retailerHint);
+        const cached = readProductDetailCache<Product, Comparison>(cacheKey);
+        if (cached) {
+            setProduct(cached.product);
+            setComparisons(cached.comparisons);
+            setRecommendations(cached.recommendations);
+            setError('');
+            setLoading(false);
+            setLoadedCacheKey(cacheKey);
+            return;
+        }
+
         setLoading(true);
+        setError('');
+        setLoadedCacheKey(null);
+        setComparisons([]);
+        setRecommendations([]);
         const retailerQuery = retailerHint ? `?retailer=${encodeURIComponent(retailerHint)}` : '';
         fetch(`/api/products/${id}${retailerQuery}`)
             .then(r => r.json())
             .then(d => {
-                if (d.success) setProduct(d.product);
+                if (d.success) {
+                    setProduct(d.product);
+                }
                 else setError('Product not found');
             })
             .catch(() => setError('Failed to load product'))
             .finally(() => setLoading(false));
-    }, [id, retailerHint]);
+    }, [id, retailerHint, currentUser?.id]);
 
     useEffect(() => {
-        if (!product) return;
+        if (!product || !currentUser?.id) return;
         const retailer = (product.retailer_name || '').toLowerCase();
         const encodedRetailer = encodeURIComponent(retailer);
+        const cacheKey = getProductDetailCacheKey(currentUser.id, id, retailerHint);
+
+        if (loadedCacheKey === cacheKey) return;
         
-        // Fetch Comparisons
+        let cancelled = false;
         setCompsLoading(true);
-        fetch(`/api/products/${encodedRetailer}/${product.id}/price-comparisons`)
-            .then(r => r.json())
-            .then(d => { if (d.success) setComparisons(d.comparisons || []); })
-            .catch(() => { })
-            .finally(() => setCompsLoading(false));
 
-        // Fetch Recommendations
-        setRecsLoading(true);
-        fetch(`/api/products/${encodedRetailer}/${product.id}/recommendations`)
+        const comparisonsRequest = fetch(`/api/products/${encodedRetailer}/${product.id}/price-comparisons`)
             .then(r => r.json())
-            .then(d => { if (d.success) setRecommendations(d.recommendations || []); })
-            .catch(() => { })
-            .finally(() => setRecsLoading(false));
+            .then(d => d.success && Array.isArray(d.comparisons) ? d.comparisons as Comparison[] : [])
+            .catch(() => []);
 
-    }, [product]);
+        const recommendationsRequest = fetch(`/api/products/${encodedRetailer}/${product.id}/recommendations`)
+            .then(r => r.json())
+            .then(d => d.success && Array.isArray(d.recommendations) ? d.recommendations as Product[] : [])
+            .catch(() => []);
+
+        Promise.all([comparisonsRequest, recommendationsRequest])
+            .then(([nextComparisons, nextRecommendations]) => {
+                if (cancelled) return;
+                setComparisons(nextComparisons);
+                setRecommendations(nextRecommendations);
+                writeProductDetailCache<Product, Comparison>(cacheKey, {
+                    userId: String(currentUser.id),
+                    productId: String(id),
+                    retailerHint: retailerHint || '',
+                    product,
+                    comparisons: nextComparisons,
+                    recommendations: nextRecommendations,
+                });
+            })
+            .finally(() => {
+                if (cancelled) return;
+                setCompsLoading(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+
+    }, [product, currentUser?.id, id, retailerHint, loadedCacheKey]);
 
     useEffect(() => {
         if (!product) return;
         // Track internal DropIQ product page visit for "System Settings" history
         try {
             const raw = localStorage.getItem('dropiq_product_history');
-            const history = JSON.parse(raw || '[]');
+            const parsed = JSON.parse(raw || '[]');
+            const history: ProductHistoryEntry[] = Array.isArray(parsed) ? parsed : [];
             const entry = {
                 id: product.id,
                 name: product.product_name,
@@ -134,9 +196,9 @@ export default function ProductDetailPage() {
                 price: product.price_inr,
                 timestamp: new Date().toISOString()
             };
-            const filtered = history.filter((p: any) => p.id !== product.id);
+            const filtered = history.filter((p) => p.id !== product.id);
             localStorage.setItem('dropiq_product_history', JSON.stringify([entry, ...filtered].slice(0, 15)));
-        } catch(e) {}
+        } catch {}
     }, [product]);
 
     const handleAddToCart = () => {
@@ -190,10 +252,11 @@ export default function ProductDetailPage() {
         // Track visited store locally for the "See visited stores" history with statistics
         try {
             const visitedRaw = localStorage.getItem('visited_stores_v2');
-            const visited = JSON.parse(visitedRaw || '[]');
+            const parsed = JSON.parse(visitedRaw || '[]');
+            const visited: VisitedStoreEntry[] = Array.isArray(parsed) ? parsed : [];
             const storeName = product.retailer_name || product.merchant || 'Unknown Store';
             
-            let existing = visited.find((s: any) => s.name === storeName);
+            const existing = visited.find((s) => s.name === storeName);
             if (existing) {
                 existing.count = (existing.count || 0) + 1;
                 existing.lastVisited = new Date().toISOString();
@@ -202,7 +265,7 @@ export default function ProductDetailPage() {
             }
             
             // Sort by most recent visit
-            visited.sort((a: any, b: any) => new Date(b.lastVisited).getTime() - new Date(a.lastVisited).getTime());
+            visited.sort((a, b) => new Date(b.lastVisited).getTime() - new Date(a.lastVisited).getTime());
             localStorage.setItem('visited_stores_v2', JSON.stringify(visited.slice(0, 15)));
         } catch(e) {
             console.error("Failed to save visit history", e);
@@ -214,7 +277,7 @@ export default function ProductDetailPage() {
                 const data = await res.json();
                 setCurrentUser({ ...currentUser, storeVisits: data.visits });
             }
-        } catch (_) {}
+        } catch {}
     };
 
     return (

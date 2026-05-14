@@ -453,7 +453,16 @@ router.get('/:id', async (req, res) => {
         product = await checkTable(productTable.tableName, productTable.retailerName);
       } else {
         // Check if it's an offline store
-        const offlineRes = await db.query('SELECT table_name, store_name FROM offline_stores WHERE store_name = $1 OR store_id = $1', [retailer]);
+        const offlineRes = await db.query(`
+          SELECT s.table_name, s.store_name
+          FROM offline_stores s
+          JOIN information_schema.tables t
+            ON t.table_schema = 'public'
+           AND t.table_name = s.table_name
+           AND t.table_type = 'BASE TABLE'
+          WHERE (s.store_name = $1 OR s.store_id = $1)
+            AND s.table_name ~ '^[a-z0-9_]+$'
+        `, [retailer]);
         if (offlineRes.rows.length > 0) {
           product = await checkTable(offlineRes.rows[0].table_name, offlineRes.rows[0].store_name);
         }
@@ -472,7 +481,15 @@ router.get('/:id', async (req, res) => {
 
     // 3. Last resort: check all offline stores
     if (!product) {
-      const offlineStores = await db.query('SELECT table_name, store_name FROM offline_stores');
+      const offlineStores = await db.query(`
+        SELECT s.table_name, s.store_name
+        FROM offline_stores s
+        JOIN information_schema.tables t
+          ON t.table_schema = 'public'
+         AND t.table_name = s.table_name
+         AND t.table_type = 'BASE TABLE'
+        WHERE s.table_name ~ '^[a-z0-9_]+$'
+      `);
       for (const store of offlineStores.rows) {
         product = await checkTable(store.table_name, store.store_name);
         if (product) break;

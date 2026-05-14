@@ -669,7 +669,15 @@ class ProductRepository {
       if (!retailer || retailer.includes('_o')) {
         try {
           // Get all offline stores
-          const offlineStoresQuery = 'SELECT store_id, store_name, table_name, owner_name, owner_phone FROM offline_stores';
+          const offlineStoresQuery = `
+            SELECT s.store_id, s.store_name, s.table_name, s.owner_name, s.owner_phone
+            FROM offline_stores s
+            JOIN information_schema.tables t
+              ON t.table_schema = 'public'
+             AND t.table_name = s.table_name
+             AND t.table_type = 'BASE TABLE'
+            WHERE s.table_name ~ '^[a-z0-9_]+$'
+          `;
           const offlineStoresResult = await db.query(offlineStoresQuery);
           
           const offlineTasks = offlineStoresResult.rows.map(async (store) => {

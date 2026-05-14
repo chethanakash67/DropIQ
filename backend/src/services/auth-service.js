@@ -44,7 +44,11 @@ ensureGoogleColumns();
 
 class AuthService {
   emailVerificationRequired() {
-    return process.env.AUTH_REQUIRE_EMAIL_VERIFICATION !== 'false';
+    if (process.env.AUTH_REQUIRE_EMAIL_VERIFICATION !== undefined) {
+      return process.env.AUTH_REQUIRE_EMAIL_VERIFICATION === 'true';
+    }
+
+    return process.env.NODE_ENV !== 'production';
   }
 
   normalizeEmail(email) {

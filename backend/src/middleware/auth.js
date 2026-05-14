@@ -51,6 +51,9 @@ const authenticate = async (req, res, next) => {
       address: user.address,
       preferences: user.preferences,
       themePreference: user.theme_preference,
+      emailVerified: !!user.email_verified,
+      createdAt: user.created_at,
+      lastLogin: user.last_login,
       planType: refreshed?.plan_type || creditsService.normalizePlanType(user.plan_type),
       credits: refreshed?.credits ?? user.credits,
       creditsLastRefreshed: refreshed?.credits_last_refreshed ?? user.credits_last_refreshed
@@ -118,6 +121,9 @@ const optionalAuth = async (req, res, next) => {
           address: user.address,
           preferences: user.preferences,
           themePreference: user.theme_preference,
+          emailVerified: !!user.email_verified,
+          createdAt: user.created_at,
+          lastLogin: user.last_login,
           planType: refreshed?.plan_type || creditsService.normalizePlanType(user.plan_type),
           credits: refreshed?.credits ?? user.credits,
           creditsLastRefreshed: refreshed?.credits_last_refreshed ?? user.credits_last_refreshed

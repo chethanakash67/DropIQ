@@ -2719,8 +2719,6 @@ a9a894f2-6eb9-4f21-8dd8-972a0dbf85ce	Noise Buds Play TWS with 40H of Playtime Qu
 --
 
 COPY public.offline_stores (id, store_id, store_name, owner_name, owner_phone, shop_location, preferred_time, table_name, created_at, updated_at, last_synced_at) FROM stdin;
-62	1231-AS-AS	asdfasdf	asdfasdf	1231231231	fsfd	\N	asdfasdf_o	2026-04-21 19:50:59.20343	2026-04-21 19:50:59.20343	2026-04-21 19:50:59.20343
-63	2342-BH-SA	Bharath Electronics	Sai Karthik	234238393	sasdfasf	\N	bharath_electronics_o	2026-04-21 19:50:59.448805	2026-04-21 19:50:59.448805	2026-04-21 19:50:59.448805
 \.
 
 
@@ -3675,4 +3673,3 @@ ALTER TABLE ONLY public.search_history
 --
 -- PostgreSQL database dump complete
 --
-
