@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
@@ -33,15 +34,15 @@ export default function Navbar() {
                 </Link>
             </div>
 
-            <div className="navbar-actions" style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+            <div className="navbar-actions">
                 {name && <span className="navbar-greeting" style={{ fontSize: '13px' }}>Hi, {name.split(' ')[0]}!</span>}
-
                 {currentUser && (
-                    <span style={{ fontSize: '13px', color: '#FFD700', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" style={{ marginRight: 2 }}><circle cx="10" cy="10" r="10" fill="#FFD700" /></svg>
-                        {currentUser.credits ?? 0} credits
+                    <span style={{ fontSize: '13px', color: '#FFD700', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, marginLeft: '8px', marginRight: '12px' }}>
+                        <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#FFD700" /></svg>
+                        {currentUser.credits ?? 0}
                     </span>
                 )}
+
 
                 <div style={{ display: 'flex', gap: '20px' }}>
                     <button className="navbar-text-action" onClick={() => setShowBag(true)} style={{ fontWeight: 500 }}>

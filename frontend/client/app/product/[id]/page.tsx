@@ -96,6 +96,7 @@ export default function ProductDetailPage() {
     const [cartAdded, setCartAdded] = useState(false);
     const [bagAdded, setBagAdded] = useState(false);
     const [showAllSpecs, setShowAllSpecs] = useState(false);
+    const [showAllFeatures, setShowAllFeatures] = useState(false);
     const [loadedCacheKey, setLoadedCacheKey] = useState<string | null>(null);
 
     useEffect(() => {
@@ -393,13 +394,30 @@ export default function ProductDetailPage() {
                         <div className="product-detail-section">
                             <h3>Key Features</h3>
                             <ul className="product-detail-features">
-                                {features.map((f, i) => (
+                                {features.slice(0, showAllFeatures ? undefined : 2).map((f, i) => (
                                     <li key={i}>
                                         <IconCheckCircle size={13} style={{ marginRight: 8, color: '#059669', flexShrink: 0 }} />
                                         {f}
                                     </li>
                                 ))}
                             </ul>
+                            {features.length > 2 && (
+                                <button
+                                    onClick={() => setShowAllFeatures(!showAllFeatures)}
+                                    style={{
+                                        marginTop: '12px',
+                                        background: 'none',
+                                        border: 'none',
+                                        color: 'var(--accent)',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        fontSize: '14px',
+                                        padding: '4px 0'
+                                    }}
+                                >
+                                    {showAllFeatures ? 'View Less' : 'View All'}
+                                </button>
+                            )}
                         </div>
                     )}
 

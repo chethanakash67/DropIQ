@@ -9,6 +9,7 @@ import PremiumAlert from '@/components/PremiumAlert';
 import CountdownTimer from '@/components/CountdownTimer';
 import DIQModal from '@/components/DIQModal';
 import { useSearch } from '@/hooks/useSearch';
+import { IconSearch } from '@/components/Icons';
 
 type DashboardProduct = {
     id?: string | number;
@@ -100,7 +101,7 @@ const CategoryItem = ({ cat, router }: { cat: CategoryMeta, router: DashboardRou
                 </div>
             ))}
             <div className="category-circle" onClick={() => router.push(`/results?q=${cat.q}&chargeCredits=true`)} style={{ 
-                width: '200px', height: '200px', borderRadius: '50%', background: 'var(--bg-secondary)', 
+                borderRadius: '50%', background: 'var(--bg-secondary)', 
                 border: '3px solid var(--border-focus)', display: 'flex', flexDirection: 'column', 
                 alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden',
                 position: 'relative', boxShadow: '0 8px 25px rgba(16,185,129,0.15)', transition: 'all 0.4s cubic-bezier(0.25, 1, 0.5, 1)'
@@ -656,10 +657,15 @@ export default function DashboardPage() {
                             style={{
                                 opacity: currentCredits < 3 ? 0.5 : 1,
                                 cursor: currentCredits < 3 ? 'not-allowed' : 'pointer',
-                                background: currentCredits < 3 ? '#94a3b8' : 'var(--accent)'
+                                background: currentCredits < 3 ? '#94a3b8' : 'var(--accent)',
+                                padding: '12px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                minWidth: '48px'
                             }}
                         >
-                            Search
+                            <IconSearch size={20} color="white" />
                         </button>
 
                         {currentCredits < 3 && (
@@ -864,13 +870,7 @@ export default function DashboardPage() {
                 {festiveCollection.length > 0 && (
                     <div className="dashboard-section" style={{ marginBottom: '64px' }}>
                         <h2 className="dashboard-section-header">Festive Collection</h2>
-                        <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: 'repeat(4, 1fr)', 
-                            gap: '32px', 
-                            justifyContent: 'space-around',
-                            alignItems: 'center'
-                        }}>
+                        <div className="festive-grid">
                             {festiveCollection.slice(0, 8).map((p, i) => renderCard(p, i, 'festive'))}
                         </div>
                     </div>
@@ -906,11 +906,7 @@ export default function DashboardPage() {
                 {suggestedForYou.length > 0 && (
                     <div className="dashboard-section" style={{ marginBottom: '64px' }}>
                         <h2 className="dashboard-section-header">Suggested For You</h2>
-                        <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: 'repeat(2, 1fr)', 
-                            gap: '24px' 
-                        }}>
+                        <div className="suggested-grid">
                             {suggestedForYou.slice(0, 8).map((p, i) => renderCard(p, i, 'suggested'))}
                         </div>
                     </div>
@@ -930,13 +926,7 @@ export default function DashboardPage() {
                 {cart.length > 0 && (
                     <div className="dashboard-section" style={{ marginBottom: '64px' }}>
                         <h2 className="dashboard-section-header" style={{ borderColor: '#f59e0b', color: '#b45309' }}>Your Cart - Ready to Buy Now</h2>
-                        <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', 
-                            gap: '32px',
-                            justifyContent: 'flex-start',
-                            alignItems: 'stretch'
-                        }}>
+                        <div className="dynamic-auto-grid">
                             {cart.map((p, i) => renderCard(p, i, 'cart'))}
                         </div>
                     </div>
@@ -945,13 +935,7 @@ export default function DashboardPage() {
                 {bag.length > 0 && (
                     <div className="dashboard-section" style={{ marginBottom: '64px' }}>
                         <h2 className="dashboard-section-header" style={{ borderColor: '#10b981', color: '#047857' }}>My Saved Bag</h2>
-                        <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', 
-                            gap: '32px',
-                            justifyContent: 'flex-start',
-                            alignItems: 'stretch'
-                        }}>
+                        <div className="dynamic-auto-grid">
                             {bag.map((p, i) => renderCard(p, i, 'bag'))}
                         </div>
                     </div>
@@ -960,11 +944,7 @@ export default function DashboardPage() {
                 {favourites.length > 0 && (
                     <div className="dashboard-section" style={{ marginBottom: '64px' }}>
                         <h2 className="dashboard-section-header" style={{ borderColor: '#ec4899', color: '#be185d' }}>User&apos;s Favourites</h2>
-                        <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: 'repeat(4, 1fr)', 
-                            gap: '32px'
-                        }}>
+                        <div className="fav-grid">
                             {favourites.slice(0, 4).map((p, i) => renderCard(p, i, 'fav'))}
                         </div>
                     </div>
@@ -972,7 +952,7 @@ export default function DashboardPage() {
 
                 <div className="dashboard-section" style={{ marginBottom: '64px' }}>
                     <h2 className="dashboard-section-header" style={{ borderLeft: 'none', textAlign: 'center', color: '#064e3b' }}>Explore Categories</h2>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '32px', marginTop: '48px', justifyItems: 'center' }}>
+                    <div className="categories-auto-grid">
                         {categoryMeta.map((cat, i) => (
                             <CategoryItem key={i} cat={cat} router={router} />
                         ))}

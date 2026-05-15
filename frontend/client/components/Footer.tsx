@@ -53,7 +53,7 @@ export default function Footer() {
             }} />
 
             <div className="container" style={{ maxWidth: '1280px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
-                <div style={{
+                <div className="footer-grid" style={{
                     display: 'grid',
                     gridTemplateColumns: '2fr 1fr 1fr 1fr',
                     gap: '48px',
@@ -144,7 +144,7 @@ export default function Footer() {
                 </div>
 
                 {/* Bottom Bar: Payments & Copyright */}
-                <div style={{
+                <div className="footer-bottom-bar" style={{
                     borderTop: '1px solid rgba(255, 255, 255, 0.1)',
                     paddingTop: '32px',
                     display: 'flex',

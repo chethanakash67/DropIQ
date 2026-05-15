@@ -10,6 +10,7 @@ import Navbar from '@/components/Navbar';
 import PremiumAlert from '@/components/PremiumAlert';
 import InsufficientCreditsModal from '@/components/InsufficientCreditsModal';
 import { useSearch } from '@/hooks/useSearch';
+import { IconSearch } from '@/components/Icons';
 
 interface Product {
     id: string | number;
@@ -385,10 +386,14 @@ function ResultsContent() {
                     disabled={userCredits < 3}
                     style={{
                         opacity: userCredits < 3 ? 0.5 : 1,
-                        cursor: userCredits < 3 ? 'not-allowed' : 'pointer'
+                        cursor: userCredits < 3 ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minWidth: '48px'
                     }}
                 >
-                    Search
+                    <IconSearch size={20} color="white" />
                 </button>
 
                 {userCredits < 3 && (
@@ -439,8 +444,8 @@ function ResultsContent() {
                 marginBottom: '40px'
             }}>
                 <h3 style={{ marginBottom: '20px', fontSize: '20px', fontWeight: 600 }}>Filters</h3>
-                <div className="filter-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
-                    <div className="filter-group">
+                <div className="filter-row">
+                    <div className="filter-group sort-group">
                         <label>Sort By</label>
                         <select value={sortBy} onChange={e => { setSortBy(e.target.value); handleFilterChange(e.target.value); }}>
                             <option value="relevance">Relevance</option>
@@ -449,17 +454,17 @@ function ResultsContent() {
                             <option value="price_desc">Price (High to Low)</option>
                         </select>
                     </div>
-                    <div className="filter-group">
-                        <label>Min Price (₹)</label>
-                        <input type="number" placeholder="0" value={minPrice}
-                            onChange={e => { setMinPrice(e.target.value); handleFilterChange(undefined, e.target.value); }} />
+                    <div className="filter-group price-group">
+                        <label>Price Range</label>
+                        <div className="price-range-inputs">
+                            <input type="number" placeholder="Min" value={minPrice}
+                                onChange={e => { setMinPrice(e.target.value); handleFilterChange(undefined, e.target.value); }} />
+                            <span className="range-sep">-</span>
+                            <input type="number" placeholder="Max" value={maxPrice}
+                                onChange={e => { setMaxPrice(e.target.value); handleFilterChange(undefined, undefined, e.target.value); }} />
+                        </div>
                     </div>
-                    <div className="filter-group">
-                        <label>Max Price (₹)</label>
-                        <input type="number" placeholder="100000" value={maxPrice}
-                            onChange={e => { setMaxPrice(e.target.value); handleFilterChange(undefined, undefined, e.target.value); }} />
-                    </div>
-                    <div className="filter-group">
+                    <div className="filter-group store-group">
                         <label>Store</label>
                         <select value={retailer} onChange={e => { setRetailer(e.target.value); handleFilterChange(undefined, undefined, undefined, e.target.value); }}>
                             <option value="">All Stores</option>
