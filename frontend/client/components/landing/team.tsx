@@ -8,7 +8,7 @@ const founder = {
   name: "Senoay Shaw",
   role: "Founder & CEO",
   img: "/images/founders/seonay_profile.png",
-  about: "Bridging the gap between robust engineering and high-impact growth marketing, Alex has spent years building scalable tech products that resonate with users. Driven by a passion for solving real-world computing challenges through intuitive design and data-driven strategies, they lead the technical vision and market positioning at DropIQ. Prior to this, Alex spearheaded product growth at multiple startups, mastering the art of turning complex algorithms into seamless, user-friendly experiences.",
+  // about: "Bridging the gap between robust engineering and high-impact growth marketing, Alex has spent years building scalable tech products that resonate with users. Driven by a passion for solving real-world computing challenges through intuitive design and data-driven strategies, they lead the technical vision and market positioning at DropIQ. Prior to this, Alex spearheaded product growth at multiple startups, mastering the art of turning complex algorithms into seamless, user-friendly experiences.",
   expertise: "Full-Stack Engineering, Growth Marketing, Product Strategy, Data Analytics",
   linkedin: "https://www.linkedin.com/in/senoay-shaw-3970922a0/",
 }
@@ -34,9 +34,9 @@ export default function Team() {
               </span>
             </div>
             
-            <p className="text-base text-slate-600 dark:text-gray-300 leading-relaxed">
+            {/* <p className="text-base text-slate-600 dark:text-gray-300 leading-relaxed">
               {founder.about}
-            </p>
+            </p> */}
 
             <div className="pt-2">
               <h4 className="font-semibold text-slate-900 dark:text-white mb-1">Expertise:</h4>

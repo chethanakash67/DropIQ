@@ -21,6 +21,7 @@ type DashboardProduct = {
     image?: string;
     retailer_name?: string;
     last_updated?: string;
+    is_offline_store?: boolean;
 };
 
 type PromoSlide = {
@@ -133,7 +134,7 @@ const searchesFrom = (data: { searches?: unknown } | null | undefined): string[]
 export default function DashboardPage() {
     const router = useRouter();
     const { currentUser, loading, authenticatedFetch } = useAuth();
-    const { cart, bag } = useCart();
+    const { cart, bag, addToCart, addToBag } = useCart();
     const { search: clientSearch, indexLoaded } = useSearch(); // client-side instant search
     
     const [searchTerm, setSearchTerm] = useState('');
@@ -517,6 +518,39 @@ export default function DashboardPage() {
         const displayTitle = (isFestive || isLoot || isGrab || isFav || isSuggested)
             ? (productName.length > 25 ? productName.substring(0, 25) + '...' : productName)
             : productName;
+        const statusLabel = p.is_offline_store ? 'Offline' : 'Online';
+
+        if (isFestive) {
+            return (
+                <div key={`${uniqueKey}-${i}`} className="product-card revolving-border-card dashboard-mobile-action-card" onClick={() => loadProduct(String(p.id || ''), p.retailer_name || '')} style={{ cursor: 'pointer', width: '100%' }}>
+                    <div className={`dashboard-card-status ${p.is_offline_store ? 'is-offline' : 'is-online'}`}>{statusLabel}</div>
+                    <div className="dashboard-card-store">{p.retailer_name || 'Store'}</div>
+
+                    <div className="dashboard-card-image-wrap">
+                        {p.image_url ? (
+                            <img src={p.image_url} alt={displayTitle} className="dashboard-card-image" />
+                        ) : (
+                            <div className="dashboard-card-no-image">No Image</div>
+                        )}
+                    </div>
+
+                    <div className="dashboard-card-info">
+                        <div className="product-brand dashboard-card-brand">{p.brand || 'DROP IQ'}</div>
+                        <div className="product-title dashboard-card-title">{displayTitle}</div>
+                        <div className="dashboard-card-freshness">
+                            <span></span>
+                            {freshnessLabel}
+                        </div>
+                        <div className="product-price dashboard-card-price">â‚¹{p.price_inr}</div>
+                        <div className="dashboard-card-actions">
+                            <button type="button" onClick={(e) => { e.stopPropagation(); addToCart(p); }}>Add to Cart</button>
+                            <button type="button" onClick={(e) => { e.stopPropagation(); addToBag(p); }}>Add to Bag</button>
+                            <button type="button" onClick={(e) => { e.stopPropagation(); loadProduct(String(p.id || ''), p.retailer_name || ''); }}>View Product</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
 
         // Custom Layout for "Loot Deals" & "Suggested For You" (Slim Horizontal Rectangle)
         if (isLoot || isSuggested) {

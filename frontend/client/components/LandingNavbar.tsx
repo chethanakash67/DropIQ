@@ -1,99 +1,83 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
-
-const links = [
-    { href: "/#how-it-works", label: "How it Works" },
-    { href: "/#why-different", label: "Why Different" },
-    { href: "/#social-proof", label: "Testimonials" },
-    { href: "/#team", label: "Team" },
-    { href: "/#pricing", label: "Pricing" },
-];
+import { useAuth } from '@/context/AuthContext';
+import { useCart } from '@/context/CartContext';
 
 export default function LandingNavbar() {
-    return (
-        <nav style={{
-            position: 'sticky',
-            top: 0,
-            zIndex: 1000,
-            width: '100%',
-            background: 'rgba(255, 255, 255, 0.8)',
-            backdropFilter: 'blur(12px)',
-            borderBottom: '1px solid #f1f5f9',
-            padding: '0 40px',
-            height: '72px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between'
-        }}>
-            {/* Brand */}
-            <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
-                <img 
-                    src="/images/founders/des-1-removebg-preview_cropped.png" 
-                    alt="Logo" 
-                    style={{ height: '40px', width: '40px', objectFit: 'contain' }} 
-                />
-                <span style={{ 
-                    fontSize: '24px', 
-                    fontWeight: 900, 
-                    letterSpacing: '-1.2px',
-                    background: 'linear-gradient(to right, #10b981, #84cc16)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent'
-                }}>
-                    DropiQ
-                </span>
-            </Link>
+    const { currentUser } = useAuth();
+    const { totalItems, totalBagItems, setShowCart, setShowBag } = useCart();
 
-            {/* Links - Desktop Only */}
-            <div style={{ display: 'flex', gap: '8px' }}>
-                {links.map(l => (
-                    <Link 
-                        key={l.label} 
-                        href={l.href} 
-                        style={{
-                            padding: '8px 16px',
-                            borderRadius: '20px',
-                            fontSize: '14px',
-                            fontWeight: 500,
-                            color: '#475569',
-                            textDecoration: 'none',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        {l.label}
-                    </Link>
-                ))}
+    const name = currentUser?.fullName || currentUser?.email?.split('@')[0] || '';
+    const initials = name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+    const avatarUrl = (currentUser as Record<string, unknown> | null)?.avatarUrl as string | undefined;
+    const isProLikeUser = currentUser?.planType === 'pro' || currentUser?.planType === 'max' || currentUser?.planType === 'premium';
+
+    return (
+        <nav className="navbar">
+            <div className="navbar-brand" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <Link href={currentUser ? '/dashboard' : '/'} style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+                    <img src="/dropiq-logo-black.png" alt="DropIQ" style={{ height: '38px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+                    <span style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-1.2px' }}>DropIQ</span>
+                    {isProLikeUser && (
+                        <span title="Pro Plan" style={{ marginLeft: 4, display: 'flex', alignItems: 'center' }}>
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M4 18L6.5 7L12 13L17.5 7L20 18H4Z" fill="#FFD166" stroke="#E0A800" strokeWidth="1.2"/>
+                                <circle cx="6.5" cy="6.2" r="1.2" fill="#FFD166"/>
+                                <circle cx="12" cy="12.2" r="1.2" fill="#FFD166"/>
+                                <circle cx="17.5" cy="6.2" r="1.2" fill="#FFD166"/>
+                            </svg>
+                        </span>
+                    )}
+                </Link>
             </div>
 
-            {/* Actions */}
-            <div style={{ display: 'flex', gap: '12px' }}>
-                <Link href="/login" style={{
-                    padding: '10px 24px',
-                    borderRadius: '24px',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: '#1e293b',
-                    border: '1px solid #e2e8f0',
-                    textDecoration: 'none',
-                    transition: 'all 0.2s'
-                }}>
-                    Log In
-                </Link>
-                <Link href="/signup" style={{
-                    padding: '10px 24px',
-                    borderRadius: '24px',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: 'white',
-                    background: '#10b981',
-                    textDecoration: 'none',
-                    transition: 'all 0.2s',
-                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)'
-                }}>
-                    Sign Up
-                </Link>
+            <div className="navbar-actions">
+                {currentUser ? (
+                    <>
+                        {name && <span className="navbar-greeting" style={{ fontSize: '13px' }}>Hi, {name.split(' ')[0]}!</span>}
+                        <span style={{ fontSize: '13px', color: '#FFD700', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, marginLeft: '8px', marginRight: '12px' }}>
+                            <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#FFD700" /></svg>
+                            {currentUser.credits ?? 0}
+                        </span>
+                        <div style={{ display: 'flex', gap: '20px' }}>
+                            <button className="navbar-text-action" onClick={() => setShowBag(true)} style={{ fontWeight: 500 }}>
+                                My Bag {totalBagItems > 0 && <span className="count-badge accent-badge">{totalBagItems}</span>}
+                            </button>
+                            <button className="navbar-text-action" onClick={() => setShowCart(true)} style={{ fontWeight: 500 }}>
+                                My Cart {totalItems > 0 && <span className="count-badge">{totalItems}</span>}
+                            </button>
+                        </div>
+                        <Link href="/profile" className="user-avatar-link">
+                            <div className="user-avatar" title="My Profile">
+                                {avatarUrl
+                                    ? <img src={avatarUrl} alt={name} referrerPolicy="no-referrer" />
+                                    : initials || '?'
+                                }
+                            </div>
+                        </Link>
+                    </>
+                ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <Link href="/login" className="navbar-text-action" style={{ textDecoration: 'none' }}>
+                            Log In
+                        </Link>
+                        <Link href="/signup" style={{
+                            padding: '9px 18px',
+                            borderRadius: '14px',
+                            background: 'rgba(255, 255, 255, 0.16)',
+                            border: '1px solid rgba(255, 255, 255, 0.24)',
+                            color: 'white',
+                            fontSize: '13px',
+                            fontWeight: 700,
+                            textDecoration: 'none',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px'
+                        }}>
+                            Sign Up
+                        </Link>
+                    </div>
+                )}
             </div>
         </nav>
     );

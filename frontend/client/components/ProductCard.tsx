@@ -59,22 +59,13 @@ export default function ProductCard({ product }: { product: Product }) {
 
     return (
         <div className={`product-card ${isOfflineStore ? ' offline-store-product' : ''}`}>
-            {/* Colored signal for online/offline */}
             <div
-                style={{
-                    position: 'absolute',
-                    top: 8,
-                    left: 8,
-                    width: 14,
-                    height: 14,
-                    borderRadius: '50%',
-                    background: isOfflineStore ? '#1e3a8a' : '#a020f0', // dark blue for offline, purple for online
-                    border: '2px solid #fff',
-                    zIndex: 20,
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.10)'
-                }}
+                className={`store-status-flag ${isOfflineStore ? 'offline' : 'online'}`}
                 title={isOfflineStore ? 'Offline Store' : 'Online Store'}
-            />
+                aria-label={isOfflineStore ? 'Offline Store' : 'Online Store'}
+            >
+                {isOfflineStore ? 'Offline' : 'Online'}
+            </div>
             <div className={`store-tag${isOfflineStore ? ' offline-tag' : ''}`}>
                 {product.retailer_name}
             </div>
