@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { useEffect, useState } from "react"
 
 import GlowButton from "./glow-button"
 import { Badge } from "@/components/landing/ui/badge"
@@ -14,11 +15,27 @@ import { dashboardPath } from "@/lib/dashboard-url"
 // Lazy load the heavy AnimatedCounter component
 const AnimatedCounter = dynamic(() => import("./animated-counter"), {
   ssr: false,
-  loading: () => <span className="text-3xl font-extrabold">200+</span>
+  loading: () => <span className="text-3xl font-semibold">200+</span>
 })
 
+const slideshowProducts = [
+  { name: "Premium Earbuds", url: "https://m.media-amazon.com/images/I/31qGR9hxtsL._SX300_SY300_QL70_FMwebp_.jpg" },
+  { name: "Wired Headphones", url: "https://rukminim1.flixcart.com/image/400/400/xif0q/headphone/s/k/s/best-performing-with-low-latency-wired-cbt-cabtronics-original-imahjhcfykzejntc.jpeg?q=70" },
+  { name: "Samsung Galaxy Buds", url: "https://images.samsung.com/is/image/samsung/p6pim/in/sm-r400nzaains/gallery/in-galaxy-buds-fe-480225-sm-r400nzaains-thumb-538531516?$Q90_330_330_F_PNG$" },
+  { name: "TWS Earbuds", url: "https://img.tatacliq.com/images/i23//437Wx649H/MP000000025388609_437Wx649H_202503292347271.jpeg" }
+]
+
 export default function Hero() {
+  const [currentSlide, setCurrentSlide] = useState(0)
   const fullLine = "Discover the 'most reasonable price' for every 'particular product'"
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slideshowProducts.length)
+    }, 3000)
+
+    return () => window.clearInterval(timer)
+  }, [])
 
   const HIGHLIGHT_CLASS =
     "bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 via-lime-600 to-emerald-600 dark:from-cyan-400 dark:via-sky-400 dark:to-cyan-400"
@@ -68,7 +85,7 @@ export default function Hero() {
             {/* Logo and brand name */}
             <div className="flex items-center gap-4 mb-2">
               <Logo size="xl" className="text-emerald-600 dark:text-cyan-400" />
-              <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight">
+              <h1 className="text-5xl sm:text-6xl font-semibold tracking-tight">
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 via-lime-600 to-emerald-600 dark:from-cyan-400 dark:via-sky-400 dark:to-cyan-400 bg-[length:200%_200%] animate-[gradientMove_8s_ease_infinite]">
                   {"DropiQ"}
                 </span>
@@ -79,7 +96,7 @@ export default function Hero() {
             <div className="relative mt-3 inline-block">
               {/* Glow behind text */}
               <div className="absolute inset-0 -z-10 rounded-xl blur-2xl opacity-70 glow-bg lightGlow darkGlow" />
-              <p className="relative text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white px-3 py-2">
+              <p className="relative text-2xl sm:text-3xl font-medium text-gray-900 dark:text-white px-3 py-2">
                 {highlightQuoted(fullLine)}
               </p>
             </div>
@@ -126,45 +143,55 @@ export default function Hero() {
                         <span className="relative z-10 drop-shadow-sm">{"DropIQ"}</span>
                       </div>
 
-                      {/* Title */}
-                      <h3 className="mt-4 text-lg font-semibold text-slate-900 dark:text-white">{"iPhone 15 Pro"}</h3>
+                      {/* Product image slideshow */}
+                      <div className="mt-4 flex min-h-[140px] flex-col items-center justify-center transition-all duration-300">
+                        <img
+                          key={slideshowProducts[currentSlide].url}
+                          src={slideshowProducts[currentSlide].url}
+                          alt={slideshowProducts[currentSlide].name}
+                          className="mb-2 h-28 rounded-md object-contain mix-blend-multiply animate-in fade-in zoom-in duration-500 dark:mix-blend-normal"
+                        />
+                        <h3 className="text-center text-lg font-medium text-slate-900 animate-in fade-in slide-in-from-bottom-2 duration-500 dark:text-white">
+                          {slideshowProducts[currentSlide].name}
+                        </h3>
+                      </div>
 
                       {/* Rows */}
                       <div className="mt-3 space-y-2">
                         <div className="flex items-center justify-between rounded-lg bg-gray-100 px-3 py-2 text-xs dark:bg-slate-900 dark:text-gray-200">
                           <span>{"Amazon"}</span>
-                          <span className="font-bold text-slate-900 dark:text-gray-100">{"₹82,917"}</span>
+                          <span className="font-semibold text-slate-900 dark:text-gray-100">{"₹82,917"}</span>
                         </div>
 
                         <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800 ring-1 ring-emerald-200 dark:bg-cyan-900/20 dark:text-cyan-300 dark:ring-cyan-700">
                           <span>{"Best Buy"}</span>
-                          <span className="font-extrabold">{"₹78,767"}</span>
+                          <span className="font-semibold">{"₹78,767"}</span>
                         </div>
 
                         <div className="flex items-center justify-between rounded-lg bg-gray-100 px-3 py-2 text-xs dark:bg-slate-900 dark:text-gray-200">
                           <span>{"Apple"}</span>
-                          <span className="font-bold text-slate-900 dark:text-gray-100">{"₹82,917"}</span>
+                          <span className="font-semibold text-slate-900 dark:text-gray-100">{"₹82,917"}</span>
                         </div>
 
                         <div className="flex flex-col rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800 ring-1 ring-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:ring-emerald-700">
                           <div className="flex items-center justify-between">
-                            <span className="font-semibold">{"Digital Plaza (Offline)"}</span>
-                            <span className="font-bold">{"₹77,500"}</span>
+                            <span className="font-medium">{"Digital Plaza (Offline)"}</span>
+                            <span className="font-semibold">{"₹77,500"}</span>
                           </div>
                           <span className="text-[10px] opacity-70">{"MG Road, Bangalore"}</span>
                         </div>
 
                         <div className="flex flex-col rounded-lg bg-lime-50 px-3 py-2 text-xs text-lime-800 ring-1 ring-lime-200 dark:bg-lime-900/20 dark:text-lime-300 dark:ring-lime-700">
                           <div className="flex items-center justify-between">
-                            <span className="font-semibold">{"Smart Electronics"}</span>
-                            <span className="font-bold">{"₹77,900"}</span>
+                            <span className="font-medium">{"Smart Electronics"}</span>
+                            <span className="font-semibold">{"₹77,900"}</span>
                           </div>
                           <span className="text-[10px] opacity-70">{"Indiranagar, Bangalore"}</span>
                         </div>
 
                         <div className="flex items-center justify-between rounded-lg bg-emerald-600 px-3 py-2 text-xs text-white shadow-md transform scale-105">
-                          <span className="font-bold">{"Least Price Ever!"}</span>
-                          <span className="font-extrabold">{"₹77,500"}</span>
+                          <span className="font-semibold">{"Least Price Ever!"}</span>
+                          <span className="font-semibold">{"₹77,500"}</span>
                         </div>
 
                         <div className="rounded-lg bg-emerald-100 px-3 py-1 text-center text-[11px] font-semibold text-emerald-800 dark:bg-cyan-900/30 dark:text-cyan-300">
@@ -189,7 +216,7 @@ export default function Hero() {
                 <div className="mt-2 space-y-2 text-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-slate-600 dark:text-gray-300">{"Price"}</span>
-                    <span className="font-extrabold text-emerald-600 dark:text-cyan-400">{"₹78,767"}</span>
+                    <span className="font-semibold text-emerald-600 dark:text-cyan-400">{"₹78,767"}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-slate-600 dark:text-gray-300">{"Rating"}</span>

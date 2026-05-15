@@ -22,6 +22,35 @@ type DashboardProduct = {
     last_updated?: string;
 };
 
+type PromoSlide = {
+    image_url: string;
+    name: string;
+    query: string;
+};
+
+const PROMO_SLIDES: PromoSlide[] = [
+    {
+        image_url: 'https://m.media-amazon.com/images/I/31qGR9hxtsL._SX300_SY300_QL70_FMwebp_.jpg',
+        name: 'Premium Earbuds',
+        query: 'premium earbuds'
+    },
+    {
+        image_url: 'https://rukminim1.flixcart.com/image/400/400/xif0q/headphone/s/k/s/best-performing-with-low-latency-wired-cbt-cabtronics-original-imahjhcfykzejntc.jpeg?q=70',
+        name: 'Wired Headphones',
+        query: 'wired headphones'
+    },
+    {
+        image_url: 'https://images.samsung.com/is/image/samsung/p6pim/in/sm-r400nzaains/gallery/in-galaxy-buds-fe-480225-sm-r400nzaains-thumb-538531516?$Q90_330_330_F_PNG$',
+        name: 'Samsung Galaxy Buds FE',
+        query: 'samsung galaxy buds'
+    },
+    {
+        image_url: 'https://m.media-amazon.com/images/I/318-p4IpH6L._SY300_SX300_QL70_FMwebp_.jpg',
+        name: 'TWS Earbuds',
+        query: 'tws earbuds'
+    }
+];
+
 type CategoryMeta = {
     name: string;
     price: string;
@@ -156,12 +185,7 @@ export default function DashboardPage() {
         { name: 'Neckbands', price: '399', image: 'https://m.media-amazon.com/images/I/31-gSmPV0kL._SY300_SX300_QL70_FMwebp_.jpg', q: 'neckband' }
     ]);
 
-    const [slideshowImages, setSlideshowImages] = useState<any[]>([
-        { image: 'https://m.media-amazon.com/images/I/31qGR9hxtsL._SX300_SY300_QL70_FMwebp_.jpg', name: 'Premium Earbuds' },
-        { image: 'https://rukminim1.flixcart.com/image/400/400/xif0q/headphone/s/k/s/best-performing-with-low-latency-wired-cbt-cabtronics-original-imahjhcfykzejntc.jpeg?q=70', name: 'Wired Headphones' },
-        { image: 'https://images.samsung.com/is/image/samsung/p6pim/in/sm-r400nzaains/gallery/in-galaxy-buds-fe-480225-sm-r400nzaains-thumb-538531516?$Q90_330_330_F_PNG$', name: 'Samsung Galaxy Buds FE' },
-        { image: 'https://img.tatacliq.com/images/i23//437Wx649H/MP000000025388609_437Wx649H_202503292347271.jpeg', name: 'TWS Earbuds' }
-    ]);
+    const slideshowImages = PROMO_SLIDES;
     const [slideshowIndex, setSlideshowIndex] = useState(0);
     const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean; title: string; message: string; onConfirm?: () => void; type?: 'danger' | 'warning' | 'info' | 'success'; confirmText?: string }>({
         isOpen: false,
@@ -807,15 +831,19 @@ export default function DashboardPage() {
                     {slideshowImages.length > 0 ? (
                         <div className="slideshow-container">
                             {slideshowImages.map((img, i) => (
-                                <div key={i} className={`slideshow-slide ${i === slideshowIndex ? 'active' : ''}`}>
+                                <div
+                                    key={i}
+                                    className={`slideshow-slide ${i === slideshowIndex ? 'active' : ''}`}
+                                    style={{ backgroundImage: `url(${img.image_url})` }}
+                                >
                                     <img src={img.image_url} alt="" className="slideshow-img" />
                                     <div className="slideshow-overlay" />
                                     <div className="slideshow-content">
                                         <div className="slideshow-tag">BIG SALE LIVE</div>
                                         <h2 className="slideshow-title">UP TO 70% OFF</h2>
-                                        <p className="slideshow-subtitle">Exclusive deals on {img.product_name || img.name}</p>
+                                        <p className="slideshow-subtitle">Exclusive deals on {img.name}</p>
                                         <button className="shiny-shield-btn" style={{ padding: '12px 24px', width: 'fit-content', marginTop: '20px', borderRadius: '30px' }}
-                                                onClick={() => router.push(`/product/${img.id}?retailer=${encodeURIComponent(img.retailer_name || '')}`)}>
+                                                onClick={() => router.push(`/results?q=${encodeURIComponent(img.query)}&chargeCredits=true`)}>
                                             Shop Now →
                                         </button>
                                     </div>

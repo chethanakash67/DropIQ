@@ -54,7 +54,7 @@ export default function Footer() {
                 <Twitter className="h-5 w-5" />
               </a> */}
               <a
-                href="https://www.github.com/Sai-Videsh/dropiq"
+                href="https://github.com/chethanakash67/DropIQ"
                 aria-label="GitHub"
                 className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-cyan-300"
               >

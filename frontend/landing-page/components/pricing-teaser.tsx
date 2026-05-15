@@ -52,15 +52,13 @@ export default function PricingTeaser() {
   }
 
   const handleCardClick = (cardType: 'free' | 'pro' | 'max') => {
-    // Only flip on click if it's a touch device
-    if (isTouchDevice) {
-      if (cardType === 'free') {
-        setFreeCardFlipped(!freeCardFlipped)
-      } else if (cardType === 'pro') {
-        setProCardFlipped(!proCardFlipped)
-      } else {
-        setMaxCardFlipped(!maxCardFlipped)
-      }
+    // Flip on click for any device if they click it, makes it reliable for mobile
+    if (cardType === 'free') {
+      setFreeCardFlipped(!freeCardFlipped)
+    } else if (cardType === 'pro') {
+      setProCardFlipped(!proCardFlipped)
+    } else {
+      setMaxCardFlipped(!maxCardFlipped)
     }
   }
 
@@ -83,22 +81,18 @@ export default function PricingTeaser() {
       <div className="mt-8 grid grid-flow-col auto-cols-[minmax(280px,1fr)] md:auto-cols-auto md:grid-cols-3 gap-6 max-w-6xl mx-auto overflow-x-auto pb-2">
         {/* Free Plan Card */}
         <div
-          className={`group relative [perspective:1000px] h-[400px] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-cyan-500 rounded-2xl ${
-            isTouchDevice ? 'cursor-pointer' : ''
-          }`}
+          className={`group relative [perspective:1000px] h-[400px] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-cyan-500 rounded-2xl cursor-pointer`}
           onClick={() => handleCardClick('free')}
           onKeyDown={(e) => handleKeyDown(e, 'free')}
-          tabIndex={isTouchDevice ? 0 : -1}
-          role={isTouchDevice ? "button" : "presentation"}
-          aria-pressed={isTouchDevice ? freeCardFlipped : undefined}
-          aria-label={isTouchDevice ? "Free plan card, click to flip and see details" : undefined}
+          tabIndex={0}
+          role="button"
+          aria-pressed={freeCardFlipped}
+          aria-label="Free plan card, click to flip and see details"
         >
           <div
             className={`relative h-full transform-gpu transition-transform duration-700 [transform-style:preserve-3d] ${
               freeCardFlipped ? "[transform:rotateY(180deg)]" : ""
-            } ${
-              isTouchDevice ? '' : 'group-hover:[transform:rotateY(180deg)]'
-            } motion-reduce:transition-none motion-reduce:[transform:none]`}
+            } md:group-hover:[transform:rotateY(180deg)] motion-reduce:transition-none motion-reduce:[transform:none]`}
           >
             {/* Front face */}
             <Card className="p-6 rounded-2xl relative overflow-hidden transition-all duration-300 dark:bg-slate-900 dark:border-slate-800 [backface-visibility:hidden] h-full flex flex-col bg-gradient-to-br from-white via-gray-50 to-white dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 border-2 border-emerald-200 dark:border-cyan-700 shadow-lg hover:shadow-xl hover:scale-[1.02] group-hover:shadow-2xl">
@@ -151,22 +145,18 @@ export default function PricingTeaser() {
 
         {/* Pro Plan Card */}
         <div
-          className={`group relative [perspective:1000px] h-[400px] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-cyan-500 rounded-2xl ${
-            isTouchDevice ? 'cursor-pointer' : ''
-          }`}
+          className={`group relative [perspective:1000px] h-[400px] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-cyan-500 rounded-2xl cursor-pointer`}
           onClick={() => handleCardClick('pro')}
           onKeyDown={(e) => handleKeyDown(e, 'pro')}
-          tabIndex={isTouchDevice ? 0 : -1}
-          role={isTouchDevice ? "button" : "presentation"}
-          aria-pressed={isTouchDevice ? proCardFlipped : undefined}
-          aria-label={isTouchDevice ? "Pro plan card, click to flip and see details" : undefined}
+          tabIndex={0}
+          role="button"
+          aria-pressed={proCardFlipped}
+          aria-label="Pro plan card, click to flip and see details"
         >
           <div
             className={`relative h-full transform-gpu transition-transform duration-700 [transform-style:preserve-3d] ${
               proCardFlipped ? "[transform:rotateY(180deg)]" : ""
-            } ${
-              isTouchDevice ? '' : 'group-hover:[transform:rotateY(180deg)]'
-            } motion-reduce:transition-none motion-reduce:[transform:none]`}
+            } md:group-hover:[transform:rotateY(180deg)] motion-reduce:transition-none motion-reduce:[transform:none]`}
           >
             {/* Front face */}
             <Card className="p-6 rounded-2xl relative overflow-hidden transition-all duration-300 dark:bg-slate-900 dark:border-slate-800 [backface-visibility:hidden] h-full flex flex-col bg-gradient-to-br from-white via-emerald-50 to-white dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 border-2 border-emerald-200 dark:border-cyan-700 shadow-lg hover:shadow-xl hover:scale-[1.02] group-hover:shadow-2xl">
@@ -220,22 +210,18 @@ export default function PricingTeaser() {
 
         {/* Max Plan Card */}
         <div
-          className={`group relative [perspective:1000px] h-[400px] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-cyan-500 rounded-2xl ${
-            isTouchDevice ? 'cursor-pointer' : ''
-          }`}
+          className={`group relative [perspective:1000px] h-[400px] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-cyan-500 rounded-2xl cursor-pointer`}
           onClick={() => handleCardClick('max')}
           onKeyDown={(e) => handleKeyDown(e, 'max')}
-          tabIndex={isTouchDevice ? 0 : -1}
-          role={isTouchDevice ? "button" : "presentation"}
-          aria-pressed={isTouchDevice ? maxCardFlipped : undefined}
-          aria-label={isTouchDevice ? "Max plan card, click to flip and see details" : undefined}
+          tabIndex={0}
+          role="button"
+          aria-pressed={maxCardFlipped}
+          aria-label="Max plan card, click to flip and see details"
         >
           <div
             className={`relative h-full transform-gpu transition-transform duration-700 [transform-style:preserve-3d] ${
               maxCardFlipped ? "[transform:rotateY(180deg)]" : ""
-            } ${
-              isTouchDevice ? '' : 'group-hover:[transform:rotateY(180deg)]'
-            } motion-reduce:transition-none motion-reduce:[transform:none]`}
+            } md:group-hover:[transform:rotateY(180deg)] motion-reduce:transition-none motion-reduce:[transform:none]`}
           >
             {/* Front face */}
             <Card className="p-6 rounded-2xl relative overflow-hidden transition-all duration-300 dark:bg-slate-900 dark:border-slate-800 [backface-visibility:hidden] h-full flex flex-col bg-gradient-to-br from-white via-emerald-100/30 to-white dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 border-2 border-emerald-300 dark:border-cyan-700 shadow-lg hover:shadow-xl hover:scale-[1.02] group-hover:shadow-2xl">
@@ -274,8 +260,12 @@ export default function PricingTeaser() {
                   <Feature text="Unlimited Preferences" />
                   <Feature text="Priority 24/7 Support" />
                 </ul>
-                <Button onClick={scrollToFinalCTA} className="mt-6 w-full rounded-xl bg-gradient-to-r from-emerald-600 to-lime-600 hover:from-emerald-700 hover:to-lime-700 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5">
-                  {"Upgrade to Max"}
+                <Button 
+                  className="mt-6 w-full rounded-xl bg-gradient-to-r from-emerald-600 to-lime-600 hover:from-emerald-700 hover:to-lime-700 text-white font-bold shadow-lg transition-all duration-300 cursor-not-allowed group"
+                  onClick={(e) => e.preventDefault()}
+                >
+                  <span className="group-hover:hidden">{"Upgrade to Max"}</span>
+                  <span className="hidden group-hover:block">{"Coming Soon"}</span>
                 </Button>
               </div>
             </Card>
