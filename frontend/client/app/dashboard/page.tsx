@@ -521,6 +521,7 @@ export default function DashboardPage() {
         const statusLabel = p.is_offline_store ? 'Offline' : 'Online';
 
         if (isFestive) {
+            const festivePrice = String(p.price_inr ?? '').replace(/\D/g, '');
             return (
                 <div key={`${uniqueKey}-${i}`} className="product-card revolving-border-card dashboard-mobile-action-card" onClick={() => loadProduct(String(p.id || ''), p.retailer_name || '')} style={{ cursor: 'pointer', width: '100%' }}>
                     <div className={`dashboard-card-status ${p.is_offline_store ? 'is-offline' : 'is-online'}`}>{statusLabel}</div>
@@ -541,7 +542,7 @@ export default function DashboardPage() {
                             <span></span>
                             {freshnessLabel}
                         </div>
-                        <div className="product-price dashboard-card-price">â‚¹{p.price_inr}</div>
+                        <div className="product-price dashboard-card-price">₹{festivePrice}</div>
                         <div className="dashboard-card-actions">
                             <button type="button" onClick={(e) => { e.stopPropagation(); addToCart(p); }}>Add to Cart</button>
                             <button type="button" onClick={(e) => { e.stopPropagation(); addToBag(p); }}>Add to Bag</button>
