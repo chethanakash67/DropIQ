@@ -24,24 +24,24 @@ export default function BagModal() {
 
     return (
         <div className="modal-overlay-standard" onClick={(e) => { if (e.target === e.currentTarget) setShowBag(false); }}>
-            <div className="modal-container-standard">
+            <div className="modal-container-standard cart-bag-modal">
                 <button className="modal-close-btn" onClick={() => setShowBag(false)}>×</button>
                 
-                <div style={{ marginBottom: '32px' }}>
+                <div className="cart-bag-modal-header" style={{ marginBottom: '32px' }}>
                     <h2 style={{ fontSize: '26px', fontWeight: 800, letterSpacing: '-0.5px' }}>My Saved Bag</h2>
                     <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '4px' }}>Items you bookmarked for later consideration.</p>
                 </div>
 
                 <div className="modal-items-list" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     {bag.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '48px 0', background: 'var(--bg-secondary)', borderRadius: '20px', border: '1px dashed var(--border)' }}>
+                        <div className="cart-bag-empty-state" style={{ textAlign: 'center', padding: '48px 0', background: 'var(--bg-secondary)', borderRadius: '20px', border: '1px dashed var(--border)' }}>
                             <p style={{ color: 'var(--text-muted)', fontSize: '15px' }}>Your bag is empty.</p>
                         </div>
                     ) : (
                         bag.map((item, index) => {
                             const price = parseFloat(String(item.price_inr)) || 0;
                             return (
-                                <div key={`${item.id}-${index}`} className="modal-item-box">
+                                <div key={`${item.id}-${index}`} className="modal-item-box cart-bag-item">
                                     <div style={{ width: '80px', height: '80px', background: 'white', borderRadius: '16px', padding: '8px', border: '1px solid var(--border)', flexShrink: 0, cursor: 'pointer' }} onClick={() => {
                                         router.push(`/product/${item.id}?retailer=${encodeURIComponent(item.retailer_name || '')}`);
                                         setShowBag(false);
@@ -103,9 +103,9 @@ export default function BagModal() {
                     )}
                 </div>
 
-                <div style={{ marginTop: '32px', borderTop: '1px solid var(--border)', paddingTop: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div className="cart-bag-modal-footer" style={{ marginTop: '32px', borderTop: '1px solid var(--border)', paddingTop: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <p style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 500 }}>Items in your bag are synced to your account.</p>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <div className="cart-bag-footer-actions" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                         {bag.length > 0 && (
                             <button 
                                 style={{ background: 'transparent', border: '1px solid #fee2e2', color: '#ef4444', padding: '10px 20px', borderRadius: '12px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}

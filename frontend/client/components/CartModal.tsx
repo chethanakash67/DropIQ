@@ -19,10 +19,10 @@ export default function CartModal() {
 
     return (
         <div className="modal-overlay-standard" onClick={(e) => { if (e.target === e.currentTarget) setShowCart(false); }}>
-            <div className="modal-container-standard" style={{ maxWidth: '650px' }}>
+            <div className="modal-container-standard cart-bag-modal" style={{ maxWidth: '650px' }}>
                 <button className="modal-close-btn" onClick={() => setShowCart(false)}>×</button>
 
-                <div style={{ marginBottom: '32px' }}>
+                <div className="cart-bag-modal-header" style={{ marginBottom: '32px' }}>
                     <h2 style={{ fontSize: '26px', fontWeight: 800, letterSpacing: '-0.5px' }}>
                         <IconCart size={24} style={{ marginRight: 10, verticalAlign: 'middle' }} />
                         My Active Cart
@@ -32,7 +32,7 @@ export default function CartModal() {
 
                 <div className="modal-items-list" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     {cart.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '48px 0', background: 'var(--bg-secondary)', borderRadius: '20px', border: '1px dashed var(--border)' }}>
+                        <div className="cart-bag-empty-state" style={{ textAlign: 'center', padding: '48px 0', background: 'var(--bg-secondary)', borderRadius: '20px', border: '1px dashed var(--border)' }}>
                             <p style={{ color: 'var(--text-muted)', fontSize: '15px' }}>Your cart is empty.</p>
                         </div>
                     ) : (
@@ -40,7 +40,7 @@ export default function CartModal() {
                             const price = parseFloat(String(item.price_inr)) || 0;
                             const subtotal = price * item.quantity;
                             return (
-                                <div key={`${item.id}-${index}`} className="modal-item-box">
+                                <div key={`${item.id}-${index}`} className="modal-item-box cart-bag-item">
                                     <div style={{ width: '90px', height: '90px', background: 'white', borderRadius: '16px', padding: '8px', border: '1px solid var(--border)', flexShrink: 0 }}>
                                         {item.image_url
                                             ? <img src={item.image_url} alt={item.product_name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
@@ -82,12 +82,12 @@ export default function CartModal() {
                     )}
                 </div>
 
-                <div style={{ marginTop: '32px', borderTop: '2px solid var(--border)', paddingTop: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div className="cart-bag-modal-footer" style={{ marginTop: '32px', borderTop: '2px solid var(--border)', paddingTop: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                         <p style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '4px' }}>Total Amount</p>
                         <div style={{ fontSize: '28px', fontWeight: 900, color: '#10b981', letterSpacing: '-1px' }}>₹{total.toLocaleString('en-IN')}</div>
                     </div>
-                    <div style={{ display: 'flex', gap: '12px' }}>
+                    <div className="cart-bag-footer-actions" style={{ display: 'flex', gap: '12px' }}>
                         <button 
                             style={{ background: 'transparent', border: '1px solid #fee2e2', color: '#ef4444', padding: '12px 24px', borderRadius: '14px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}
                             onClick={() => {
