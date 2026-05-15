@@ -15,26 +15,61 @@ pause
 
 echo.
 echo Starting Store Sync Scheduler...
-start "Store Sync Scheduler" cmd /k "cd /d ""%~dp0backend"" && npm run scheduler:stores"
+echo.
+echo Preparing environment and installing dependencies if missing...
+
+set ROOT=%~dp0
+
+rem Install backend deps if needed
+if not exist "%ROOT%backend\node_modules" (
+	echo Installing backend dependencies...
+	pushd "%ROOT%backend"
+	npm install
+	popd
+) else (
+	echo Backend dependencies present.
+)
+
+rem Install dashboard deps if needed
+if not exist "%ROOT%frontend\client\node_modules" (
+	echo Installing dashboard dependencies...
+	pushd "%ROOT%frontend\client"
+	npm install
+	popd
+) else (
+	echo Dashboard dependencies present.
+)
+
+rem Install landing deps if needed
+if not exist "%ROOT%frontend\landing-page\node_modules" (
+	echo Installing landing-page dependencies...
+	pushd "%ROOT%frontend\landing-page"
+	npm install
+	popd
+) else (
+	echo Landing-page dependencies present.
+)
+
+echo.
+echo Starting services...
+
+start "Store Sync Scheduler" cmd /k "cd /d "%ROOT%backend" && npm run scheduler:stores"
 
 timeout /t 2 /nobreak >nul
 
-echo Starting Backend API...
-start "DropIQ Backend" cmd /k "cd /d ""%~dp0backend"" && npm run dev"
+start "DropIQ Backend" cmd /k "cd /d "%ROOT%backend" && npm run dev"
 
 timeout /t 2 /nobreak >nul
 
-echo Starting Dashboard Frontend...
-start "DropIQ Dashboard" cmd /k "cd /d ""%~dp0frontend\client"" && npm run dev -- -p 3000"
+start "DropIQ Dashboard" cmd /k "cd /d "%ROOT%frontend\client" && npm run dev -- -p 3000"
 
 timeout /t 2 /nobreak >nul
 
-echo Starting Landing Page...
-start "DropIQ Landing" cmd /k "cd /d ""%~dp0frontend\landing-page"" && npm run dev -- -p 3002"
+start "DropIQ Landing" cmd /k "cd /d "%ROOT%frontend\landing-page" && npm run dev -- -p 3002"
 
 echo.
 echo ========================================
-echo   All services started!
+echo   All services started (windows opened).
 echo ========================================
 echo.
 echo Check the new terminal windows for logs.
