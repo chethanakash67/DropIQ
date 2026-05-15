@@ -48,6 +48,8 @@ export default function ProfilePage() {
     const [visitedHistory, setVisitedHistory] = useState<any[]>([]);
     const [productHistory, setProductHistory] = useState<any[]>([]);
     const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
 
     useEffect(() => {
         if (!loading && !currentUser) {
@@ -75,6 +77,13 @@ export default function ProfilePage() {
         const pHistory = JSON.parse(localStorage.getItem('dropiq_product_history') || '[]');
         setProductHistory(pHistory);
     }, [currentUser, loading, router]);
+
+    useEffect(() => {
+        const check = () => setIsMobile(typeof window !== 'undefined' && window.innerWidth <= 768);
+        check();
+        window.addEventListener('resize', check);
+        return () => window.removeEventListener('resize', check);
+    }, []);
 
     const actualProfileUpdate = async () => {
         setIsSaving(true);
@@ -269,9 +278,38 @@ export default function ProfilePage() {
                 </Link>
             </div>
             
-            <div className="container" style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: '40px', minHeight: '80vh' }}>
-                
+            <div className="container" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '280px 1fr', gap: isMobile ? '16px' : '40px', minHeight: '80vh', padding: isMobile ? '12px' : undefined }}>
+
+                {isMobile && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'var(--gradient-vibrant)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', border: '3px solid var(--bg-card)' }}>{currentUser.fullName?.[0] || 'U'}</div>
+                            <div style={{ lineHeight: 1 }}>
+                                <div style={{ fontWeight: 700 }}>{currentUser.fullName || 'User'}</div>
+                                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{currentUser.email}</div>
+                            </div>
+                        </div>
+                        <div style={{ position: 'relative' }}>
+                            <button aria-label="Open settings menu" onClick={() => setMenuOpen(!menuOpen)} style={{ width: '44px', height: '44px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-card)', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '4px', padding: '8px' }}>
+                                <span style={{ height: '2px', background: 'var(--text-primary)', display: 'block' }} />
+                                <span style={{ height: '2px', background: 'var(--text-primary)', display: 'block' }} />
+                                <span style={{ height: '2px', background: 'var(--text-primary)', display: 'block' }} />
+                            </button>
+                            {menuOpen && (
+                                <div style={{ position: 'absolute', right: 0, top: '52px', width: '220px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '8px', boxShadow: '0 12px 30px rgba(0,0,0,0.12)', zIndex: 40 }}>
+                                    {navItems.map(item => (
+                                        <button key={item.id} onClick={() => { setActiveTab(item.id); setMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 12px', border: 'none', background: 'transparent', borderRadius: '8px', cursor: 'pointer', fontWeight: activeTab === item.id ? 700 : 500 }}>
+                                            {item.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
                 {/* SIDEBAR */}
+                {!isMobile && (
                 <aside className="profile-sidebar" style={{ 
                     background: 'var(--bg-card)', 
                     borderRadius: '24px', 
@@ -329,6 +367,7 @@ export default function ProfilePage() {
                         ))}
                     </nav>
                 </aside>
+                )}
 
                 {/* CONTENT AREA */}
                 <main className="profile-content">
@@ -351,7 +390,7 @@ export default function ProfilePage() {
                             <h2 style={{ fontSize: '24px', marginBottom: '8px' }}>User Details</h2>
                             <p style={{ color: 'var(--text-muted)', marginBottom: '32px' }}>Personal information and contact details.</p>
                             
-                            <form onSubmit={handleProfileUpdate} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', background: 'var(--bg-card)', padding: '32px', borderRadius: '24px', border: '1px solid var(--border)' }}>
+                            <form onSubmit={handleProfileUpdate} style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '24px', background: 'var(--bg-card)', padding: isMobile ? '20px' : '32px', borderRadius: '24px', border: '1px solid var(--border)' }}>
                                 <div className="form-group">
                                     <label>Full Name</label>
                                     <input value={form.fullName} onChange={e => setForm({...form, fullName: e.target.value})} placeholder="Your full name" />
@@ -368,7 +407,7 @@ export default function ProfilePage() {
                                     <label>Location / Address</label>
                                     <input value={form.address} onChange={e => setForm({...form, address: e.target.value})} placeholder="State, City, Pincode" />
                                 </div>
-                                <div style={{ gridColumn: 'span 2', marginTop: '12px' }}>
+                                <div style={{ gridColumn: isMobile ? 'auto' : 'span 2', marginTop: '12px', display: 'flex', justifyContent: isMobile ? 'stretch' : 'flex-start' }}>
                                     <button type="submit" className="shiny-shield-btn" style={{ padding: '16px 32px', width: 'auto', borderRadius: '16px', fontWeight: 500 }} disabled={isSaving}>
                                         {isSaving ? 'Saving...' : 'Save Profile Changes'}
                                     </button>
@@ -581,48 +620,55 @@ export default function ProfilePage() {
 
                     {activeTab === 'bag' && (
                         <div className="tab-view animate-fade-in">
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
-                                <div>
-                                    <h2 style={{ fontSize: '24px', marginBottom: '4px' }}>My Saved Bag</h2>
-                                    <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Items you&apos;ve bookmarked for later.</p>
+                            <div style={{ marginBottom: '16px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
+                                    <div>
+                                        <button 
+                                            className="shiny-shield-btn"
+                                            style={{ 
+                                                padding: isMobile ? '8px 12px' : '10px 18px', 
+                                                borderRadius: isMobile ? '12px' : '16px', 
+                                                fontSize: isMobile ? '12px' : '14px', 
+                                                fontWeight: 600,
+                                                opacity: 0.6,
+                                                cursor: 'not-allowed',
+                                                pointerEvents: 'none',
+                                                whiteSpace: 'nowrap'
+                                            }}
+                                        >
+                                            Checkout All at Once <span style={{ fontSize: isMobile ? '9px' : '10px', marginLeft: '6px' }}>(Soon)</span>
+                                        </button>
+                                    </div>
+                                    <div>
+                                        <button 
+                                            style={{ 
+                                                padding: isMobile ? '8px 12px' : '10px 18px', 
+                                                borderRadius: isMobile ? '12px' : '16px', 
+                                                fontSize: isMobile ? '12px' : '14px', 
+                                                fontWeight: 600,
+                                                border: '1px solid #fee2e2', 
+                                                background: '#fef2f2', 
+                                                color: '#ef4444',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s',
+                                                whiteSpace: 'nowrap'
+                                            }}
+                                            onClick={() => {
+                                                if (confirm('Clear all items from your bag?')) {
+                                                    // Clear bag logic
+                                                    localStorage.removeItem('dropiq_bag');
+                                                    window.location.reload(); 
+                                                }
+                                            }}
+                                        >
+                                            Clear All
+                                        </button>
+                                    </div>
                                 </div>
-                                <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
-                                    <button 
-                                        className="shiny-shield-btn"
-                                        style={{ 
-                                            padding: '12px 28px', 
-                                            borderRadius: '16px', 
-                                            fontSize: '14px', 
-                                            fontWeight: 600,
-                                            opacity: 0.6,
-                                            cursor: 'not-allowed',
-                                            pointerEvents: 'none'
-                                        }}
-                                    >
-                                        Checkout All at Once <span style={{ fontSize: '10px' }}>(Soon)</span>
-                                    </button>
-                                    <button 
-                                        style={{ 
-                                            padding: '12px 28px', 
-                                            borderRadius: '16px', 
-                                            fontSize: '14px', 
-                                            fontWeight: 600,
-                                            border: '1px solid #fee2e2', 
-                                            background: '#fef2f2', 
-                                            color: '#ef4444',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s'
-                                        }}
-                                        onClick={() => {
-                                            if (confirm('Clear all items from your bag?')) {
-                                                // Clear bag logic
-                                                localStorage.removeItem('dropiq_bag');
-                                                window.location.reload(); 
-                                            }
-                                        }}
-                                    >
-                                        Clear All
-                                    </button>
+
+                                <div style={{ marginTop: '12px' }}>
+                                    <h2 style={{ fontSize: isMobile ? '18px' : '24px', margin: 0, lineHeight: 1.05 }}>My Saved Bag</h2>
+                                    <p style={{ color: 'var(--text-muted)', fontSize: isMobile ? '12px' : '14px', margin: '8px 0 0' }}>Items you've bookmarked for later.</p>
                                 </div>
                             </div>
 
