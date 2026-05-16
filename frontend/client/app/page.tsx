@@ -21,11 +21,6 @@ const DynamicFaq = dynamic(() => import("@/components/landing/faq"), {
   loading: () => <div className="h-96 w-full animate-pulse rounded bg-gray-200 dark:bg-gray-800" />,
 });
 
-const DynamicTeam = dynamic(() => import("@/components/landing/team"), {
-  ssr: true,
-  loading: () => <div className="h-96 w-full animate-pulse rounded bg-gray-200 dark:bg-gray-800" />,
-});
-
 export default function Page() {
   return (
     <main className="dropiq-landing">
@@ -35,7 +30,7 @@ export default function Page() {
       <WhyDifferent />
       <SearchDemo />
       <SocialProof />
-      <DynamicTeam />
+      {/* Team section removed */}
       <DemoVideo />
       <PricingTeaser />
       <DynamicFaq />
